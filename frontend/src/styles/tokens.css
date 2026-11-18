@@ -1,0 +1,18 @@
+/* Design tokens exposed to Tailwind as theme values (bg-panel, text-muted, ...). */
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-shell: #e9eef6;
+  --color-panel: #ffffff;
+  --color-ink: #111827;
+  --color-muted: #5b6474;
+  --color-line: #d5dbe5;
+  --color-line-soft: #e6eaf1;
+  --color-hover: #f3f6fb;
+  --color-accent: #1d5bf5;
+  --color-accent-strong: #1d4ed8;
+
+  --radius-panel: 28px;
+  --radius-control: 12px;
+}

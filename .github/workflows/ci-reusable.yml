@@ -1,0 +1,99 @@
+# Reusable CI (workflow_call): backend, frontend, Bicep and CodeQL jobs.
+name: ci-reusable
+
+on:
+  workflow_call:
+    inputs:
+      upload-codeql:
+        description: Upload CodeQL results (needs security-events write).
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: backend/global.json
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release
+      - name: Check for vulnerable NuGet packages
+        run: |
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          ! grep -q "has the following vulnerable packages" vuln.txt
+
+  frontend:
+    name: Frontend lint, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx oxlint . && npx eslint .
+      - run: npx vue-tsc --build
+      - run: npx vitest run
+      - run: npx vite build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+        env:
+          CI: 'true'
+
+  bicep:
+    name: Bicep lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: |
+          az bicep install
+          az bicep build --file infra/main.bicep --stdout > /dev/null
+          az bicep build --file infra/bootstrap/bootstrap.bicep --stdout > /dev/null
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [csharp, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          upload: ${{ inputs.upload-codeql && 'always' || 'never' }}

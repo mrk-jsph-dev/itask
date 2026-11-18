@@ -1,0 +1,54 @@
+# ---- Local-only, never pushed (repo is public) ----
+# Claude Code configuration and memory
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+**/CLAUDE.md
+**/CLAUDE.local.md
+.mcp.json
+# Local design notes and plans
+docs/
+
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pfx
+*.pem
+*.key
+*.p12
+appsettings.*.local.json
+secrets.json
+
+# ---- .NET ----
+bin/
+obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+TestResults/
+
+# ---- Node / Vue ----
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.eslintcache
+test-results/
+playwright-report/
+
+# ---- Bicep / Azure ----
+infra/**/*.json
+!infra/**/bicepconfig.json
+.azure/
+
+# ---- Editors / OS ----
+.idea/
+.vs/
+*.swp
+.DS_Store
+Thumbs.db
