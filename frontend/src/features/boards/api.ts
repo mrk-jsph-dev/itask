@@ -92,3 +92,41 @@ export const boardsApi = {
   acceptInvite: (token: string) =>
     api.post<{ boardId: string }>(`/invites/${encodeURIComponent(token)}/accept`),
 }
+
+export interface BoardList {
+  id: string
+  name: string
+  emoji: string | null
+  position: number
+  wipLimit: number | null
+  archivedAt: string | null
+}
+
+export interface ListInput {
+  name: string
+  emoji: string | null
+  wipLimit: number | null
+}
+
+/** Neighbours a moved list ends up between; ids of the lists left and right of it. */
+export interface ListNeighbours {
+  beforeId: string | null
+  afterId: string | null
+}
+
+const lists = (boardId: string) => `${board(boardId)}/lists`
+
+export const listsApi = {
+  all: (boardId: string) => api.get<BoardList[]>(lists(boardId)),
+  archived: (boardId: string) => api.get<BoardList[]>(`${lists(boardId)}?archived=true`),
+  create: (boardId: string, input: ListInput) =>
+    api.post<Omit<BoardList, 'archivedAt'>>(lists(boardId), input),
+  rename: (boardId: string, listId: string, input: ListInput) =>
+    api.put<Omit<BoardList, 'archivedAt'>>(`${lists(boardId)}/${listId}`, input),
+  move: (boardId: string, listId: string, neighbours: ListNeighbours) =>
+    api.put<{ id: string; position: number }>(`${lists(boardId)}/${listId}/position`, neighbours),
+  archive: (boardId: string, listId: string) =>
+    api.post<void>(`${lists(boardId)}/${listId}/archive`),
+  restore: (boardId: string, listId: string) =>
+    api.post<void>(`${lists(boardId)}/${listId}/restore`),
+}

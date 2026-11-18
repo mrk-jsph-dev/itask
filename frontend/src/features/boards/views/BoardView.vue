@@ -1,17 +1,36 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import { ApiError } from '@/shared/api/http'
 import { toast } from '@/shared/ui/toast'
+import type { BoardList, ListInput } from '../api'
 import BoardSettingsSheet from '../components/BoardSettingsSheet.vue'
+import BoardToolbar from '../components/BoardToolbar.vue'
+import ListColumn from '../components/ListColumn.vue'
+import NewListColumn from '../components/NewListColumn.vue'
+import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
 
 const props = defineProps<{ boardId: string }>()
 const store = useBoardsStore()
+const lists = useListsStore()
 
 const notFound = ref(false)
 const settingsOpen = ref(false)
+/** The list that just dropped, for a brief glow. */
+const settledId = ref<string | null>(null)
+
+/** Editors and owners change lists, unless the board is archived. */
+const editable = computed(
+  () => !!store.current && store.current.role !== 'Viewer' && !store.current.archivedAt,
+)
+
+const ordered = computed<BoardList[]>({
+  get: () => lists.lists ?? [],
+  set: (value) => (lists.lists = value),
+})
 
 watch(
   () => props.boardId,
@@ -19,7 +38,7 @@ watch(
     notFound.value = false
     settingsOpen.value = false
     try {
-      await store.open(id)
+      await Promise.all([store.open(id), lists.load(id)])
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) notFound.value = true
       else toast(errorText(e, "Couldn't load the board."), 'error')
@@ -27,6 +46,47 @@ watch(
   },
   { immediate: true },
 )
+
+function onDrop(event: SortableEvent) {
+  const from = event.oldDraggableIndex
+  const to = event.newDraggableIndex
+  if (from === undefined || to === undefined || from === to) return
+  settledId.value = ordered.value[to]?.id ?? null
+  setTimeout(() => (settledId.value = null), 400)
+  void lists.commitMove(from, to)
+}
+
+function moveBy(index: number, delta: -1 | 1) {
+  void lists.move(index, index + delta)
+}
+
+async function create(input: ListInput, done: (ok: boolean) => void) {
+  try {
+    await lists.create(input)
+    done(true)
+  } catch (e) {
+    toast(errorText(e, "Couldn't add the list."), 'error')
+    done(false)
+  }
+}
+
+async function rename(listId: string, input: ListInput, done: (ok: boolean) => void) {
+  try {
+    await lists.rename(listId, input)
+    done(true)
+  } catch (e) {
+    toast(errorText(e, "Couldn't rename the list."), 'error')
+    done(false)
+  }
+}
+
+function onArchivedToggle(event: Event) {
+  if ((event.target as HTMLDetailsElement).open && !lists.archived) {
+    lists
+      .loadArchived()
+      .catch((e: unknown) => toast(errorText(e, "Couldn't load archived lists."), 'error'))
+  }
+}
 </script>
 
 <template>
@@ -88,7 +148,75 @@ watch(
         </button>
       </div>
     </header>
-    <p class="text-sm text-muted">Lists and cards arrive in the next modules.</p>
+    <BoardToolbar :members="store.members" />
+
+    <div v-if="lists.lists === null" class="board-grid" aria-busy="true" aria-label="Loading lists">
+      <div v-for="i in 4" :key="i" class="flex flex-col gap-2.5">
+        <SkeletonBlock height="28px" width="60%" />
+        <SkeletonBlock height="96px" />
+      </div>
+    </div>
+    <VueDraggable
+      v-else
+      v-model="ordered"
+      class="board-grid"
+      :disabled="!editable"
+      draggable="[data-list]"
+      handle=".list-handle"
+      ghost-class="drag-ghost"
+      drag-class="dragging"
+      :animation="200"
+      :force-fallback="true"
+      @end="onDrop"
+    >
+      <div
+        v-for="(list, i) in ordered"
+        :key="list.id"
+        data-list
+        class="fade-up rounded-[18px]"
+        :class="{ settle: settledId === list.id }"
+        :style="{ '--i': i }"
+      >
+        <ListColumn
+          :list="list"
+          :editable="editable"
+          :can-move-left="i > 0"
+          :can-move-right="i < ordered.length - 1"
+          @rename="(input, done) => rename(list.id, input, done)"
+          @move="(delta) => moveBy(i, delta)"
+          @archive="lists.archive(list.id)"
+        />
+      </div>
+      <NewListColumn v-if="editable" @create="create" />
+    </VueDraggable>
+
+    <p v-if="lists.lists?.length === 0 && !editable" class="text-sm text-muted">
+      🌱 This board has no lists yet.
+    </p>
+
+    <details v-if="editable" class="text-sm" @toggle="onArchivedToggle">
+      <summary class="cursor-pointer font-semibold text-muted">🗄 Archived lists</summary>
+      <p v-if="lists.archived === null" class="mt-2 text-muted">Loading…</p>
+      <p v-else-if="lists.archived.length === 0" class="mt-2 text-muted">Nothing archived.</p>
+      <ul v-else class="mt-2 flex flex-col gap-1" aria-label="Archived lists">
+        <li
+          v-for="list in lists.archived"
+          :key="list.id"
+          class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-hover"
+        >
+          <span aria-hidden="true">{{ list.emoji }}</span>
+          <span class="min-w-0 flex-1 truncate">{{ list.name }}</span>
+          <button
+            type="button"
+            class="ghost rounded-full border border-line px-3 py-1 font-semibold"
+            :aria-label="`Restore ${list.name}`"
+            @click="lists.restore(list.id)"
+          >
+            Restore
+          </button>
+        </li>
+      </ul>
+    </details>
     <BoardSettingsSheet v-if="settingsOpen" @close="settingsOpen = false" />
   </section>
 
@@ -97,3 +225,12 @@ watch(
     <SkeletonBlock height="16px" width="25%" />
   </section>
 </template>
+
+<style scoped>
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+</style>

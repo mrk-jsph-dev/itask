@@ -20,6 +20,9 @@ export const boardEmojis = [
   '🔒',
 ] as const
 
+/** Emoji offered for lists. */
+export const listEmojis = ['📝', '🚧', '👀', '✅', '📦', '🐞', '💡', '⏸', '🔥', '🧪'] as const
+
 /** "Good morning" before noon, "Good afternoon" until 6 pm, then "Good evening". */
 export function greeting(now: Date = new Date()): string {
   const hour = now.getHours()

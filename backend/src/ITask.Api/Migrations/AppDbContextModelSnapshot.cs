@@ -198,6 +198,53 @@ namespace ITask.Api.Migrations
                     b.ToTable("BoardInvites");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.BoardList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<double>("Position")
+                        .HasColumnType("float");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("WipLimit")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId", "Name")
+                        .IsUnique()
+                        .HasFilter("[ArchivedAt] IS NULL");
+
+                    b.HasIndex("BoardId", "Position");
+
+                    b.ToTable("Lists", (string)null);
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.BoardMember", b =>
                 {
                     b.Property<Guid>("BoardId")
@@ -387,6 +434,17 @@ namespace ITask.Api.Migrations
                     b.Navigation("Board");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.BoardList", b =>
+                {
+                    b.HasOne("ITask.Api.Domain.Board", "Board")
+                        .WithMany("Lists")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.BoardMember", b =>
                 {
                     b.HasOne("ITask.Api.Domain.Board", "Board")
@@ -477,6 +535,8 @@ namespace ITask.Api.Migrations
             modelBuilder.Entity("ITask.Api.Domain.Board", b =>
                 {
                     b.Navigation("Invites");
+
+                    b.Navigation("Lists");
 
                     b.Navigation("Members");
 

@@ -6,3 +6,7 @@ root = false
 dotnet_diagnostic.CA1707.severity = none
 # xUnit fixtures and test classes are public by convention.
 dotnet_diagnostic.CA1515.severity = none
+
+# EF Core migrations are generated; analyzers skip them.
+[src/ITask.Api/Migrations/*.cs]
+generated_code = true

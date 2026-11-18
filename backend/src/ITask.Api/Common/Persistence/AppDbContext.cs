@@ -17,6 +17,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<BoardInvite> BoardInvites => Set<BoardInvite>();
 
+    public DbSet<BoardList> Lists => Set<BoardList>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -72,17 +74,35 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             invite.HasOne(i => i.Board).WithMany(b => b.Invites).HasForeignKey(i => i.BoardId);
             invite.HasOne<AppUser>().WithMany().HasForeignKey(i => i.CreatedById).OnDelete(DeleteBehavior.NoAction);
         });
+
+        builder.Entity<BoardList>(list =>
+        {
+            list.ToTable("Lists");
+            list.Property(l => l.Name).HasMaxLength(BoardList.NameMaxLength);
+            list.Property(l => l.Emoji).HasMaxLength(16);
+            list.HasOne(l => l.Board).WithMany(b => b.Lists).HasForeignKey(l => l.BoardId);
+            list.HasIndex(l => new { l.BoardId, l.Position });
+
+            // Archived lists keep their name, so only active lists must be unique.
+            list.HasIndex(l => new { l.BoardId, l.Name }).IsUnique().HasFilter("[ArchivedAt] IS NULL");
+
+            if (Database.IsSqlite())
+            {
+                list.Property(l => l.RowVersion).ValueGeneratedNever();
+            }
+        });
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         if (Database.IsSqlite())
         {
-            foreach (var entry in ChangeTracker.Entries<Board>())
+            foreach (var entry in ChangeTracker.Entries())
             {
-                if (entry.State is EntityState.Added or EntityState.Modified)
+                if (entry.State is EntityState.Added or EntityState.Modified
+                    && entry.Metadata.FindProperty(nameof(Board.RowVersion)) is { IsConcurrencyToken: true } rowVersion)
                 {
-                    entry.Entity.RowVersion = RandomNumberGenerator.GetBytes(8);
+                    entry.Property(rowVersion.Name).CurrentValue = RandomNumberGenerator.GetBytes(8);
                 }
             }
         }

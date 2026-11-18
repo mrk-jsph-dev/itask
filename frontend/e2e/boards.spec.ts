@@ -47,6 +47,7 @@ async function mockApi(page: Page, boards: (typeof roadmap)[]) {
         board.isStarred = method === 'PUT'
         return route.fulfill({ status: 204 })
       }
+      if (pathname.endsWith('/lists')) return route.fulfill({ json: [] })
       const detail = pathname.match(/^\/api\/boards\/(\w+)$/)
       if (detail) {
         const board = boards.find((b) => b.id === detail[1])!
