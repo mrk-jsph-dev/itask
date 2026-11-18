@@ -12,4 +12,7 @@ public sealed class DemoOptions
     /// skipped when it is empty.
     /// </summary>
     public string? Password { get; set; }
+
+    /// <summary>True when demo accounts exist and the demo sign-in buttons should be offered.</summary>
+    public bool IsActive => Enabled && !string.IsNullOrWhiteSpace(Password);
 }

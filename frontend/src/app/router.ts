@@ -2,6 +2,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '@/features/auth/store'
 
+declare module 'vue-router' {
+  interface RouteMeta {
+    /** Reachable without signing in. */
+    public?: boolean
+    /** Only for signed-out visitors; signed-in users go home. */
+    guestOnly?: boolean
+  }
+}
+
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -9,7 +18,13 @@ export const router = createRouter({
       path: '/sign-in',
       name: 'sign-in',
       component: () => import('@/features/auth/views/SignInView.vue'),
-      meta: { public: true },
+      meta: { public: true, guestOnly: true },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/features/auth/views/RegisterView.vue'),
+      meta: { public: true, guestOnly: true },
     },
     {
       path: '/',
@@ -26,15 +41,25 @@ export const router = createRouter({
           component: () => import('@/features/boards/views/BoardView.vue'),
           props: true,
         },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/features/profile/views/ProfileView.vue'),
+        },
       ],
     },
   ],
 })
 
 router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+
+  if (to.meta.guestOnly) {
+    await auth.ensureLoaded()
+    return auth.isSignedIn ? { name: 'home' } : true
+  }
   if (to.meta.public) return true
 
-  const auth = useAuthStore()
   await auth.ensureLoaded()
   return auth.isSignedIn ? true : { name: 'sign-in', query: { next: to.fullPath } }
 })
