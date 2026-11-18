@@ -32,6 +32,21 @@ infra/      Bicep: bootstrap/ (one-time, run by the owner) and main.bicep (deplo
 .github/    ci-reusable.yml, ci.yml (pull requests), ci-cd.yml (main + deploy)
 ```
 
+## Versioning
+
+Releases follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
+
+| Part | Bump when | Example |
+|---|---|---|
+| **MAJOR** (1st digit) | a change breaks compatibility: API contract, data model or behavior existing users rely on | `1.4.2` → `2.0.0` |
+| **MINOR** (2nd digit) | a new feature is added in a backward-compatible way | `1.4.2` → `1.5.0` |
+| **PATCH** (3rd digit) | a backward-compatible bug or security fix | `1.4.2` → `1.4.3` |
+
+- Versions below `1.0.0` are pre-release; `1.0.0` is the first production release (the MVP).
+- Releases are git tags `vMAJOR.MINOR.PATCH` (e.g. `v1.2.0`) with release notes.
+- The API (`backend/Directory.Build.props`, `<Version>`) and the frontend
+  (`frontend/package.json`, `version`) carry the same version.
+
 ## Develop
 
 Works the same on a laptop, in a dev container / Codespaces, or in a cloud sandbox:
