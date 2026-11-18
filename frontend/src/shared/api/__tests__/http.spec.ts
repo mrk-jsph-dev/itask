@@ -38,6 +38,16 @@ describe('http', () => {
     expect((error as ApiError).status).toBe(400)
     expect((error as ApiError).errors?.Name).toEqual(['Required'])
   })
+
+  it('keeps the ProblemDetails detail', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ title: 'Unauthorized', detail: 'Lockedout' }), { status: 401 }),
+    )
+
+    const error = await http('/auth/login').catch((e: unknown) => e)
+
+    expect((error as ApiError).detail).toBe('Lockedout')
+  })
 })
 
 describe('api helpers', () => {

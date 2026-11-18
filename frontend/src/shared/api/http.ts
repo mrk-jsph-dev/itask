@@ -7,6 +7,7 @@ export class ApiError extends Error {
     public readonly status: number,
     message: string,
     public readonly errors?: Record<string, string[]>,
+    public readonly detail?: string,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -25,17 +26,20 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
   if (!response.ok) {
     let title = response.statusText
     let errors: Record<string, string[]> | undefined
+    let detail: string | undefined
     try {
       const problem = (await response.json()) as {
         title?: string
+        detail?: string
         errors?: Record<string, string[]>
       }
       title = problem.title ?? title
       errors = problem.errors
+      detail = problem.detail
     } catch {
       // Body was not JSON; keep the status text.
     }
-    throw new ApiError(response.status, title, errors)
+    throw new ApiError(response.status, title, errors, detail)
   }
 
   if (response.status === 204) return undefined as T
