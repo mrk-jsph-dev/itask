@@ -19,6 +19,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<BoardList> Lists => Set<BoardList>();
 
+    public DbSet<Card> Cards => Set<Card>();
+
+    public DbSet<Label> Labels => Set<Label>();
+
+    public DbSet<CardLabel> CardLabels => Set<CardLabel>();
+
+    public DbSet<CardAssignee> CardAssignees => Set<CardAssignee>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -91,6 +99,55 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 list.Property(l => l.RowVersion).ValueGeneratedNever();
             }
         });
+
+        builder.Entity<Card>(card =>
+        {
+            card.Property(c => c.Title).HasMaxLength(Card.TitleMaxLength);
+            card.Property(c => c.Description).HasMaxLength(Card.DescriptionMaxLength);
+            card.Property(c => c.CoverColor).HasMaxLength(7);
+            card.Property(c => c.Priority).HasConversion<string>().HasMaxLength(16);
+            card.HasOne(c => c.Board).WithMany(b => b.Cards).HasForeignKey(c => c.BoardId);
+
+            // Boards cascade to cards already; a second cascade path through lists is not allowed on SQL Server.
+            card.HasOne(c => c.List).WithMany().HasForeignKey(c => c.ListId).OnDelete(DeleteBehavior.NoAction);
+            card.HasOne<AppUser>().WithMany().HasForeignKey(c => c.CreatedById).OnDelete(DeleteBehavior.NoAction);
+            card.HasIndex(c => new { c.ListId, c.Position });
+            card.HasIndex(c => new { c.BoardId, c.Number }).IsUnique();
+
+            if (Database.IsSqlite())
+            {
+                card.Property(c => c.RowVersion).ValueGeneratedNever();
+            }
+        });
+
+        builder.Entity<Label>(label =>
+        {
+            label.Property(l => l.Name).HasMaxLength(Label.NameMaxLength);
+            label.Property(l => l.Color).HasMaxLength(7);
+            label.Property(l => l.Emoji).HasMaxLength(16);
+            label.HasOne(l => l.Board).WithMany(b => b.Labels).HasForeignKey(l => l.BoardId);
+            label.HasIndex(l => new { l.BoardId, l.Name }).IsUnique();
+        });
+
+        builder.Entity<CardLabel>(cardLabel =>
+        {
+            cardLabel.HasKey(cl => new { cl.CardId, cl.LabelId });
+            cardLabel.HasOne(cl => cl.Card).WithMany(c => c.Labels).HasForeignKey(cl => cl.CardId);
+
+            // Deleting a board cascades through cards; label deletes clear their links in the slice.
+            cardLabel.HasOne(cl => cl.Label).WithMany().HasForeignKey(cl => cl.LabelId).OnDelete(DeleteBehavior.NoAction);
+            cardLabel.HasIndex(cl => cl.LabelId);
+        });
+
+        builder.Entity<CardAssignee>(assignee =>
+        {
+            assignee.HasKey(a => new { a.CardId, a.UserId });
+            assignee.HasOne(a => a.Card).WithMany(c => c.Assignees).HasForeignKey(a => a.CardId);
+            assignee.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.NoAction);
+            assignee.HasIndex(a => a.UserId);
+        });
+
+        builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)

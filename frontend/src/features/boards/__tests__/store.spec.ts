@@ -75,13 +75,20 @@ describe('boards store', () => {
     await store.toggleStar('alpha', true)
 
     expect(store.boards![0]!.isStarred).toBe(true)
-    expect(toasts.value[toasts.value.length - 1]).toMatchObject({ tone: 'error', text: "Couldn't update the star." })
+    expect(toasts.value[toasts.value.length - 1]).toMatchObject({
+      tone: 'error',
+      text: "Couldn't update the star.",
+    })
   })
 
   it('drops archived boards from the active list and marks the open board', async () => {
     vi.spyOn(boardsApi, 'mine').mockResolvedValue([summary('Alpha'), summary('Beta')])
     vi.spyOn(boardsApi, 'archive').mockResolvedValue()
-    vi.spyOn(boardsApi, 'get').mockResolvedValue({ ...summary('Alpha'), rowVersion: 'AQ==' })
+    vi.spyOn(boardsApi, 'get').mockResolvedValue({
+      ...summary('Alpha'),
+      keyPrefix: 'ALP',
+      rowVersion: 'AQ==',
+    })
     vi.spyOn(boardsApi, 'members').mockResolvedValue([])
     vi.spyOn(boardsApi, 'invites').mockResolvedValue([])
     const store = useBoardsStore()
@@ -95,7 +102,7 @@ describe('boards store', () => {
   })
 
   it('saves details with the row version and keeps the new one', async () => {
-    const board: BoardDetail = { ...summary('Alpha'), rowVersion: 'v1' }
+    const board: BoardDetail = { ...summary('Alpha'), keyPrefix: 'ALP', rowVersion: 'v1' }
     vi.spyOn(boardsApi, 'get').mockResolvedValue(board)
     vi.spyOn(boardsApi, 'members').mockResolvedValue([])
     vi.spyOn(boardsApi, 'invites').mockResolvedValue([])
@@ -105,6 +112,7 @@ describe('boards store', () => {
       emoji: null,
       description: 'Text',
       color: '#1D5BF5',
+      keyPrefix: 'ALP',
       rowVersion: 'v2',
     })
     const store = useBoardsStore()
@@ -120,6 +128,7 @@ describe('boards store', () => {
   it('loads invites only for owners', async () => {
     vi.spyOn(boardsApi, 'get').mockResolvedValue({
       ...summary('Alpha', { role: 'Viewer' }),
+      keyPrefix: 'ALP',
       rowVersion: 'v',
     })
     vi.spyOn(boardsApi, 'members').mockResolvedValue([])
@@ -133,7 +142,11 @@ describe('boards store', () => {
   })
 
   it('adds a created invite to the pending list without its token', async () => {
-    vi.spyOn(boardsApi, 'get').mockResolvedValue({ ...summary('Alpha'), rowVersion: 'v' })
+    vi.spyOn(boardsApi, 'get').mockResolvedValue({
+      ...summary('Alpha'),
+      keyPrefix: 'ALP',
+      rowVersion: 'v',
+    })
     vi.spyOn(boardsApi, 'members').mockResolvedValue([])
     vi.spyOn(boardsApi, 'invites').mockResolvedValue([])
     vi.spyOn(boardsApi, 'createInvite').mockResolvedValue({

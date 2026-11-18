@@ -17,6 +17,7 @@ export interface BoardSummary {
 }
 
 export interface BoardDetail extends BoardSummary {
+  keyPrefix: string
   rowVersion: string
 }
 
@@ -25,6 +26,8 @@ export interface BoardInput {
   emoji: string | null
   description: string | null
   color: string
+  /** Card key prefix (2-5 capital letters); omitted keeps the current one. */
+  keyPrefix?: string
 }
 
 export interface CreatedBoard {
@@ -37,6 +40,7 @@ export interface CreatedBoard {
 }
 
 export interface UpdatedBoard extends Omit<CreatedBoard, 'role'> {
+  keyPrefix: string
   rowVersion: string
 }
 
@@ -100,6 +104,8 @@ export interface BoardList {
   position: number
   wipLimit: number | null
   archivedAt: string | null
+  /** Active cards in order; empty for archived lists. */
+  cards: Card[]
 }
 
 export interface ListInput {
@@ -120,13 +126,111 @@ export const listsApi = {
   all: (boardId: string) => api.get<BoardList[]>(lists(boardId)),
   archived: (boardId: string) => api.get<BoardList[]>(`${lists(boardId)}?archived=true`),
   create: (boardId: string, input: ListInput) =>
-    api.post<Omit<BoardList, 'archivedAt'>>(lists(boardId), input),
+    api.post<Omit<BoardList, 'archivedAt' | 'cards'>>(lists(boardId), input),
   rename: (boardId: string, listId: string, input: ListInput) =>
-    api.put<Omit<BoardList, 'archivedAt'>>(`${lists(boardId)}/${listId}`, input),
+    api.put<Omit<BoardList, 'archivedAt' | 'cards'>>(`${lists(boardId)}/${listId}`, input),
   move: (boardId: string, listId: string, neighbours: ListNeighbours) =>
     api.put<{ id: string; position: number }>(`${lists(boardId)}/${listId}/position`, neighbours),
   archive: (boardId: string, listId: string) =>
     api.post<void>(`${lists(boardId)}/${listId}/archive`),
   restore: (boardId: string, listId: string) =>
     api.post<void>(`${lists(boardId)}/${listId}/restore`),
+}
+
+export type CardPriority = 'None' | 'Low' | 'Medium' | 'High' | 'Urgent'
+
+export interface Label {
+  id: string
+  name: string
+  color: string
+  emoji: string | null
+}
+
+export type LabelInput = Omit<Label, 'id'>
+
+export interface Assignee {
+  userId: string
+  displayName: string
+  avatarColor: string
+}
+
+/** A card as a tile shows it. `rowVersion` goes back with moves. */
+export interface Card {
+  id: string
+  listId: string
+  number: number
+  key: string
+  title: string
+  position: number
+  dueAt: string | null
+  startAt: string | null
+  priority: CardPriority
+  coverColor: string | null
+  completedAt: string | null
+  archivedAt: string | null
+  labels: Label[]
+  assignees: Assignee[]
+  checklistDone: number
+  checklistTotal: number
+  commentCount: number
+  rowVersion: string
+}
+
+export interface CardDetail {
+  card: Card
+  description: string | null
+  createdById: string
+  createdByName: string | null
+  createdAt: string
+}
+
+/** Fields to change; absent ones stay, `null` clears. */
+export interface CardPatch {
+  title?: string
+  description?: string | null
+  dueAt?: string | null
+  startAt?: string | null
+  priority?: CardPriority
+  coverColor?: string | null
+}
+
+/** Target list and the ids of the cards the moved card ends up between. */
+export interface CardMove extends ListNeighbours {
+  listId: string
+}
+
+const cards = (boardId: string) => `${board(boardId)}/cards`
+
+export const cardsApi = {
+  create: (boardId: string, listId: string, title: string) =>
+    api.post<Card>(`${lists(boardId)}/${listId}/cards`, { title }),
+  get: (boardId: string, cardId: string) => api.get<CardDetail>(`${cards(boardId)}/${cardId}`),
+  update: (boardId: string, cardId: string, patch: CardPatch) =>
+    api.patch<Card>(`${cards(boardId)}/${cardId}`, patch),
+  move: (boardId: string, cardId: string, move: CardMove, rowVersion: string) =>
+    api.put<{ card: Card; renumbered: boolean }>(`${cards(boardId)}/${cardId}/position`, {
+      ...move,
+      rowVersion,
+    }),
+  complete: (boardId: string, cardId: string) =>
+    api.post<Card>(`${cards(boardId)}/${cardId}/complete`),
+  reopen: (boardId: string, cardId: string) => api.post<Card>(`${cards(boardId)}/${cardId}/reopen`),
+  archive: (boardId: string, cardId: string) =>
+    api.post<Card>(`${cards(boardId)}/${cardId}/archive`),
+  restore: (boardId: string, cardId: string) =>
+    api.post<Card>(`${cards(boardId)}/${cardId}/restore`),
+  setLabels: (boardId: string, cardId: string, labelIds: string[]) =>
+    api.put<Card>(`${cards(boardId)}/${cardId}/labels`, { labelIds }),
+  setAssignees: (boardId: string, cardId: string, userIds: string[]) =>
+    api.put<Card>(`${cards(boardId)}/${cardId}/assignees`, { userIds }),
+}
+
+const labels = (boardId: string) => `${board(boardId)}/labels`
+
+export const labelsApi = {
+  all: (boardId: string) => api.get<Label[]>(labels(boardId)),
+  create: (boardId: string, input: LabelInput) => api.post<Label>(labels(boardId), input),
+  update: (boardId: string, labelId: string, input: LabelInput) =>
+    api.put<Label>(`${labels(boardId)}/${labelId}`, input),
+  remove: (boardId: string, labelId: string) => api.del(`${labels(boardId)}/${labelId}`),
 }

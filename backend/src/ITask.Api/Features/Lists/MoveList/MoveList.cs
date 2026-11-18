@@ -74,58 +74,18 @@ public static class MoveList
             }
 
             lists.Remove(moved);
-            var slot = FindSlot(lists, request);
-            if (slot is null)
+            if (NeighbourSlot.Find(lists, l => l.Id, request.BeforeId, request.AfterId) is not { } index)
             {
                 return BoardResults.Conflict("The board's lists changed. Reload and try again.");
             }
 
-            var index = slot.Value;
-            double? before = index > 0 ? lists[index - 1].Position : null;
-            double? after = index < lists.Count ? lists[index].Position : null;
-
-            if (PositionCalculator.NeedsRenumber(before, after))
-            {
-                lists.Insert(index, moved);
-                var positions = PositionCalculator.Renumber(lists.Count);
-                for (var i = 0; i < lists.Count; i++)
-                {
-                    lists[i].Position = positions[i];
-                }
-            }
-            else
-            {
-                moved.Position = PositionCalculator.Between(before, after);
-            }
+            NeighbourSlot.Place(lists, moved, index, l => l.Position, (l, p) => l.Position = p);
 
             await db.SaveChangesAsync(ct);
 
             // activity: list moved
 
             return TypedResults.Ok(new Response(moved.Id, moved.Position));
-        }
-
-        /// <summary>
-        /// Index in <paramref name="others"/> (the ordered lists without the moved one) where the
-        /// moved list goes, or null when the neighbours are unknown or not adjacent.
-        /// </summary>
-        private static int? FindSlot(List<BoardList> others, Request request)
-        {
-            var beforeIndex = request.BeforeId is { } beforeId ? others.FindIndex(l => l.Id == beforeId) : -1;
-            var afterIndex = request.AfterId is { } afterId ? others.FindIndex(l => l.Id == afterId) : others.Count;
-
-            if ((request.BeforeId is not null && beforeIndex < 0) || (request.AfterId is not null && afterIndex < 0))
-            {
-                return null;
-            }
-
-            return (request.BeforeId, request.AfterId) switch
-            {
-                (null, null) => others.Count,
-                (not null, null) => beforeIndex + 1,
-                (null, not null) => afterIndex,
-                _ => afterIndex == beforeIndex + 1 ? afterIndex : null,
-            };
         }
     }
 }

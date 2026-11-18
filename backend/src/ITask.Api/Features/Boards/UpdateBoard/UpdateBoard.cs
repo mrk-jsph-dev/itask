@@ -11,13 +11,16 @@ namespace ITask.Api.Features.Boards.UpdateBoard;
 
 /// <summary>
 /// Changes a board's details. Owner only. <c>RowVersion</c> must match the stored one,
-/// otherwise someone else saved first and the response is 409.
+/// otherwise someone else saved first and the response is 409. <c>KeyPrefix</c> is optional;
+/// changing it changes every card key on the board.
 /// </summary>
 public static class UpdateBoard
 {
-    public sealed record Request(string Name, string? Emoji, string? Description, string Color, string RowVersion);
+    public sealed record Request(
+        string Name, string? Emoji, string? Description, string Color, string RowVersion, string? KeyPrefix = null);
 
-    public sealed record Response(Guid Id, string Name, string? Emoji, string? Description, string Color, string RowVersion);
+    public sealed record Response(
+        Guid Id, string Name, string? Emoji, string? Description, string Color, string KeyPrefix, string RowVersion);
 
     public sealed class Validator : AbstractValidator<Request>
     {
@@ -28,6 +31,10 @@ public static class UpdateBoard
             RuleFor(r => r.Description).MaximumLength(500);
             RuleFor(r => r.Color).NotEmpty().HexColor();
             RuleFor(r => r.RowVersion).RowVersion();
+            RuleFor(r => r.KeyPrefix)
+                .Matches($"^[A-Z]{{{CardKeys.MinLength},{CardKeys.MaxLength}}}$")
+                .When(r => r.KeyPrefix is not null)
+                .WithMessage($"Use {CardKeys.MinLength} to {CardKeys.MaxLength} capital letters A to Z.");
         }
     }
 
@@ -61,6 +68,7 @@ public static class UpdateBoard
             board.Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
             board.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             board.Color = request.Color.ToUpperInvariant();
+            board.KeyPrefix = request.KeyPrefix ?? board.KeyPrefix;
 
             try
             {
@@ -74,7 +82,7 @@ public static class UpdateBoard
             // activity: board updated
 
             return TypedResults.Ok(new Response(
-                board.Id, board.Name, board.Emoji, board.Description, board.Color, Convert.ToBase64String(board.RowVersion)));
+                board.Id, board.Name, board.Emoji, board.Description, board.Color, board.KeyPrefix, Convert.ToBase64String(board.RowVersion)));
         }
     }
 }
