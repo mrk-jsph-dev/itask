@@ -15,7 +15,13 @@ export default defineConfig({
     trace: 'retain-on-failure',
     headless: true,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      // CI runners ship Google Chrome, so CI skips downloading Playwright's Chromium.
+      use: { ...devices['Desktop Chrome'], channel: process.env.CI ? 'chrome' : undefined },
+    },
+  ],
   webServer: {
     command: process.env.CI ? 'npm run preview' : 'npm run dev',
     port: process.env.CI ? 4173 : 5173,
