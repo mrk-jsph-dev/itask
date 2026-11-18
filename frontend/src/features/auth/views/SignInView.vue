@@ -5,8 +5,8 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import AppLogo from '@/shared/ui/AppLogo.vue'
 import TurnstileWidget from '@/shared/ui/TurnstileWidget.vue'
 import { turnstileEnabled } from '@/shared/ui/turnstile'
-import { ApiError } from '@/shared/api/http'
 import { authApi, type DemoRole } from '../api'
+import { signInErrorMessage } from '../signInError'
 import { useAuthStore } from '../store'
 
 const auth = useAuthStore()
@@ -55,12 +55,7 @@ async function submit() {
     await auth.signIn(email.value, password.value, token.value)
     await goNext()
   } catch (e) {
-    error.value =
-      e instanceof ApiError && e.status === 401
-        ? 'Email or password is incorrect, or the account is locked for a few minutes.'
-        : e instanceof ApiError && e.status === 400
-          ? e.message
-          : 'Something went wrong.'
+    error.value = signInErrorMessage(e)
     widget.value?.reset()
   } finally {
     busy.value = false
