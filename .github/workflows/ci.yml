@@ -4,6 +4,8 @@ name: ci
 on:
   pull_request:
     branches: [main]
+    # ready_for_review runs CI once a draft is marked ready.
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +17,8 @@ concurrency:
 
 jobs:
   ci:
+    # Drafts can't merge, so CI waits until the PR is ready for review.
+    if: github.event.pull_request.draft != true
     uses: ./.github/workflows/ci-reusable.yml
     permissions:
       contents: read

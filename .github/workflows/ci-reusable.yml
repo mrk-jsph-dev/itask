@@ -1,4 +1,6 @@
 # Reusable CI (workflow_call): backend, frontend, Bicep and CodeQL jobs.
+# On pull requests each job runs only when its area changed; a skipped job still
+# satisfies its required check. Other events (ci-cd dispatch) run every job.
 name: ci-reusable
 
 on:
@@ -13,8 +15,47 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      backend: ${{ steps.diff.outputs.backend }}
+      frontend: ${{ steps.diff.outputs.frontend }}
+      infra: ${{ steps.diff.outputs.infra }}
+      actions: ${{ steps.diff.outputs.actions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The PR merge commit and its first parent (the base branch tip).
+          fetch-depth: 2
+      - id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          areas=(backend frontend infra actions)
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            for area in "${areas[@]}"; do echo "$area=true" >> "$GITHUB_OUTPUT"; done
+            exit 0
+          fi
+          files=$(git diff --name-only HEAD^1 HEAD)
+          echo "$files"
+          # A workflow change can affect any job, so it runs them all.
+          all=false
+          grep -q '^\.github/workflows/' <<<"$files" && all=true
+          match() { if [ "$all" = true ] || grep -qE "$1" <<<"$files"; then echo true; else echo false; fi; }
+          {
+            echo "backend=$(match '^backend/')"
+            echo "frontend=$(match '^frontend/')"
+            echo "infra=$(match '^infra/')"
+            echo "actions=$(match '^\.github/')"
+          } | tee -a "$GITHUB_OUTPUT"
+
   backend:
     name: Backend build and test
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -37,6 +78,8 @@ jobs:
 
   frontend:
     name: Frontend lint, test and build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -56,13 +99,15 @@ jobs:
       - run: npx vue-tsc --build
       - run: npx vitest run
       - run: npx vite build
-      - run: npx playwright install --with-deps chromium
+      # Playwright drives the runner's preinstalled Google Chrome (see playwright.config.ts).
       - run: npx playwright test
         env:
           CI: 'true'
 
   bicep:
     name: Bicep lint
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -74,28 +119,73 @@ jobs:
           az bicep build --file infra/main.bicep --stdout > /dev/null
           az bicep build --file infra/bootstrap/bootstrap.bicep --stdout > /dev/null
 
-  codeql:
-    name: CodeQL (${{ matrix.language }})
+  # One job per language (not a matrix) so each can be skipped by name and still
+  # report its required check. Categories match ci-cd.yml so PR results compare against main.
+  codeql-csharp:
+    name: CodeQL (csharp)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [csharp, javascript-typescript, actions]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
-          languages: ${{ matrix.language }}
+          languages: csharp
           build-mode: none
           queries: security-extended
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
-          # Same category from ci.yml and ci-cd.yml, so PR results compare against main.
-          category: /language:${{ matrix.language }}
+          category: /language:csharp
+          upload: ${{ inputs.upload-codeql && 'always' || 'never' }}
+
+  codeql-javascript-typescript:
+    name: CodeQL (javascript-typescript)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:javascript-typescript
+          upload: ${{ inputs.upload-codeql && 'always' || 'never' }}
+
+  codeql-actions:
+    name: CodeQL (actions)
+    needs: changes
+    if: needs.changes.outputs.actions == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: actions
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:actions
           upload: ${{ inputs.upload-codeql && 'always' || 'never' }}
