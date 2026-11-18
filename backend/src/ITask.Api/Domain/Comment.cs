@@ -18,6 +18,9 @@ public class Comment
     /// <summary>Markdown.</summary>
     public required string Body { get; set; }
 
+    /// <summary>Lower-cased <see cref="Body"/> for search; set by <c>AppDbContext</c> on save.</summary>
+    public string SearchBody { get; set; } = "";
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? EditedAt { get; set; }

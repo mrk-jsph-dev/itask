@@ -27,6 +27,9 @@ public class Card
 
     public required string Title { get; set; }
 
+    /// <summary>Lower-cased <see cref="Title"/> for search; set by <c>AppDbContext</c> on save.</summary>
+    public string SearchTitle { get; set; } = "";
+
     /// <summary>Markdown.</summary>
     public string? Description { get; set; }
 

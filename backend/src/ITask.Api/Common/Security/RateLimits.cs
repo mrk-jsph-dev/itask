@@ -6,11 +6,14 @@ namespace ITask.Api.Common.Security;
 
 /// <summary>
 /// Fixed-window limits partitioned per user id when signed in, otherwise per client IP.
-/// The <see cref="Auth"/> policy applies a tighter limit to sign-in and registration.
+/// The <see cref="Auth"/> policy applies a tighter limit to sign-in and registration,
+/// <see cref="Search"/> to search-as-you-type.
 /// </summary>
 public static class RateLimits
 {
     public const string Auth = "auth";
+
+    public const string Search = "search";
 
     public static IServiceCollection AddITaskRateLimits(this IServiceCollection services, IConfiguration config)
     {
@@ -19,6 +22,7 @@ public static class RateLimits
             // Read here, not at registration, so test host overrides apply.
             var perMinute = config.GetValue("RateLimits:PerMinute", 120);
             var authPerMinute = config.GetValue("RateLimits:AuthPerMinute", 10);
+            var searchPerMinute = config.GetValue("RateLimits:SearchPerMinute", 60);
 
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -33,6 +37,13 @@ public static class RateLimits
                 RateLimitPartition.GetFixedWindowLimiter(PartitionKey(context), _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = authPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+
+            options.AddPolicy(Search, context =>
+                RateLimitPartition.GetFixedWindowLimiter(PartitionKey(context), _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = searchPerMinute,
                     Window = TimeSpan.FromMinutes(1),
                 }));
         });

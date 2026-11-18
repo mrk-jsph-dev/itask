@@ -52,6 +52,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<Board>(board =>
         {
             board.Property(b => b.Name).HasMaxLength(120);
+            board.Property(b => b.SearchName).HasMaxLength(120);
+            board.HasIndex(b => b.SearchName);
             board.Property(b => b.Emoji).HasMaxLength(16);
             board.Property(b => b.Description).HasMaxLength(500);
             board.Property(b => b.Color).HasMaxLength(7);
@@ -113,6 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<Card>(card =>
         {
             card.Property(c => c.Title).HasMaxLength(Card.TitleMaxLength);
+            card.Property(c => c.SearchTitle).HasMaxLength(Card.TitleMaxLength);
             card.Property(c => c.Description).HasMaxLength(Card.DescriptionMaxLength);
             card.Property(c => c.CoverColor).HasMaxLength(7);
             card.Property(c => c.Priority).HasConversion<string>().HasMaxLength(16);
@@ -123,6 +126,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             card.HasOne<AppUser>().WithMany().HasForeignKey(c => c.CreatedById).OnDelete(DeleteBehavior.NoAction);
             card.HasIndex(c => new { c.ListId, c.Position });
             card.HasIndex(c => new { c.BoardId, c.Number }).IsUnique();
+            card.HasIndex(c => new { c.BoardId, c.SearchTitle });
 
             if (Database.IsSqlite())
             {
@@ -169,6 +173,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<Comment>(comment =>
         {
             comment.Property(c => c.Body).HasMaxLength(Comment.BodyMaxLength);
+
+            // Too wide for an index key on SQL Server; substring search scans it either way.
+            comment.Property(c => c.SearchBody).HasMaxLength(Comment.BodyMaxLength);
             comment.HasOne(c => c.Card).WithMany(c => c.Comments).HasForeignKey(c => c.CardId);
             comment.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId).OnDelete(DeleteBehavior.NoAction);
             comment.HasIndex(c => new { c.CardId, c.CreatedAt });
@@ -223,6 +230,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        NormalizeSearchColumns();
+
         if (Database.IsSqlite())
         {
             foreach (var entry in ChangeTracker.Entries())
@@ -236,5 +245,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         }
 
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>Keeps the lower-cased search copies in step with the text they mirror.</summary>
+    private void NormalizeSearchColumns()
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
+            {
+                continue;
+            }
+
+            switch (entry.Entity)
+            {
+                case Board board:
+                    board.SearchName = board.Name.ToLowerInvariant();
+                    break;
+                case Card card:
+                    card.SearchTitle = card.Title.ToLowerInvariant();
+                    break;
+                case Comment comment:
+                    comment.SearchBody = comment.Body.ToLowerInvariant();
+                    break;
+            }
+        }
     }
 }
