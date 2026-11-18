@@ -1,14 +1,18 @@
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
+using ITask.Api.Common.Files;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Security;
 using ITask.Api.Domain;
+using ITask.Api.Infrastructure.Storage;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Boards.DeleteBoard;
 
-/// <summary>Permanently deletes an archived board with its members, stars and invites. Owner only.</summary>
+/// <summary>
+/// Permanently deletes an archived board with its members, stars, invites, cards and their files. Owner only.
+/// </summary>
 public static class DeleteBoard
 {
     internal sealed class Endpoint : IEndpoint
@@ -20,7 +24,7 @@ public static class DeleteBoard
                 .RequireNonDemo();
 
         private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, AppDbContext db, IBoardAccess access, IBlobStorage storage, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -40,6 +44,7 @@ public static class DeleteBoard
             }
 
             await db.Boards.Where(b => b.Id == boardId).ExecuteDeleteAsync(ct);
+            await storage.DeletePrefixAsync(AttachmentRules.BoardPrefix(boardId), ct);
             return TypedResults.NoContent();
         }
     }

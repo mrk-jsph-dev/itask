@@ -49,11 +49,6 @@ module sql 'modules/sql.bicep' = {
   }
 }
 
-module storage 'modules/storage.bicep' = {
-  name: 'storage'
-  params: { location: location, name: take('st${appName}${suffix}', 24), tags: tags }
-}
-
 module keyVault 'modules/keyvault.bicep' = {
   name: 'keyvault'
   params: { location: location, name: 'kv-${appName}-${suffix}', tags: tags }
@@ -65,6 +60,16 @@ module site 'modules/staticwebapp.bicep' = {
 }
 
 var allowedOrigin = empty(siteOrigin) ? 'https://${site.outputs.defaultHostname}' : siteOrigin
+
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    name: take('st${appName}${suffix}', 24)
+    allowedOrigin: allowedOrigin
+    tags: tags
+  }
+}
 
 module api 'modules/containerapp.bicep' = {
   name: 'api'
@@ -81,6 +86,8 @@ module api 'modules/containerapp.bicep' = {
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
     sqlConnectionString: sql.outputs.connectionString
     allowedOrigin: allowedOrigin
+    blobEndpoint: storage.outputs.blobEndpoint
+    blobContainer: storage.outputs.container
     tags: tags
   }
 }

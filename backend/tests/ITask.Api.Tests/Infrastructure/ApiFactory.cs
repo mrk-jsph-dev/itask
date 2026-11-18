@@ -14,6 +14,9 @@ public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"itask-test-{Guid.NewGuid():N}.db");
 
+    /// <summary>Folder of the local blob storage, deleted on dispose.</summary>
+    public string BlobRoot { get; } = Path.Combine(Path.GetTempPath(), $"itask-blobs-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -23,6 +26,8 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["Database:AutoMigrate"] = "true",
             ["ConnectionStrings:Default"] = $"Data Source={_dbPath}",
             ["Demo:Enabled"] = "false",
+            ["Storage:Provider"] = "Local",
+            ["Storage:LocalRoot"] = BlobRoot,
             ["Auth:RequireConfirmedEmail"] = "false",
             ["RateLimits:AuthPerMinute"] = "1000",
             ["RateLimits:PerMinute"] = "10000",
@@ -64,6 +69,11 @@ public class ApiFactory : WebApplicationFactory<Program>
         if (File.Exists(_dbPath))
         {
             File.Delete(_dbPath);
+        }
+
+        if (Directory.Exists(BlobRoot))
+        {
+            Directory.Delete(BlobRoot, recursive: true);
         }
     }
 }

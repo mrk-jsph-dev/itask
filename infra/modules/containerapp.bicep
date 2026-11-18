@@ -12,6 +12,10 @@ param logAnalyticsName string
 param appInsightsConnectionString string
 param sqlConnectionString string
 param allowedOrigin string
+
+@description('Blob service endpoint for attachments.')
+param blobEndpoint string
+param blobContainer string
 param tags object
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
@@ -76,6 +80,9 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Database__AutoMigrate', value: 'true' }
             { name: 'ConnectionStrings__Default', value: sqlConnectionString }
             { name: 'Cors__AllowedOrigins__0', value: allowedOrigin }
+            { name: 'Storage__Provider', value: 'Azure' }
+            { name: 'Storage__BlobEndpoint', value: blobEndpoint }
+            { name: 'Storage__Container', value: blobContainer }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection' }
           ]
           probes: [

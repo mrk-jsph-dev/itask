@@ -27,6 +27,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<CardAssignee> CardAssignees => Set<CardAssignee>();
 
+    public DbSet<ChecklistItem> ChecklistItems => Set<ChecklistItem>();
+
+    public DbSet<Comment> Comments => Set<Comment>();
+
+    public DbSet<CommentMention> CommentMentions => Set<CommentMention>();
+
+    public DbSet<Attachment> Attachments => Set<Attachment>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -145,6 +153,50 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             assignee.HasOne(a => a.Card).WithMany(c => c.Assignees).HasForeignKey(a => a.CardId);
             assignee.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.NoAction);
             assignee.HasIndex(a => a.UserId);
+        });
+
+        builder.Entity<ChecklistItem>(item =>
+        {
+            item.Property(i => i.Text).HasMaxLength(ChecklistItem.TextMaxLength);
+            item.HasOne(i => i.Card).WithMany(c => c.Checklist).HasForeignKey(i => i.CardId);
+            item.HasOne(i => i.Assignee).WithMany().HasForeignKey(i => i.AssigneeId).OnDelete(DeleteBehavior.NoAction);
+            item.HasIndex(i => new { i.CardId, i.Position });
+            item.HasIndex(i => i.AssigneeId);
+        });
+
+        builder.Entity<Comment>(comment =>
+        {
+            comment.Property(c => c.Body).HasMaxLength(Comment.BodyMaxLength);
+            comment.HasOne(c => c.Card).WithMany(c => c.Comments).HasForeignKey(c => c.CardId);
+            comment.HasOne(c => c.Author).WithMany().HasForeignKey(c => c.AuthorId).OnDelete(DeleteBehavior.NoAction);
+            comment.HasIndex(c => new { c.CardId, c.CreatedAt });
+            comment.HasIndex(c => c.AuthorId);
+
+            // SQLite can't order by DateTimeOffset; UTC ticks keep comment paging in the database.
+            if (Database.IsSqlite())
+            {
+                comment.Property(c => c.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
+        });
+
+        builder.Entity<CommentMention>(mention =>
+        {
+            mention.HasKey(m => new { m.CommentId, m.UserId });
+            mention.HasOne(m => m.Comment).WithMany(c => c.Mentions).HasForeignKey(m => m.CommentId);
+            mention.HasOne(m => m.User).WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.NoAction);
+            mention.HasIndex(m => m.UserId);
+        });
+
+        builder.Entity<Attachment>(attachment =>
+        {
+            attachment.Property(a => a.FileName).HasMaxLength(Attachment.FileNameMaxLength);
+            attachment.Property(a => a.ContentType).HasMaxLength(Attachment.ContentTypeMaxLength);
+            attachment.Property(a => a.BlobName).HasMaxLength(Attachment.BlobNameMaxLength);
+            attachment.HasOne(a => a.Card).WithMany(c => c.Attachments).HasForeignKey(a => a.CardId);
+            attachment.HasOne(a => a.UploadedBy).WithMany().HasForeignKey(a => a.UploadedById).OnDelete(DeleteBehavior.NoAction);
+            attachment.HasIndex(a => a.CardId);
+            attachment.HasIndex(a => a.BlobName).IsUnique();
+            attachment.HasIndex(a => a.UploadedById);
         });
 
         builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);

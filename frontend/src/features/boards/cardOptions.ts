@@ -51,3 +51,17 @@ export function fromDateInput(value: string, edge: 'start' | 'end'): string | nu
     edge === 'end' ? new Date(y!, m! - 1, d!, 23, 59, 59) : new Date(y!, m! - 1, d!, 0, 0, 0)
   return date.toISOString()
 }
+
+/** "just now", "5 minutes ago", "2 hours ago", "3 days ago", then a short date. */
+export function formatRelative(iso: string, now = new Date()): string {
+  const seconds = Math.round((now.getTime() - new Date(iso).getTime()) / 1000)
+  if (seconds < 45) return 'just now'
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return rtf.format(-minutes, 'minute')
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return rtf.format(-hours, 'hour')
+  const days = Math.round(hours / 24)
+  if (days < 7) return rtf.format(-days, 'day')
+  return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+}

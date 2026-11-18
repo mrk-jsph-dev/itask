@@ -139,6 +139,9 @@ async function mockApi(page: Page, role = 'Editor') {
         const { title } = request.postDataJSON() as { title: string }
         return route.fulfill({ status: 201, json: newCard(create[1]!, title) })
       }
+      if (/^\/api\/boards\/b1\/cards\/\w+\/comments$/.test(pathname)) {
+        return route.fulfill({ json: { items: [], nextCursor: null } })
+      }
       const one = pathname.match(/^\/api\/boards\/b1\/cards\/(\w+)(?:\/(\w+))?$/)
       if (one) {
         const card = cards.find((c) => c.id === one[1])!
@@ -170,6 +173,8 @@ async function mockApi(page: Page, role = 'Editor') {
               createdById: me.id,
               createdByName: me.displayName,
               createdAt: me.createdAt,
+              checklist: [],
+              attachments: [],
             },
           })
         if (one[2] === 'archive') card.archivedAt = '2026-11-18T12:00:00Z'
@@ -239,7 +244,10 @@ test('keyboard moves a card to another list and up within it', async ({ page }) 
 
   await page.getByRole('button', { name: 'Write the spec card menu' }).click()
   await page.getByRole('menuitem', { name: /Move to list/ }).click()
+  // The next move needs this one's new row version, so wait for the server, not just the UI.
+  const movedToDone = page.waitForResponse((r) => r.url().endsWith('/position') && r.ok())
   await page.getByRole('menuitem', { name: /Done/ }).click()
+  await movedToDone
   await expect.poll(() => cardTitles(page, 'Done')).toEqual(['Pick fonts', 'Write the spec'])
 
   await page.getByRole('button', { name: 'Write the spec card menu' }).focus()

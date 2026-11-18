@@ -1,22 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
+import { useAuthStore } from '@/features/auth/store'
 import SideSheet from '@/shared/ui/SideSheet.vue'
+import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { colorPalette } from '@/shared/ui/palette'
 import { toast } from '@/shared/ui/toast'
-import { cardsApi, type CardPatch, type CardPriority } from '../api'
+import type { CardPatch, CardPriority } from '../api'
+import { useCardDetailStore } from '../cardDetailStore'
 import { useCardsStore } from '../cardsStore'
 import { fromDateInput, priorities, toDateInput } from '../cardOptions'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
+import CardAttachments from './CardAttachments.vue'
+import CardChecklist from './CardChecklist.vue'
+import CardComments from './CardComments.vue'
+import MarkdownField from './MarkdownField.vue'
 
-const props = defineProps<{ cardId: string; editable: boolean }>()
+/** `canComment`: any member may comment unless the board is archived. */
+const props = defineProps<{ cardId: string; editable: boolean; canComment: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
 const boards = useBoardsStore()
 const lists = useListsStore()
 const cards = useCardsStore()
+const detail = useCardDetailStore()
+const auth = useAuthStore()
 
 /** Live summary from the board, so tile and sheet stay in step. */
 const spot = computed(() => cards.find(props.cardId))
@@ -25,24 +35,21 @@ const card = computed(() => (spot.value ? spot.value.list.cards[spot.value.index
 const title = ref(card.value?.title ?? '')
 const description = ref('')
 const descriptionSaved = ref('')
-const loadingDetail = ref(true)
 
 watch(
   () => props.cardId,
   async (id) => {
-    loadingDetail.value = true
     try {
-      const detail = await cardsApi.get(lists.boardId!, id)
-      description.value = detail.description ?? ''
+      await detail.open(lists.boardId!, id)
+      description.value = detail.description
       descriptionSaved.value = description.value
     } catch (e) {
       toast(errorText(e, "Couldn't load the card."), 'error')
-    } finally {
-      loadingDetail.value = false
     }
   },
   { immediate: true },
 )
+onBeforeUnmount(() => detail.close())
 
 watch(
   () => card.value?.title,
@@ -125,7 +132,7 @@ const sectionTitle = 'text-[13px] font-semibold'
 </script>
 
 <template>
-  <SideSheet :title="card ? card.key : 'Card'" @close="emit('close')">
+  <SideSheet :title="card ? card.key : 'Card'" wide @close="emit('close')">
     <template v-if="card && spot">
       <p class="-mt-3 text-sm text-muted">
         {{ boards.current?.name }} / <span aria-hidden="true">{{ spot.list.emoji }}</span>
@@ -264,36 +271,45 @@ const sectionTitle = 'text-[13px] font-semibold'
             </li>
           </ul>
         </fieldset>
-
-        <form class="flex flex-col gap-2" @submit.prevent="saveDescription">
-          <label class="flex flex-col gap-1" :class="sectionTitle">
-            📝 Description
-            <textarea
-              v-model="description"
-              rows="6"
-              maxlength="10000"
-              :placeholder="loadingDetail ? 'Loading…' : 'Add more detail (Markdown)'"
-              class="rounded-[var(--radius-control)] border border-line bg-panel px-3 py-2 text-[15px] font-normal disabled:bg-hover"
-            />
-          </label>
-          <button
-            v-if="editable && description !== descriptionSaved"
-            type="submit"
-            class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-white"
-          >
-            Save description
-          </button>
-        </form>
-
-        <button
-          v-if="editable"
-          type="button"
-          class="ghost h-10 w-fit rounded-full border border-line px-5 text-sm font-semibold text-red-700"
-          @click="archive"
-        >
-          🗄 Archive card
-        </button>
       </fieldset>
+
+      <MarkdownField
+        v-model="description"
+        label="📝 Description"
+        :editable="editable"
+        :maxlength="10000"
+        :loading="detail.loading"
+        placeholder="Add more detail (Markdown)"
+        @save="saveDescription"
+      >
+        <button
+          v-if="editable && description !== descriptionSaved"
+          type="button"
+          class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-white"
+          @click="saveDescription"
+        >
+          Save description
+        </button>
+      </MarkdownField>
+
+      <div v-if="detail.loading" class="flex flex-col gap-2" aria-busy="true">
+        <SkeletonBlock height="18px" width="30%" />
+        <SkeletonBlock height="64px" />
+      </div>
+      <template v-else>
+        <CardChecklist :editable="editable" />
+        <CardAttachments :editable="editable" :is-demo="!!auth.user?.isDemo" />
+        <CardComments :can-post="canComment" />
+      </template>
+
+      <button
+        v-if="editable"
+        type="button"
+        class="ghost h-10 w-fit rounded-full border border-line px-5 text-sm font-semibold text-red-700"
+        @click="archive"
+      >
+        🗄 Archive card
+      </button>
     </template>
   </SideSheet>
 </template>

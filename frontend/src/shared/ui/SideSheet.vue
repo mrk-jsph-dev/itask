@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue'
 
-defineProps<{ title: string }>()
+defineProps<{
+  title: string
+  /** Wider panel for dense content such as card detail. */
+  wide?: boolean
+}>()
 const emit = defineEmits<{ close: [] }>()
 
 const titleId = useId()
@@ -35,7 +39,8 @@ onBeforeUnmount(() => {
       role="dialog"
       aria-modal="true"
       :aria-labelledby="titleId"
-      class="sheet fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col gap-5 overflow-y-auto bg-panel p-6 shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+      :class="wide ? 'max-w-xl' : 'max-w-md'"
+      class="sheet fixed inset-y-0 right-0 z-40 flex w-full flex-col gap-5 overflow-y-auto bg-panel p-6 shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
     >
       <div class="flex items-center justify-between gap-4">
         <h2 :id="titleId" class="text-lg font-bold tracking-tight">{{ title }}</h2>
