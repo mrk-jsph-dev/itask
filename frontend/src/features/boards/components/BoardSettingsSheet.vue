@@ -7,6 +7,7 @@ import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { toast } from '@/shared/ui/toast'
 import { useAuthStore } from '@/features/auth/store'
 import BoardDetailsFields from './BoardDetailsFields.vue'
+import LabelManager from './LabelManager.vue'
 import { boardRoles, type BoardRole } from '../api'
 import { inviteLink } from '../options'
 import { errorText, useBoardsStore } from '../store'
@@ -24,6 +25,8 @@ const name = ref(board.value.name)
 const emoji = ref(board.value.emoji)
 const description = ref(board.value.description ?? '')
 const color = ref(board.value.color)
+const keyPrefix = ref(board.value.keyPrefix)
+const canEditLabels = computed(() => board.value.role !== 'Viewer' && !board.value.archivedAt)
 const savingDetails = ref(false)
 const detailsMessage = ref<{ ok: boolean; text: string } | null>(null)
 
@@ -36,6 +39,7 @@ async function saveDetails() {
       emoji: emoji.value,
       description: description.value?.trim() || null,
       color: color.value,
+      keyPrefix: keyPrefix.value.trim().toUpperCase(),
     })
     detailsMessage.value = { ok: true, text: 'Board saved.' }
   } catch (e) {
@@ -168,6 +172,23 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
         v-model:description="description"
         v-model:color="color"
       />
+      <label class="flex flex-col gap-1.5 text-[13px] font-semibold">
+        Card key prefix
+        <input
+          v-model="keyPrefix"
+          type="text"
+          required
+          minlength="2"
+          maxlength="5"
+          pattern="[A-Za-z]{2,5}"
+          autocomplete="off"
+          :class="[inputClass, 'uppercase']"
+          aria-describedby="settings-key-hint"
+        />
+        <span id="settings-key-hint" class="text-xs font-normal text-muted">
+          2 to 5 letters. Cards read {{ keyPrefix.toUpperCase() || 'ITK' }}-1, -2, …
+        </span>
+      </label>
       <p
         v-if="detailsMessage"
         role="status"
@@ -184,6 +205,8 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
         {{ savingDetails ? 'Saving…' : 'Save details' }}
       </button>
     </form>
+
+    <LabelManager v-if="canEditLabels" />
 
     <section :class="sectionClass" aria-labelledby="settings-members">
       <h3 id="settings-members" class="text-base font-semibold">

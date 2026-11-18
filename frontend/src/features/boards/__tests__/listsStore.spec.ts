@@ -13,6 +13,7 @@ const list = (name: string, position: number): BoardList => ({
   position,
   wipLimit: null,
   archivedAt: null,
+  cards: [],
 })
 
 const lastToast = () => toasts.value[toasts.value.length - 1]

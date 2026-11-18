@@ -9,7 +9,7 @@ namespace ITask.Api.Features.Boards.RemoveMember;
 
 /// <summary>
 /// Removes a member (Owner) or leaves the board (any member removing themselves).
-/// The last Owner can't be removed or leave. Leaving also clears the caller's star.
+/// The last Owner can't be removed or leave. Leaving also clears the caller's star and their card assignments on the board.
 /// </summary>
 public static class RemoveMember
 {
@@ -49,6 +49,8 @@ public static class RemoveMember
             db.BoardMembers.Remove(member);
             db.BoardStars.RemoveRange(
                 await db.BoardStars.Where(s => s.BoardId == boardId && s.UserId == userId).ToListAsync(ct));
+            db.CardAssignees.RemoveRange(
+                await db.CardAssignees.Where(a => a.UserId == userId && a.Card!.BoardId == boardId).ToListAsync(ct));
             await db.SaveChangesAsync(ct);
             // activity: member removed
 

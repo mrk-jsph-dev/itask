@@ -21,6 +21,7 @@ const board = {
   isStarred: false,
   memberCount: 1,
   archivedAt: null,
+  keyPrefix: 'RM',
   rowVersion: 'AQ==',
 }
 
@@ -31,6 +32,7 @@ interface MockList {
   position: number
   wipLimit: number | null
   archivedAt: string | null
+  cards: unknown[]
 }
 
 /** Mocks the API with a server-side list store, so reloads see saved changes. */
@@ -47,6 +49,7 @@ async function mockApi(page: Page, role = 'Editor') {
     position: (i + 1) * 1024,
     wipLimit: null,
     archivedAt: null,
+    cards: [],
   }))
   const active = () => lists.filter((l) => !l.archivedAt).sort((a, b) => a.position - b.position)
 
@@ -73,6 +76,7 @@ async function mockApi(page: Page, role = 'Editor') {
           ],
         })
       }
+      if (pathname === '/api/boards/b1/labels') return route.fulfill({ json: [] })
       if (pathname === '/api/boards/b1/lists' && method === 'GET') {
         const archived = searchParams.get('archived') === 'true'
         return route.fulfill({ json: archived ? lists.filter((l) => l.archivedAt) : active() })
@@ -84,6 +88,7 @@ async function mockApi(page: Page, role = 'Editor') {
           ...body,
           position: (active().at(-1)?.position ?? 0) + 1024,
           archivedAt: null,
+          cards: [],
         }
         lists.push(created)
         return route.fulfill({ status: 201, json: created })

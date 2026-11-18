@@ -27,7 +27,7 @@ export const useListsStore = defineStore('lists', () => {
 
   async function create(input: ListInput) {
     const created = await listsApi.create(boardId.value!, input)
-    lists.value = [...(lists.value ?? []), { ...created, archivedAt: null }]
+    lists.value = [...(lists.value ?? []), { ...created, archivedAt: null, cards: [] }]
   }
 
   async function rename(listId: string, input: ListInput) {
