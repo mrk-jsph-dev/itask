@@ -43,6 +43,7 @@ public sealed partial class DemoSeeder(
             board = new Board
             {
                 Name = boardName,
+                KeyPrefix = "WEB",
                 Emoji = "🚀",
                 Description = "Sample board shared by the demo accounts.",
                 Color = "#0F766E",

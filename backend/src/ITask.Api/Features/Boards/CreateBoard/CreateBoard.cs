@@ -39,9 +39,11 @@ public static class CreateBoard
         private static async Task<Created<Response>> Handle(
             Request request, AppDbContext db, ICurrentUser user, CancellationToken ct)
         {
+            var name = request.Name.Trim();
             var board = new Board
             {
-                Name = request.Name.Trim(),
+                Name = name,
+                KeyPrefix = CardKeys.DefaultPrefix(name),
                 Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji,
                 Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
                 Color = request.Color?.ToUpperInvariant() ?? Board.DefaultColor,

@@ -1,62 +1,60 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, useId, useTemplateRef } from 'vue'
+import { computed, ref, useId, useTemplateRef } from 'vue'
+import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
-import type { BoardList, ListInput } from '../api'
+import { useMenu } from '@/shared/ui/menu'
+
+import type { BoardList, Card, ListInput } from '../api'
+import CardTile from './CardTile.vue'
 import ListForm from './ListForm.vue'
+import NewCardForm from './NewCardForm.vue'
 
-defineProps<{
+const props = defineProps<{
   list: BoardList
   editable: boolean
   canMoveLeft: boolean
   canMoveRight: boolean
+  /** Every active list, for the card menu's "Move to list…". */
+  allLists: Pick<BoardList, 'id' | 'name' | 'emoji'>[]
+  /** Card that just dropped, for a brief glow. */
+  settledCardId?: string | null
 }>()
 const emit = defineEmits<{
   rename: [input: ListInput, done: (ok: boolean) => void]
   move: [delta: -1 | 1]
   archive: []
+  createCard: [title: string, done: (ok: boolean) => void]
+  openCard: [cardId: string]
+  moveCard: [cardId: string, listId: string, index: number]
+  toggleComplete: [card: Card]
+  archiveCard: [cardId: string]
+  dragStart: []
+  dropCard: [cardId: string]
 }>()
 
+/** The list's cards; drag and drop writes the new order back through v-model. */
+const cards = defineModel<Card[]>('cards', { required: true })
+
+const targets = computed(() => props.allLists.filter((l) => l.id !== props.list.id))
+const overLimit = computed(() => !!props.list.wipLimit && cards.value.length > props.list.wipLimit)
+
+function onCardDrop(event: SortableEvent) {
+  const cardId = (event.item as HTMLElement).dataset.cardId
+  const moved = event.from !== event.to || event.oldDraggableIndex !== event.newDraggableIndex
+  if (cardId && moved) emit('dropCard', cardId)
+}
+
 const menuId = useId()
-const menuOpen = ref(false)
 const editing = ref(false)
 const saving = ref(false)
 const menu = useTemplateRef('menu')
 const trigger = useTemplateRef('trigger')
-
-function closeMenu(focusTrigger = false) {
-  menuOpen.value = false
-  if (focusTrigger) trigger.value?.focus()
-}
-
-async function openMenu() {
-  menuOpen.value = !menuOpen.value
-  if (menuOpen.value) {
-    await nextTick()
-    menu.value?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')?.focus()
-  }
-}
-
-function onMenuKey(event: KeyboardEvent) {
-  const items = [
-    ...(menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []),
-  ]
-  const index = items.indexOf(document.activeElement as HTMLButtonElement)
-  if (event.key === 'ArrowDown') items[(index + 1) % items.length]?.focus()
-  else if (event.key === 'ArrowUp') items[(index - 1 + items.length) % items.length]?.focus()
-  else if (event.key === 'Escape') closeMenu(true)
-  else return
-  event.preventDefault()
-}
-
-function closeOnOutside(event: MouseEvent) {
-  const target = event.target as Node
-  if (menuOpen.value && !menu.value?.contains(target) && !trigger.value?.contains(target)) {
-    closeMenu()
-  }
-}
-
-onMounted(() => document.addEventListener('click', closeOnOutside))
-onBeforeUnmount(() => document.removeEventListener('click', closeOnOutside))
+const {
+  open: menuOpen,
+  close: closeMenu,
+  toggle: openMenu,
+  onKeydown: onMenuKey,
+} = useMenu(menu, trigger)
 
 function pick(action: 'rename' | 'left' | 'right' | 'archive') {
   closeMenu(action === 'left' || action === 'right')
@@ -93,10 +91,11 @@ function save(input: ListInput) {
       <span v-if="list.emoji" class="text-lg" aria-hidden="true">{{ list.emoji }}</span>
       <h2 class="min-w-0 truncate text-[15px] font-semibold">{{ list.name }}</h2>
       <span
-        v-if="list.wipLimit"
-        class="text-[13px] text-muted"
-        :title="`WIP limit ${list.wipLimit}`"
-        >max {{ list.wipLimit }}</span
+        class="text-[13px]"
+        :class="overLimit ? 'font-semibold text-red-700' : 'text-muted'"
+        :title="list.wipLimit ? `WIP limit ${list.wipLimit}` : undefined"
+        :aria-label="`${cards.length} cards${list.wipLimit ? `, limit ${list.wipLimit}` : ''}`"
+        >{{ cards.length }}<template v-if="list.wipLimit">/{{ list.wipLimit }}</template></span
       >
       <template v-if="editable">
         <button
@@ -157,10 +156,56 @@ function save(input: ListInput) {
         </div>
       </template>
     </header>
-    <div
-      class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-line p-2 text-[13px] text-muted"
-    >
-      <span>No tasks yet</span>
+    <div class="relative">
+      <span
+        v-if="cards.length === 0"
+        class="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] text-muted"
+        >No cards yet</span
+      >
+      <VueDraggable
+        v-model="cards"
+        tag="ol"
+        class="flex min-h-24 flex-col gap-2.5 rounded-[18px] border-[1.5px] border-dashed border-line p-2"
+        :aria-label="`${list.name} cards`"
+        group="cards"
+        :disabled="!editable"
+        draggable="[data-card-id]"
+        ghost-class="drag-ghost"
+        drag-class="dragging"
+        filter="[role=menu], [aria-haspopup]"
+        :prevent-on-filter="false"
+        :animation="200"
+        :force-fallback="true"
+        @start="emit('dragStart')"
+        @end="onCardDrop"
+      >
+        <li
+          v-for="(card, i) in cards"
+          :key="card.id"
+          :data-card-id="card.id"
+          class="fade-up rounded-[14px] has-[[role=menu]]:z-30"
+          :class="{ settle: settledCardId === card.id }"
+          :style="{ '--i': Math.min(i, 8) }"
+        >
+          <CardTile
+            :card="card"
+            :editable="editable"
+            :can-move-up="i > 0"
+            :can-move-down="i < cards.length - 1"
+            :targets="targets"
+            @open="emit('openCard', card.id)"
+            @move="(delta) => emit('moveCard', card.id, list.id, i + delta)"
+            @move-to="(listId) => emit('moveCard', card.id, listId, Number.MAX_SAFE_INTEGER)"
+            @toggle-complete="emit('toggleComplete', card)"
+            @archive="emit('archiveCard', card.id)"
+          />
+        </li>
+      </VueDraggable>
     </div>
+    <NewCardForm
+      v-if="editable"
+      :list-name="list.name"
+      @create="(title, done) => emit('createCard', title, done)"
+    />
   </section>
 </template>

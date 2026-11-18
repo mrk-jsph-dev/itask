@@ -7,20 +7,27 @@ import { ApiError } from '@/shared/api/http'
 import { toast } from '@/shared/ui/toast'
 import type { BoardList, ListInput } from '../api'
 import BoardSettingsSheet from '../components/BoardSettingsSheet.vue'
+import CardSheet from '../components/CardSheet.vue'
 import BoardToolbar from '../components/BoardToolbar.vue'
 import ListColumn from '../components/ListColumn.vue'
 import NewListColumn from '../components/NewListColumn.vue'
+import { useCardsStore } from '../cardsStore'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
 
 const props = defineProps<{ boardId: string }>()
 const store = useBoardsStore()
 const lists = useListsStore()
+const cards = useCardsStore()
 
 const notFound = ref(false)
 const settingsOpen = ref(false)
 /** The list that just dropped, for a brief glow. */
 const settledId = ref<string | null>(null)
+/** The card that just dropped, for a brief glow. */
+const settledCardId = ref<string | null>(null)
+/** Card open in the detail sheet. */
+const openCardId = ref<string | null>(null)
 
 /** Editors and owners change lists, unless the board is archived. */
 const editable = computed(
@@ -37,8 +44,9 @@ watch(
   async (id) => {
     notFound.value = false
     settingsOpen.value = false
+    openCardId.value = null
     try {
-      await Promise.all([store.open(id), lists.load(id)])
+      await Promise.all([store.open(id), lists.load(id), cards.loadLabels(id)])
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) notFound.value = true
       else toast(errorText(e, "Couldn't load the board."), 'error')
@@ -54,6 +62,35 @@ function onDrop(event: SortableEvent) {
   settledId.value = ordered.value[to]?.id ?? null
   setTimeout(() => (settledId.value = null), 400)
   void lists.commitMove(from, to)
+}
+
+const listTargets = computed(() =>
+  ordered.value.map((l) => ({ id: l.id, name: l.name, emoji: l.emoji })),
+)
+
+function settleCard(cardId: string) {
+  settledCardId.value = cardId
+  setTimeout(() => (settledCardId.value = null), 400)
+}
+
+function onCardDrop(cardId: string) {
+  settleCard(cardId)
+  void cards.commitDrag(cardId)
+}
+
+function moveCard(cardId: string, listId: string, index: number) {
+  settleCard(cardId)
+  void cards.move(cardId, listId, index)
+}
+
+async function createCard(listId: string, title: string, done: (ok: boolean) => void) {
+  try {
+    await cards.create(listId, title)
+    done(true)
+  } catch (e) {
+    toast(errorText(e, "Couldn't add the card."), 'error')
+    done(false)
+  }
 }
 
 function moveBy(index: number, delta: -1 | 1) {
@@ -178,13 +215,23 @@ function onArchivedToggle(event: Event) {
         :style="{ '--i': i }"
       >
         <ListColumn
+          v-model:cards="list.cards"
           :list="list"
           :editable="editable"
           :can-move-left="i > 0"
           :can-move-right="i < ordered.length - 1"
+          :all-lists="listTargets"
+          :settled-card-id="settledCardId"
           @rename="(input, done) => rename(list.id, input, done)"
           @move="(delta) => moveBy(i, delta)"
           @archive="lists.archive(list.id)"
+          @create-card="(title, done) => createCard(list.id, title, done)"
+          @open-card="(cardId) => (openCardId = cardId)"
+          @move-card="moveCard"
+          @toggle-complete="cards.toggleComplete"
+          @archive-card="cards.archive"
+          @drag-start="cards.beginDrag"
+          @drop-card="onCardDrop"
         />
       </div>
       <NewListColumn v-if="editable" @create="create" />
@@ -218,6 +265,12 @@ function onArchivedToggle(event: Event) {
       </ul>
     </details>
     <BoardSettingsSheet v-if="settingsOpen" @close="settingsOpen = false" />
+    <CardSheet
+      v-if="openCardId"
+      :card-id="openCardId"
+      :editable="editable"
+      @close="openCardId = null"
+    />
   </section>
 
   <section v-else class="flex flex-col gap-3" aria-busy="true">

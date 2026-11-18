@@ -20,6 +20,7 @@ public static class GetBoard
         bool IsStarred,
         int MemberCount,
         DateTimeOffset? ArchivedAt,
+        string KeyPrefix,
         string RowVersion);
 
     internal sealed class Endpoint : IEndpoint
@@ -55,6 +56,7 @@ public static class GetBoard
                     IsStarred = b.Stars.Any(s => s.UserId == userId),
                     MemberCount = b.Members.Count,
                     b.ArchivedAt,
+                    b.KeyPrefix,
                     b.RowVersion,
                 })
                 .FirstAsync(ct);
@@ -69,6 +71,7 @@ public static class GetBoard
                 board.IsStarred,
                 board.MemberCount,
                 board.ArchivedAt,
+                board.KeyPrefix,
                 Convert.ToBase64String(board.RowVersion)));
         }
     }

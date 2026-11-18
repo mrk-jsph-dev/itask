@@ -1,0 +1,53 @@
+import type { CardPriority } from './api'
+
+export const priorities: readonly CardPriority[] = ['None', 'Low', 'Medium', 'High', 'Urgent']
+
+/** Pill colours from DESIGN.md; Urgent is a filled red. None shows no pill. */
+export const priorityStyle: Record<Exclude<CardPriority, 'None'>, { color: string; bg: string }> = {
+  Low: { color: '#4B5563', bg: '#F3F4F6' },
+  Medium: { color: '#1D4ED8', bg: '#EFF4FF' },
+  High: { color: '#B91C1C', bg: '#FEF2F2' },
+  Urgent: { color: '#FFFFFF', bg: '#B91C1C' },
+}
+
+/** Emoji offered for labels. */
+export const labelEmojis = ['🖥️', '⚙️', '☁️', '🐞', '✨', '📣', '🔒', '📈', '🎨', '🧪'] as const
+
+export type DueState = 'done' | 'overdue' | 'soon' | 'later'
+
+const day = 24 * 60 * 60 * 1000
+
+/** How a due date reads: overdue once past, soon within 48 h; completed cards are never overdue. */
+export function dueState(dueAt: string, completedAt: string | null, now = new Date()): DueState {
+  if (completedAt) return 'done'
+  const left = new Date(dueAt).getTime() - now.getTime()
+  if (left < 0) return 'overdue'
+  return left <= 2 * day ? 'soon' : 'later'
+}
+
+/** "Nov 24", with the year only when it isn't the current one. */
+export function formatDue(iso: string, now = new Date()): string {
+  const date = new Date(iso)
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  })
+}
+
+/** `yyyy-mm-dd` in local time for a date input, or '' for none. */
+export function toDateInput(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** A date input's value as the end of that local day (due) or its start (start), in ISO. */
+export function fromDateInput(value: string, edge: 'start' | 'end'): string | null {
+  if (!value) return null
+  const [y, m, d] = value.split('-').map(Number)
+  const date =
+    edge === 'end' ? new Date(y!, m! - 1, d!, 23, 59, 59) : new Date(y!, m! - 1, d!, 0, 0, 0)
+  return date.toISOString()
+}
