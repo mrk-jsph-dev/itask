@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dismissToast, toasts } from './toast'
+import { dismissToast, runToastAction, toasts } from './toast'
 </script>
 
 <template>
@@ -15,6 +15,14 @@ import { dismissToast, toasts } from './toast'
       :class="item.tone === 'error' ? 'bg-red-700' : 'bg-ink'"
     >
       <span>{{ item.text }}</span>
+      <button
+        v-if="item.action"
+        type="button"
+        class="font-semibold text-sky-300 hover:text-white"
+        @click="runToastAction(item.id)"
+      >
+        {{ item.action.label }}
+      </button>
       <button
         type="button"
         class="text-white/70 hover:text-white"

@@ -47,6 +47,7 @@ public sealed partial class DemoSeeder(
                 Description = "Sample board shared by the demo accounts.",
                 Color = "#0F766E",
             };
+            board.Lists.AddRange(BoardList.CreateDefaults());
             db.Boards.Add(board);
         }
 

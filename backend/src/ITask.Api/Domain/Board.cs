@@ -31,4 +31,6 @@ public class Board
     public List<BoardStar> Stars { get; } = [];
 
     public List<BoardInvite> Invites { get; } = [];
+
+    public List<BoardList> Lists { get; } = [];
 }

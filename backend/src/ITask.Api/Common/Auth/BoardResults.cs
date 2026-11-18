@@ -10,6 +10,9 @@ public static class BoardResults
         title: "Your role on this board does not allow this.",
         statusCode: StatusCodes.Status403Forbidden);
 
+    /// <summary>409 for changes to the content of an archived board.</summary>
+    public static ProblemHttpResult Archived() => Conflict("This board is archived. Restore it to make changes.");
+
     public static ProblemHttpResult Conflict(string title) => TypedResults.Problem(
         title: title,
         statusCode: StatusCodes.Status409Conflict);

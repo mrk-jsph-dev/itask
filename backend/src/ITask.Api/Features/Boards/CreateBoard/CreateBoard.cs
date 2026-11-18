@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace ITask.Api.Features.Boards.CreateBoard;
 
 /// <summary>
-/// Creates a board and makes the caller its Owner.
+/// Creates a board with the default lists and makes the caller its Owner.
 /// </summary>
 public static class CreateBoard
 {
@@ -47,6 +47,7 @@ public static class CreateBoard
                 Color = request.Color?.ToUpperInvariant() ?? Board.DefaultColor,
             };
             board.Members.Add(new BoardMember { UserId = user.Id, Role = BoardRole.Owner });
+            board.Lists.AddRange(BoardList.CreateDefaults());
 
             db.Boards.Add(board);
             await db.SaveChangesAsync(ct);
