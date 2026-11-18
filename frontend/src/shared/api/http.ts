@@ -49,5 +49,7 @@ export const api = {
   get: <T>(path: string) => http<T>(path),
   post: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
     http<T>(path, { method: 'POST', body: json(body), headers }),
-  put: <T>(path: string, body?: unknown) => http<T>(path, { method: 'PUT', body: json(body) }),
+  put: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+    http<T>(path, { method: 'PUT', body: json(body), headers }),
+  del: <T = void>(path: string) => http<T>(path, { method: 'DELETE' }),
 }

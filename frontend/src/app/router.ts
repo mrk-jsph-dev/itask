@@ -8,6 +8,8 @@ declare module 'vue-router' {
     public?: boolean
     /** Only for signed-out visitors; signed-in users go home. */
     guestOnly?: boolean
+    /** Platform admins only; others go home. */
+    admin?: boolean
   }
 }
 
@@ -42,6 +44,18 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'invite/:token',
+          name: 'invite',
+          component: () => import('@/features/boards/views/AcceptInviteView.vue'),
+          props: true,
+        },
+        {
+          path: 'admin/users',
+          name: 'admin-users',
+          component: () => import('@/features/admin/views/UsersView.vue'),
+          meta: { admin: true },
+        },
+        {
           path: 'profile',
           name: 'profile',
           component: () => import('@/features/profile/views/ProfileView.vue'),
@@ -61,5 +75,7 @@ router.beforeEach(async (to) => {
   if (to.meta.public) return true
 
   await auth.ensureLoaded()
-  return auth.isSignedIn ? true : { name: 'sign-in', query: { next: to.fullPath } }
+  if (!auth.isSignedIn) return { name: 'sign-in', query: { next: to.fullPath } }
+  if (to.meta.admin && !auth.user?.isPlatformAdmin) return { name: 'home' }
+  return true
 })

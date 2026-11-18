@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, http } from '../http'
+import { ApiError, api, http } from '../http'
 
 describe('http', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -37,5 +37,21 @@ describe('http', () => {
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBe(400)
     expect((error as ApiError).errors?.Name).toEqual(['Required'])
+  })
+})
+
+describe('api helpers', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('sends DELETE and resolves on 204', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 204 }))
+
+    await expect(api.del('/boards/1/star')).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/boards/1/star',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
   })
 })

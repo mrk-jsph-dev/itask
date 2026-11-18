@@ -1,14 +1,7 @@
-/** Avatar colours offered on the profile page; all pass WCAG AA with white initials. */
-export const avatarColors = [
-  '#1D5BF5',
-  '#7C3AED',
-  '#0F766E',
-  '#E11D48',
-  '#C2410C',
-  '#4D7C0F',
-  '#0369A1',
-  '#374151',
-] as const
+import { colorPalette } from '@/shared/ui/palette'
+
+/** Avatar colours offered on the profile page. */
+export const avatarColors = colorPalette
 
 type IntlWithZones = typeof Intl & { supportedValuesOf?: (key: 'timeZone') => string[] }
 
