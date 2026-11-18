@@ -33,12 +33,12 @@ describe('upload', () => {
       expiresAt: '2026-11-18T10:10:00Z',
     })
     const confirm = vi.spyOn(attachmentsApi, 'confirm').mockResolvedValue(attachment)
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 201 }))
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(uploadFile('b1', 'c1', file('a.pdf', 'application/pdf'))).resolves.toBe(attachment)
 
-    const [url, init] = fetchMock.mock.calls[0]! as [string, RequestInit]
+    const [url, init] = fetchMock.mock.calls[0]!
     expect(url).toBe('https://store.example/x?sig=1')
     expect(init).toMatchObject({
       method: 'PUT',
@@ -56,7 +56,10 @@ describe('upload', () => {
       expiresAt: '',
     })
     const confirm = vi.spyOn(attachmentsApi, 'confirm')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 403 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 403 })),
+    )
 
     await expect(uploadFile('b1', 'c1', file('a.pdf', 'application/pdf'))).rejects.toThrow(/403/)
     expect(confirm).not.toHaveBeenCalled()
