@@ -1,0 +1,103 @@
+# main: CI, then deploy to Azure. The deploy job runs in the "production"
+# environment, which requires your approval and only accepts the main branch.
+# Azure sign-in is OIDC: no cloud secret is stored in GitHub.
+name: ci-cd
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cd-main
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    permissions:
+      contents: read
+      security-events: write
+
+  deploy:
+    name: Deploy to Azure
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ steps.infra.outputs.siteUrl }}
+    permissions:
+      contents: read
+      packages: write # push the API image to GHCR
+      id-token: write # OIDC token for Azure, only in this job
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/itask-api:${{ github.sha }}
+      RESOURCE_GROUP: rg-itask
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: backend
+          push: true
+          tags: ${{ env.IMAGE }}
+          provenance: true
+          sbom: true
+
+      - name: Azure sign-in (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy infrastructure (Bicep)
+        id: infra
+        env:
+          ITASK_API_IMAGE: ${{ env.IMAGE }}
+        run: |
+          out=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "itask-${GITHUB_RUN_NUMBER}" \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --query properties.outputs -o json)
+          echo "apiUrl=$(jq -r .apiUrl.value <<<"$out")" >> "$GITHUB_OUTPUT"
+          echo "siteName=$(jq -r .siteName.value <<<"$out")" >> "$GITHUB_OUTPUT"
+          echo "siteUrl=$(jq -r .siteUrl.value <<<"$out")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ steps.infra.outputs.apiUrl }}
+        run: |
+          npm ci
+          npx vite build
+
+      - name: Deploy frontend (token fetched now, never stored)
+        env:
+          SITE_NAME: ${{ steps.infra.outputs.siteName }}
+        run: |
+          token=$(az staticwebapp secrets list -n "$SITE_NAME" -g "$RESOURCE_GROUP" --query properties.apiKey -o tsv)
+          echo "::add-mask::$token"
+          npx --yes @azure/static-web-apps-cli@2.1.0 deploy frontend/dist \
+            --deployment-token "$token" --env production

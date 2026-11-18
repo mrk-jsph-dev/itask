@@ -1,0 +1,25 @@
+# Pull requests: CI only. Never deploys and never gets Azure access,
+# including pull requests from forks.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-reusable.yml
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      # Fork PRs get a read-only token, so they can't upload scan results.
+      upload-codeql: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}

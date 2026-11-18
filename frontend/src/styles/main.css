@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+@import './tokens.css';
+@import './motion.css';
+
+html,
+body {
+  background: var(--color-shell);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}

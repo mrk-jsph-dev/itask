@@ -1,0 +1,8 @@
+root = false
+
+[*.cs]
+# Underscored test names read like sentences.
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+# xUnit fixtures and test classes are public by convention.
+dotnet_diagnostic.CA1515.severity = none
