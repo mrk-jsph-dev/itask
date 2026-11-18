@@ -7,7 +7,6 @@ param githubEnvironment string
 var roles = {
   contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
   storageBlobDataContributor: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-  keyVaultSecretsUser: '4633458b-17de-408a-b874-0445c86b69e6'
   cognitiveServicesOpenAiUser: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 }
 
@@ -28,7 +27,7 @@ resource githubTrust 'Microsoft.ManagedIdentity/userAssignedIdentities/federated
   }
 }
 
-// Runtime identity of the API container (SQL, Blob Storage, Key Vault, Azure OpenAI).
+// Runtime identity of the API container (SQL, Blob Storage, Azure OpenAI).
 resource apiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-itask-api'
   location: location
@@ -44,7 +43,7 @@ resource deployContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 }
 
 resource apiRoles 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
-  for role in [roles.storageBlobDataContributor, roles.keyVaultSecretsUser, roles.cognitiveServicesOpenAiUser]: {
+  for role in [roles.storageBlobDataContributor, roles.cognitiveServicesOpenAiUser]: {
     name: guid(resourceGroup().id, apiIdentity.id, role)
     properties: {
       principalId: apiIdentity.properties.principalId

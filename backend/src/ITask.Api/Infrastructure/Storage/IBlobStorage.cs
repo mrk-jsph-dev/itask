@@ -25,4 +25,7 @@ public interface IBlobStorage
 
     /// <summary>Deletes every blob whose name starts with <paramref name="prefix"/>.</summary>
     Task DeletePrefixAsync(string prefix, CancellationToken ct);
+
+    /// <summary>Names of the blobs last written before <paramref name="modifiedBefore"/>.</summary>
+    IAsyncEnumerable<string> ListNamesAsync(DateTimeOffset modifiedBefore, CancellationToken ct);
 }

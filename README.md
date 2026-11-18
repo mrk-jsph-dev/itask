@@ -81,7 +81,7 @@ Want SQL Server locally for parity with Azure SQL? See `docker-compose.yml`.
 | Workflow | Runs on | Does |
 |---|---|---|
 | `ci.yml` | pull requests to `main` | calls `ci-reusable.yml`: build, test, lint, Bicep lint, CodeQL |
-| `ci-cd.yml` | push to `main`, manual | calls `ci-reusable.yml`, then **deploy** after the owner approves |
+| `ci-cd.yml` | manual (Run workflow) | calls `ci-reusable.yml`, then **deploy** after the owner approves |
 
 The deploy job signs in to Azure with **OIDC** (no stored cloud secret), pushes the
 API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Static Web Apps.
@@ -89,7 +89,8 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 ## First-time Azure setup (owner only)
 
 1. **Bootstrap** (creates `rg-itask`, identities, the GitHub OIDC trust, role
-   assignments and a $5 budget):
+   assignments, a $5 budget and the budget kill switch). Re-run it after changes to
+   `infra/bootstrap/`:
    ```sh
    az login
    export ITASK_ALERT_EMAIL=<your email>
@@ -98,12 +99,38 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
      --parameters infra/bootstrap/bootstrap.bicepparam
    ```
 2. **GitHub → Settings → Environments → New environment `production`:** add yourself
-   as a required reviewer and limit deployment branches to `main`.
+   as a required reviewer and limit deployment branches to `main`. Add these
+   **environment secrets** (stored as Container Apps secrets on each deploy; both optional):
+   - `DEMO_PASSWORD`: password of the demo accounts (empty = demo sign-in off)
+   - `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key (empty = check skipped)
 3. **GitHub → Settings → Secrets and variables → Actions → Variables** (not secrets,
    none of these are sensitive): `AZURE_CLIENT_ID` (bootstrap output `deployClientId`),
-   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
-4. After the first deploy, make the `itask-api` package on GHCR **public** so Azure can
-   pull it without credentials (it contains no secrets).
+   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and optionally `TURNSTILE_SITE_KEY` and
+   `SQL_ADMIN_GROUP_ID` (see below).
+4. **Actions → ci-cd → Run workflow** on `main`, approve the deploy. After the first
+   run, make the `itask-api` package on GHCR **public** so Azure can pull it without
+   credentials (it contains no secrets), then run the workflow again.
+
+### Operations
+
+- **Health:** liveness `/api/health`, readiness `/api/health/ready` (checks the database).
+- **Maintenance:** the API runs daily jobs (03:00 UTC slot): demo reset, activity older
+  than 180 days, uploads that were never confirmed. With the API scaled to zero, a
+  missed slot runs on the next start. Jobs take a database lock, so only one replica
+  runs each.
+- **Budget kill switch:** when the $5 budget is spent, the action group runs the
+  `logic-itask-killswitch` Logic App, which stops the API. Start it again with
+  `az containerapp start -g rg-itask -n ca-itask-api`.
+- **Manual SQL queries:** the SQL admin is the API identity. To query yourself, create
+  an Entra group (for example `itask-sql-admins`), add yourself and `id-itask-api`,
+  set its object id as the `SQL_ADMIN_GROUP_ID` variable and redeploy. Then connect
+  with Entra authentication (Azure Data Studio, `sqlcmd -G`) after allowing your IP
+  in the SQL server firewall.
+- **Custom domain (optional):** without one, the site and API are different sites, so
+  the auth cookie is `SameSite=None; Partitioned` and the API rejects writes from
+  foreign origins. Browsers that block all third-party cookies (Safari by default)
+  can't sign in until the site and API share a domain (`app.` and `api.` of the same
+  domain); then set `crossSiteCookies = false` in `infra/main.bicepparam`.
 
 ## Repository settings (owner checklist)
 

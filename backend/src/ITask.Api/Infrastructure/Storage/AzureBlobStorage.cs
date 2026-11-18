@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Identity;
 using Azure.Storage.Blobs;
@@ -60,6 +61,18 @@ internal sealed class AzureBlobStorage : IBlobStorage, IDisposable
         await foreach (var blob in _container.GetBlobsAsync(new GetBlobsOptions { Prefix = prefix }, ct))
         {
             await DeleteAsync(blob.Name, ct);
+        }
+    }
+
+    public async IAsyncEnumerable<string> ListNamesAsync(
+        DateTimeOffset modifiedBefore, [EnumeratorCancellation] CancellationToken ct)
+    {
+        await foreach (var blob in _container.GetBlobsAsync(new GetBlobsOptions(), ct))
+        {
+            if (blob.Properties.LastModified is { } modified && modified < modifiedBefore)
+            {
+                yield return blob.Name;
+            }
         }
     }
 

@@ -26,6 +26,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["Database:AutoMigrate"] = "true",
             ["ConnectionStrings:Default"] = $"Data Source={_dbPath}",
             ["Demo:Enabled"] = "false",
+            ["Maintenance:Enabled"] = "false",
             ["Storage:Provider"] = "Local",
             ["Storage:LocalRoot"] = BlobRoot,
             ["Auth:RequireConfirmedEmail"] = "false",

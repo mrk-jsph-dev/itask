@@ -66,6 +66,10 @@ jobs:
         id: infra
         env:
           ITASK_API_IMAGE: ${{ env.IMAGE }}
+          # production environment secrets, stored as Container Apps secrets by the Bicep deploy
+          ITASK_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+          ITASK_TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          ITASK_SQL_ADMIN_GROUP_ID: ${{ vars.SQL_ADMIN_GROUP_ID }} # optional, not a secret
         run: |
           out=$(az deployment group create \
             --resource-group "$RESOURCE_GROUP" \
@@ -87,6 +91,7 @@ jobs:
         working-directory: frontend
         env:
           VITE_API_BASE_URL: ${{ steps.infra.outputs.apiUrl }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }} # public site key
         run: |
           npm ci
           npx vite build

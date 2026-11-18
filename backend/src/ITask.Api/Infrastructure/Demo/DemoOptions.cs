@@ -8,7 +8,7 @@ public sealed class DemoOptions
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// Password for all demo accounts. Read from user secrets or Key Vault; seeding is
+    /// Password for all demo accounts. Read from user secrets or a Container Apps secret; seeding is
     /// skipped when it is empty.
     /// </summary>
     public string? Password { get; set; }

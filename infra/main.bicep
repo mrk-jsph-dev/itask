@@ -25,6 +25,23 @@ param apiIdentityName string = 'id-itask-api'
 @description('Optional custom domain for the site (e.g. app.example.com). Empty = default hostname.')
 param siteOrigin string = ''
 
+@description('Optional Entra group (object id) holding the API identity and you, used as SQL admin for manual queries.')
+param sqlAdminGroupId string = ''
+
+@description('Seed the demo accounts and reset them nightly.')
+param demoEnabled bool = true
+
+@description('True while the site and API are on different sites (no shared custom domain): the auth cookie becomes SameSite=None; Partitioned.')
+param crossSiteCookies bool = true
+
+@description('Password of the demo accounts. Empty = demo sign-in stays off.')
+@secure()
+param demoPassword string = ''
+
+@description('Cloudflare Turnstile secret key. Empty = Turnstile checks are skipped.')
+@secure()
+param turnstileSecretKey string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var tags = { app: appName }
 
@@ -45,13 +62,9 @@ module sql 'modules/sql.bicep' = {
     databaseName: appName
     adminIdentityName: apiIdentity.name
     adminIdentityClientId: apiIdentity.properties.clientId
+    adminGroupId: sqlAdminGroupId
     tags: tags
   }
-}
-
-module keyVault 'modules/keyvault.bicep' = {
-  name: 'keyvault'
-  params: { location: location, name: 'kv-${appName}-${suffix}', tags: tags }
 }
 
 module site 'modules/staticwebapp.bicep' = {
@@ -88,6 +101,10 @@ module api 'modules/containerapp.bicep' = {
     allowedOrigin: allowedOrigin
     blobEndpoint: storage.outputs.blobEndpoint
     blobContainer: storage.outputs.container
+    demoEnabled: demoEnabled
+    crossSiteCookies: crossSiteCookies
+    demoPassword: demoPassword
+    turnstileSecretKey: turnstileSecretKey
     tags: tags
   }
 }
@@ -96,4 +113,3 @@ output apiUrl string = api.outputs.url
 output siteName string = site.outputs.name
 output siteUrl string = allowedOrigin
 output storageAccount string = storage.outputs.name
-output keyVaultName string = keyVault.outputs.name

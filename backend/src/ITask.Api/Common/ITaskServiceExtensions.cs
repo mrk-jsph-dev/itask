@@ -8,6 +8,7 @@ using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Ai;
 using ITask.Api.Infrastructure.Demo;
 using ITask.Api.Infrastructure.Email;
+using ITask.Api.Infrastructure.Maintenance;
 using ITask.Api.Infrastructure.Storage;
 using ITask.Api.Infrastructure.Turnstile;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -30,6 +31,7 @@ public static class ITaskServiceExtensions
         services.AddHttpContextAccessor();
 
         services.AddDatabase(config);
+        services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
         services.AddAuthorizationBuilder()
             .AddPolicy(PlatformRoles.PlatformAdmin, policy => policy.RequireRole(PlatformRoles.PlatformAdmin));
@@ -49,7 +51,13 @@ public static class ITaskServiceExtensions
             options.Cookie.Name = "itask.auth";
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            options.Cookie.SameSite = SameSiteMode.Lax;
+            // None (Partitioned) when the site and API are on different sites, i.e. without a custom domain.
+            options.Cookie.SameSite = config.GetValue("Auth:CookieSameSite", SameSiteMode.Lax);
+            if (options.Cookie.SameSite == SameSiteMode.None)
+            {
+                options.Cookie.Extensions.Add("Partitioned");
+            }
+
             options.SlidingExpiration = true;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
         });
@@ -73,6 +81,7 @@ public static class ITaskServiceExtensions
 
         services.Configure<DemoOptions>(config.GetSection(DemoOptions.Section));
         services.AddScoped<DemoSeeder>();
+        services.AddMaintenance(config);
 
         services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
         services.AddEndpoints(typeof(Program).Assembly);
@@ -110,6 +119,7 @@ public static class ITaskServiceExtensions
 
         app.UseApiSecurityHeaders();
         app.UseCors(FrontendCors);
+        app.UseOriginGuard();
         app.UseAuthentication();
         app.UseRateLimiter();
         app.UseAuthorization();
