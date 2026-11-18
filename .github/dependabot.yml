@@ -5,11 +5,25 @@ updates:
     schedule: { interval: weekly }
     groups:
       dotnet: { patterns: ["*"] }
+    ignore:
+      # Stay on the .NET LTS major; framework packages version with the runtime.
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "dotnet-ef"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /frontend
     schedule: { interval: weekly }
     groups:
       frontend: { patterns: ["*"], update-types: [minor, patch] }
+    ignore:
+      # Node typings follow the Node LTS used at runtime (22).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
@@ -18,3 +32,9 @@ updates:
   - package-ecosystem: docker
     directory: /backend
     schedule: { interval: weekly }
+    ignore:
+      # Base images follow the .NET LTS major used by the SDK and packages.
+      - dependency-name: "dotnet/sdk"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "dotnet/aspnet"
+        update-types: ["version-update:semver-major"]
