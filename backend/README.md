@@ -32,7 +32,7 @@ Demo accounts need a password that is never committed:
 dotnet user-secrets --project src/ITask.Api set "Demo:Password" "<pick one>"
 ```
 
-Migrations (SQL Server, added in the Boards PR):
+Migrations (SQL Server):
 
 ```sh
 dotnet tool restore

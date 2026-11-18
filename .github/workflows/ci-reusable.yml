@@ -1,5 +1,4 @@
-# Reusable CI: build, test and scan. Called by ci.yml (pull requests) and
-# ci-cd.yml (main). Has no cloud access and no secrets.
+# Reusable CI (workflow_call): backend, frontend, Bicep and CodeQL jobs.
 name: ci-reusable
 
 on:

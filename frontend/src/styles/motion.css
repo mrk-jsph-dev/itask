@@ -1,7 +1,7 @@
 /*
- * Direction C motion presets. Durations: fast 120ms, base 200ms, slow 320ms.
- * Lists stagger 40ms per item via the --i custom property.
- * Everything collapses to near-instant under prefers-reduced-motion.
+ * Motion presets. Durations: fast 120ms, base 200ms, slow 320ms.
+ * .fade-up staggers by 40ms per item using the --i custom property.
+ * All animations collapse to ~1ms under prefers-reduced-motion.
  */
 :root {
   --ease-out: cubic-bezier(0.2, 0, 0, 1);

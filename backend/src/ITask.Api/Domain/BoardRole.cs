@@ -1,8 +1,8 @@
 namespace ITask.Api.Domain;
 
 /// <summary>
-/// Board-level roles (v1). Ordered so that a higher value includes the lower ones.
-/// Viewers can read and comment; Editors change lists and cards; Owners manage
+/// Role of a user on one board. Values are ordered so <c>role &gt;= minimum</c> checks work:
+/// Viewer reads and comments, Editor also changes lists and cards, Owner also manages
 /// members, settings and integrations.
 /// </summary>
 public enum BoardRole

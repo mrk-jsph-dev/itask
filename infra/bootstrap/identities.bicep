@@ -1,4 +1,4 @@
-// Identities and role assignments, scoped to rg-itask only.
+// Deploy and API identities with role assignments at resource-group scope.
 param location string
 param githubRepository string
 param githubEnvironment string
@@ -11,7 +11,7 @@ var roles = {
   cognitiveServicesOpenAiUser: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 }
 
-// Used only by the GitHub Actions deploy job, through OIDC. No secret exists.
+// GitHub Actions deploy identity (federated credential, no client secret).
 resource deployIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-itask-github-deploy'
   location: location
@@ -22,14 +22,13 @@ resource githubTrust 'Microsoft.ManagedIdentity/userAssignedIdentities/federated
   name: 'github-${githubEnvironment}'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    // Only jobs running in this repo's approval-gated environment match.
-    // Pull requests (including from forks) never match this subject.
+    // Matches only jobs that run in the given GitHub environment of this repository.
     subject: 'repo:${githubRepository}:environment:${githubEnvironment}'
     audiences: ['api://AzureADTokenExchange']
   }
 }
 
-// The API's own identity: reaches SQL, Blob Storage, Key Vault and Foundry with no passwords.
+// Runtime identity of the API container (SQL, Blob Storage, Key Vault, Azure OpenAI).
 resource apiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-itask-api'
   location: location

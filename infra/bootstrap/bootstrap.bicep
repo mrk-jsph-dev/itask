@@ -1,14 +1,13 @@
-// One-time setup, run by you (subscription Owner) from your own machine:
+// One-time, subscription-scope setup. Requires Owner (or User Access Administrator):
 //
 //   az login
 //   az deployment sub create --location southeastasia \
 //     --template-file infra/bootstrap/bootstrap.bicep \
 //     --parameters infra/bootstrap/bootstrap.bicepparam
 //
-// It creates everything the pipeline must NOT be able to create for itself:
-// the resource group, the two identities, the GitHub OIDC trust, role
-// assignments and the subscription budget. After this, the pipeline only ever
-// holds Contributor on rg-itask and cannot touch anything else.
+// Creates the resource group, identities, GitHub OIDC federated credential, role
+// assignments and budget. The deploy identity receives Contributor on the resource
+// group only, so CI cannot create role assignments.
 targetScope = 'subscription'
 
 @description('Azure region for the resource group and identities.')
@@ -20,10 +19,10 @@ param resourceGroupName string = 'rg-itask'
 @description('GitHub repository allowed to deploy, as owner/name.')
 param githubRepository string = 'mrk-jsph-dev/itask'
 
-@description('GitHub environment whose jobs may sign in to Azure. It must require your approval.')
+@description('GitHub environment whose jobs may sign in to Azure.')
 param githubEnvironment string = 'production'
 
-@description('Email for budget alerts. Supplied at deploy time; never committed.')
+@description('Email address for budget alerts.')
 param alertEmail string
 
 @description('Monthly subscription budget in your billing currency.')

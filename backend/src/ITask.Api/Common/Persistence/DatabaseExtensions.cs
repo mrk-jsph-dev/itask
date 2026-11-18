@@ -6,9 +6,8 @@ public static class DatabaseExtensions
 {
     /// <summary>
     /// Database:Provider picks the engine.
-    ///  - "SqlServer": Azure SQL in the cloud (managed identity, no password) or the
-    ///    SQL Server container from docker-compose locally.
-    ///  - "Sqlite": zero-setup local and cloud-sandbox development, and tests.
+    ///  - "SqlServer" (default): Azure SQL or a local SQL Server container.
+    ///  - "Sqlite": local development and tests; no server needed.
     /// </summary>
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration config)
     {

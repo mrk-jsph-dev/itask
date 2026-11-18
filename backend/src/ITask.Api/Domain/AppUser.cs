@@ -8,6 +8,6 @@ public class AppUser : IdentityUser<Guid>
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    /// <summary>Demo accounts are read-mostly: no AI, integrations or uploads.</summary>
+    /// <summary>Marks seeded demo accounts so features can restrict them (e.g. AI, uploads).</summary>
     public bool IsDemo { get; set; }
 }

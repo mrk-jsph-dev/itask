@@ -9,8 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace ITask.Api.Features.Boards.CreateBoard;
 
 /// <summary>
-/// Reference slice: request, validator, endpoint and handler live together.
-/// Copy this folder shape for every new use case.
+/// Creates a board and makes the caller its Owner.
 /// </summary>
 public static class CreateBoard
 {

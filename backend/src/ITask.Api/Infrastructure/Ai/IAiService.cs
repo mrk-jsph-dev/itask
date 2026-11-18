@@ -1,10 +1,9 @@
 namespace ITask.Api.Infrastructure.Ai;
 
 /// <summary>
-/// All AI features go through this interface. The real implementation (release 1.2)
-/// calls an OpenAI model deployed in Microsoft Foundry via the Azure.AI.OpenAI SDK,
-/// authenticated with the API's managed identity. AI only runs when a user presses
-/// an AI button, never in the background, and is capped per user per day.
+/// Chat-completion abstraction used by AI features. Implementations target an Azure
+/// OpenAI (Foundry) deployment configured under <see cref="AiOptions"/>; callers must
+/// enforce <see cref="AiOptions.DailyRequestsPerUser"/> before calling.
 /// </summary>
 public interface IAiService
 {
@@ -28,7 +27,7 @@ public sealed class AiOptions
     public int DailyRequestsPerUser { get; set; } = 20;
 }
 
-/// <summary>Used until the Foundry deployment is configured.</summary>
+/// <summary>Registered when <c>Ai:Enabled</c> is false; any call is a programming error.</summary>
 internal sealed class DisabledAiService : IAiService
 {
     public bool IsEnabled => false;

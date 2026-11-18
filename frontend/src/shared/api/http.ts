@@ -1,6 +1,6 @@
 /**
- * Thin fetch wrapper. Always sends the HttpOnly auth cookie, never stores tokens
- * in localStorage, and turns ASP.NET Core ProblemDetails into ApiError.
+ * fetch wrapper for the API: sends credentials (HttpOnly auth cookie) and maps
+ * ASP.NET Core ProblemDetails responses to ApiError.
  */
 export class ApiError extends Error {
   constructor(

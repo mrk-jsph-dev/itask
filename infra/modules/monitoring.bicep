@@ -9,7 +9,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
   properties: {
     sku: { name: 'PerGB2018' }
     retentionInDays: 30
-    // Hard cap on ingestion: stays far inside the free 5 GB a month.
+    // Ingestion stops for the day once the cap is reached.
     workspaceCapping: { dailyQuotaGb: json('0.1') }
   }
 }

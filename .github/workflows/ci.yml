@@ -1,5 +1,4 @@
-# Pull requests: CI only. Never deploys and never gets Azure access,
-# including pull requests from forks.
+# Pull requests to main: CI only. No deploy job and no id-token permission.
 name: ci
 
 on:

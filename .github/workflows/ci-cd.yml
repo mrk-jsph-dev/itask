@@ -1,6 +1,5 @@
-# main: CI, then deploy to Azure. The deploy job runs in the "production"
-# environment, which requires your approval and only accepts the main branch.
-# Azure sign-in is OIDC: no cloud secret is stored in GitHub.
+# Push to main: run CI, then deploy. The deploy job uses the "production" environment
+# (required reviewers, main only) and signs in to Azure via OIDC (azure/login).
 name: ci-cd
 
 on:

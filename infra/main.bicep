@@ -1,11 +1,10 @@
-// Everything iTask runs on, deployed by the ci-cd pipeline into rg-itask
-// (after your approval). Every resource is on a free tier or a hard-capped plan.
+// Application resources, deployed by ci-cd.yml at resource-group scope.
 targetScope = 'resourceGroup'
 
 @description('Region for most resources.')
 param location string = resourceGroup().location
 
-@description('Static Web Apps is only offered in a few regions; East Asia is closest to Manila.')
+@description('Static Web Apps region (the service is available in a limited set of regions).')
 param staticWebAppLocation string = 'eastasia'
 
 @description('Short name used in resource names.')
@@ -15,7 +14,7 @@ param appName string = 'itask'
 @description('Full API image reference, e.g. ghcr.io/mrk-jsph-dev/itask-api:<git-sha>.')
 param apiImage string
 
-@description('Max API replicas. Keeps compute inside the Container Apps free grant.')
+@description('Maximum API replicas.')
 @minValue(0)
 @maxValue(3)
 param apiMaxReplicas int = 2

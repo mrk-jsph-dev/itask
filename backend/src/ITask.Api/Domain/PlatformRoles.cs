@@ -1,9 +1,8 @@
 namespace ITask.Api.Domain;
 
 /// <summary>
-/// App-level roles (v1). A Platform admin manages accounts and settings but does
-/// not get access to other people's boards: board access always comes from
-/// <see cref="BoardMember"/>.
+/// ASP.NET Core Identity role names for app-wide permissions. These never grant board
+/// access; that comes only from a <see cref="BoardMember"/> row.
 /// </summary>
 public static class PlatformRoles
 {

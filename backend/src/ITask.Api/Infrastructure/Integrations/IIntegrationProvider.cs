@@ -1,10 +1,9 @@
 namespace ITask.Api.Infrastructure.Integrations;
 
 /// <summary>
-/// Board integrations are optional and per board; a board can hold many connections,
-/// including several of the same kind. Each tool is a provider implementing this
-/// interface. v1 providers: GitHub (GitHub App) and Azure (Entra ID, Reader role,
-/// Azure Monitor action-group webhook). Others plug in later without touching the core.
+/// An external tool a board can connect to (one board may hold several connections,
+/// including several of the same provider). Webhooks are routed to the provider by
+/// <see cref="Key"/> and must pass <see cref="VerifyWebhookAsync"/> before handling.
 /// </summary>
 public interface IIntegrationProvider
 {

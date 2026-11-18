@@ -1,4 +1,4 @@
-/* Direction C design tokens (chosen 2026-11-18). */
+/* Design tokens exposed to Tailwind as theme values (bg-panel, text-muted, ...). */
 
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;

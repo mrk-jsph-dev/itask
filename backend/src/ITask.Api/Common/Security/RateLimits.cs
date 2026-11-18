@@ -5,9 +5,8 @@ using System.Threading.RateLimiting;
 namespace ITask.Api.Common.Security;
 
 /// <summary>
-/// Abuse protection for a public app on a personal subscription: every caller is
-/// limited (per user when signed in, per IP otherwise) and sign-in/registration
-/// get a much tighter budget.
+/// Fixed-window limits partitioned per user id when signed in, otherwise per client IP.
+/// The <see cref="Auth"/> policy applies a tighter limit to sign-in and registration.
 /// </summary>
 public static class RateLimits
 {

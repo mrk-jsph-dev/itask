@@ -1,6 +1,5 @@
-// Azure SQL Database free offer: 100k vCore-seconds and 32 GB per month for the
-// life of the subscription. When the monthly allowance is used up the database
-// pauses until next month instead of billing.
+// Azure SQL Database free offer (useFreeLimit). freeLimitExhaustionBehavior AutoPause
+// pauses the database until next month instead of billing past the free allowance.
 param location string
 param serverName string
 param databaseName string
@@ -16,7 +15,7 @@ resource server 'Microsoft.Sql/servers@2023-08-01' = {
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
     administrators: {
-      // Entra ID only: there is no SQL password to leak.
+      // Entra-only authentication: SQL logins are disabled.
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
       login: adminIdentityName
@@ -28,7 +27,7 @@ resource server 'Microsoft.Sql/servers@2023-08-01' = {
 }
 
 // Container Apps (consumption) has no fixed outbound IP, so allow Azure services.
-// Auth is still Entra-only, so this opens no password-guessing surface.
+// Authentication remains Entra-only.
 resource allowAzure 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
   parent: server
   name: 'AllowAllWindowsAzureIps'

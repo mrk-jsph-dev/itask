@@ -1,5 +1,4 @@
-// The API on Container Apps (consumption): scales to zero when idle and is
-// capped at maxReplicas, so it stays inside the monthly free grant.
+// API on Container Apps (consumption profile), scaling between 0 and maxReplicas.
 param location string
 param environmentName string
 param appName string

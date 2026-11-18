@@ -13,6 +13,6 @@ COPY --from=build /app ./
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_gcServer=0
 EXPOSE 8080
-# Runs as the image's built-in non-root user.
+# Non-root user provided by the base image.
 USER $APP_UID
 ENTRYPOINT ["dotnet", "ITask.Api.dll"]

@@ -6,8 +6,7 @@ using Microsoft.Extensions.Configuration;
 namespace ITask.Api.Tests.Infrastructure;
 
 /// <summary>
-/// Runs the real API in memory against a throwaway SQLite file, so tests need no
-/// Docker or cloud resources and behave the same locally, in CI and in cloud sandboxes.
+/// Hosts the API in-process against a per-factory SQLite file that is deleted on dispose.
 /// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {

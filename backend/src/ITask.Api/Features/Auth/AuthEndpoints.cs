@@ -5,9 +5,8 @@ using ITask.Api.Domain;
 namespace ITask.Api.Features.Auth;
 
 /// <summary>
-/// Register, sign in (cookie), refresh, confirm email and reset password come from
-/// ASP.NET Core Identity's built-in endpoints, mounted at /api/auth.
-/// The Auth PR adds Turnstile (bot check) and the display-name/profile slices.
+/// Mounts ASP.NET Core Identity's endpoints (register, login, refresh, confirm email,
+/// password reset) at /api/auth with the auth rate-limit policy.
 /// </summary>
 internal sealed class AuthEndpoints : IEndpoint
 {

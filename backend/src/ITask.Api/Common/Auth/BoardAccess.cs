@@ -5,9 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace ITask.Api.Common.Auth;
 
 /// <summary>
-/// The single place that answers "what can this user do on this board?".
-/// Every board-scoped slice calls it; nobody (not even a Platform admin) gets
-/// board access without a membership row.
+/// Resolves the current user's role on a board from <see cref="BoardMember"/>.
+/// Returns null for non-members, including platform admins without a membership row.
 /// </summary>
 public interface IBoardAccess
 {

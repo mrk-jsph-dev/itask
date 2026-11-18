@@ -15,7 +15,6 @@ onMounted(async () => {
 <template>
   <section class="flex flex-col gap-6">
     <h1 class="text-2xl font-bold tracking-tight">Your boards</h1>
-    <!-- Columns wrap to fit the screen: no horizontal scrolling. -->
     <div class="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-4">
       <template v-if="boards === null">
         <SkeletonBlock v-for="n in 4" :key="n" height="120px" />

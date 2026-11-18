@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** The "Check-i" mark: a dot and a tick forming an i. */
 withDefaults(defineProps<{ size?: number }>(), { size: 34 })
 </script>
 

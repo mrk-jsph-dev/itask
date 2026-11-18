@@ -1,5 +1,4 @@
-// Holds the few secrets that remain (demo password, GitHub App key, webhook
-// secrets). Access is by Azure RBAC only; the API reads with its identity.
+// Application secrets. RBAC authorization only (no access policies).
 param location string
 param name string
 param tags object

@@ -7,9 +7,9 @@ using Microsoft.Extensions.Options;
 namespace ITask.Api.Infrastructure.Demo;
 
 /// <summary>
-/// One demo account per role on a shared sample board:
-/// Platform admin, board Owner, Editor and Viewer. Uses example.com addresses
-/// (reserved, never real people). The nightly reset job arrives with the Deploy PR.
+/// Idempotently creates one demo account per role (Platform admin, board Owner,
+/// Editor, Viewer) and a shared sample board. Addresses use the reserved example.com
+/// domain. Runs only when <c>Demo:Enabled</c> is true and <c>Demo:Password</c> is set.
 /// </summary>
 public sealed partial class DemoSeeder(
     AppDbContext db,

@@ -4,12 +4,12 @@ public sealed class DemoOptions
 {
     public const string Section = "Demo";
 
-    /// <summary>Only true in the demo environment. Never seed demo users elsewhere.</summary>
+    /// <summary>Enables <see cref="DemoSeeder"/> at startup.</summary>
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// Shared demo password. Comes from user secrets locally and Key Vault in Azure;
-    /// it is never committed. Seeding is skipped when it is missing.
+    /// Password for all demo accounts. Read from user secrets or Key Vault; seeding is
+    /// skipped when it is empty.
     /// </summary>
     public string? Password { get; set; }
 }

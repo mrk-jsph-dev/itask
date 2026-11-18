@@ -14,8 +14,6 @@ onMounted(async () => {
 <template>
   <section v-if="board" class="fade-in flex flex-col gap-2">
     <h1 class="text-2xl font-bold tracking-tight">{{ board.emoji }} {{ board.name }}</h1>
-    <p class="text-sm text-muted">
-      Your role: {{ board.role }}. Lists and cards arrive in the Boards PR.
-    </p>
+    <p class="text-sm text-muted">Your role: {{ board.role }}</p>
   </section>
 </template>

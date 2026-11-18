@@ -8,7 +8,7 @@ resource site 'Microsoft.Web/staticSites@2024-04-01' = {
   tags: tags
   sku: { name: 'Free', tier: 'Free' }
   properties: {
-    // Deployed by the pipeline with a short-lived token, not linked to GitHub.
+    // Not linked to a repo; content is uploaded with the deployment token.
     provider: 'None'
     stagingEnvironmentPolicy: 'Disabled'
     allowConfigFileUpdates: true
