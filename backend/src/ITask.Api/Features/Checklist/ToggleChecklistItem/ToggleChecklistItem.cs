@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -20,7 +21,7 @@ public static class ToggleChecklistItem
                 .RequireAuthorization();
 
         private static async Task<Results<Ok<ChecklistItemView>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -37,9 +38,13 @@ public static class ToggleChecklistItem
             if (item.IsDone != request.IsDone)
             {
                 item.IsDone = request.IsDone;
+                await activity.RecordCardAsync(
+                    item.IsDone ? ActivityTypes.ChecklistChecked : ActivityTypes.ChecklistUnchecked,
+                    boardId,
+                    cardId,
+                    new { item = item.Text },
+                    ct);
                 await db.SaveChangesAsync(ct);
-
-                // activity: checklist item checked or unchecked
             }
 
             return TypedResults.Ok(ChecklistItemView.From(item));

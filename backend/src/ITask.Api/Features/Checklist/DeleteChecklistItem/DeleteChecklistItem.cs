@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -18,22 +19,23 @@ public static class DeleteChecklistItem
                 .RequireAuthorization();
 
         private static async Task<Results<NoContent, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Guid itemId, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Guid itemId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
                 return denied;
             }
 
-            var deleted = await db.ChecklistItems
-                .Where(i => i.Id == itemId && i.CardId == cardId && i.Card!.BoardId == boardId)
-                .ExecuteDeleteAsync(ct);
-            if (deleted == 0)
+            var item = await db.ChecklistItems
+                .FirstOrDefaultAsync(i => i.Id == itemId && i.CardId == cardId && i.Card!.BoardId == boardId, ct);
+            if (item is null)
             {
                 return CardGuard.NotFound();
             }
 
-            // activity: checklist item deleted
+            db.ChecklistItems.Remove(item);
+            await activity.RecordCardAsync(ActivityTypes.ChecklistDeleted, boardId, cardId, new { item = item.Text }, ct);
+            await db.SaveChangesAsync(ct);
 
             return TypedResults.NoContent();
         }

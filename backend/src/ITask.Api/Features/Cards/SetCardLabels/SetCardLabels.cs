@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -37,7 +38,7 @@ public static class SetCardLabels
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<CardSummary>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -62,13 +63,27 @@ public static class SetCardLabels
                 });
             }
 
+            var current = card.Labels.Select(l => l.LabelId).ToList();
+            var added = wanted.Except(current).ToList();
+            var removed = current.Except(wanted).ToList();
+            if (added.Count + removed.Count > 0)
+            {
+                var changed = added.Concat(removed).ToList();
+                var names = await db.Labels
+                    .Where(l => changed.Contains(l.Id))
+                    .ToDictionaryAsync(l => l.Id, l => l.Name, ct);
+                await activity.RecordCardAsync(ActivityTypes.CardLabelsChanged, boardId, cardId, new
+                {
+                    added = added.Select(id => names[id]).ToList(),
+                    removed = removed.Select(id => names[id]).ToList(),
+                }, ct);
+            }
+
             card.Labels.RemoveAll(l => !wanted.Contains(l.LabelId));
             card.Labels.AddRange(wanted
                 .Where(id => card.Labels.All(l => l.LabelId != id))
                 .Select(id => new CardLabel { CardId = cardId, LabelId = id }));
             await db.SaveChangesAsync(ct);
-
-            // activity: card labels changed
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);
         }

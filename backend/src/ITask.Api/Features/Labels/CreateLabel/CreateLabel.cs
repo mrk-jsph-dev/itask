@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -34,7 +35,7 @@ public static class CreateLabel
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<LabelChip>, ProblemHttpResult>> Handle(
-            Guid boardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -61,6 +62,7 @@ public static class CreateLabel
                 Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji,
             };
             db.Labels.Add(label);
+            activity.Record(ActivityTypes.LabelCreated, boardId, null, new { label = label.Name, emoji = label.Emoji, color = label.Color });
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Created(

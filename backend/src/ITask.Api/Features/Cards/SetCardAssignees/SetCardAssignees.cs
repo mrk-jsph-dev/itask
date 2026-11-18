@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -37,7 +38,7 @@ public static class SetCardAssignees
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<CardSummary>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -62,13 +63,27 @@ public static class SetCardAssignees
                 });
             }
 
+            var current = card.Assignees.Select(a => a.UserId).ToList();
+            var added = wanted.Except(current).ToList();
+            var removed = current.Except(wanted).ToList();
+            if (added.Count + removed.Count > 0)
+            {
+                var changed = added.Concat(removed).ToList();
+                var names = await db.Users
+                    .Where(u => changed.Contains(u.Id))
+                    .ToDictionaryAsync(u => u.Id, u => u.DisplayName, ct);
+                await activity.RecordCardAsync(ActivityTypes.CardAssigneesChanged, boardId, cardId, new
+                {
+                    added = added.Select(id => names[id]).ToList(),
+                    removed = removed.Select(id => names[id]).ToList(),
+                }, ct);
+            }
+
             card.Assignees.RemoveAll(a => !wanted.Contains(a.UserId));
             card.Assignees.AddRange(wanted
                 .Where(id => card.Assignees.All(a => a.UserId != id))
                 .Select(id => new CardAssignee { CardId = cardId, UserId = id }));
             await db.SaveChangesAsync(ct);
-
-            // activity: card assignees changed
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);
         }

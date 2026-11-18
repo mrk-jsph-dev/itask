@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -25,7 +26,7 @@ public static class AcceptInvite
                 .RequireAuthorization();
 
         private static async Task<Results<Ok<Response>, NotFound, ProblemHttpResult>> Handle(
-            string token, AppDbContext db, ICurrentUser currentUser, TimeProvider clock, CancellationToken ct)
+            string token, AppDbContext db, ICurrentUser currentUser, IActivityRecorder activity, TimeProvider clock, CancellationToken ct)
         {
             var hash = InviteTokens.Hash(token);
             var invite = await db.BoardInvites.FirstOrDefaultAsync(i => i.TokenHash == hash, ct);
@@ -52,6 +53,11 @@ public static class AcceptInvite
             if (!isMember)
             {
                 db.BoardMembers.Add(new BoardMember { BoardId = invite.BoardId, UserId = user.Id, Role = invite.Role, JoinedAt = now });
+                activity.Record(ActivityTypes.MemberJoined, invite.BoardId, null, new
+                {
+                    member = new { id = user.Id, name = user.DisplayName },
+                    role = invite.Role.ToString(),
+                });
             }
 
             invite.AcceptedAt = now;
@@ -63,8 +69,6 @@ public static class AcceptInvite
             {
                 return Gone();
             }
-
-            // activity: member joined
 
             return TypedResults.Ok(new Response(invite.BoardId));
         }

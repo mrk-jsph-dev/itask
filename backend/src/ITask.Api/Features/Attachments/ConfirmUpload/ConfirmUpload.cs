@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -48,6 +49,7 @@ public static class ConfirmUpload
             IBoardAccess access,
             IBlobStorage storage,
             ICurrentUser user,
+            IActivityRecorder activity,
             CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
@@ -107,6 +109,7 @@ public static class ConfirmUpload
                 UploadedById = user.Id,
             };
             db.Attachments.Add(attachment);
+            await activity.RecordCardAsync(ActivityTypes.AttachmentAdded, boardId, cardId, new { fileName = attachment.FileName }, ct);
             try
             {
                 await db.SaveChangesAsync(ct);
@@ -116,8 +119,6 @@ public static class ConfirmUpload
                 // A concurrent confirm of the same blob won the unique index.
                 return BoardResults.Conflict("This upload is already attached.");
             }
-
-            // activity: attachment added
 
             var view = await db.Attachments.AsNoTracking()
                 .Where(a => a.Id == attachment.Id)

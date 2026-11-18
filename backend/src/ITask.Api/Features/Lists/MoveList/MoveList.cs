@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
@@ -39,7 +40,7 @@ public static class MoveList
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -80,10 +81,9 @@ public static class MoveList
             }
 
             NeighbourSlot.Place(lists, moved, index, l => l.Position, (l, p) => l.Position = p);
+            activity.Record(ActivityTypes.ListMoved, boardId, null, new { list = moved.Name });
 
             await db.SaveChangesAsync(ct);
-
-            // activity: list moved
 
             return TypedResults.Ok(new Response(moved.Id, moved.Position));
         }

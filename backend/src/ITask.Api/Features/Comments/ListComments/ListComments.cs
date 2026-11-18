@@ -1,7 +1,7 @@
-using System.Globalization;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
+using ITask.Api.Common.Paging;
 using ITask.Api.Common.Persistence;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +15,6 @@ namespace ITask.Api.Features.Comments.ListComments;
 /// </summary>
 public static class ListComments
 {
-    public const int DefaultLimit = 50;
-
-    public const int MaxLimit = 100;
-
     public sealed record Response(IReadOnlyList<CommentView> Items, string? NextCursor);
 
     internal sealed class Endpoint : IEndpoint
@@ -39,7 +35,7 @@ public static class ListComments
             var query = db.Comments.AsNoTracking().Where(c => c.CardId == cardId);
             if (cursor is not null)
             {
-                if (!TryParse(cursor, out var createdAt, out var id))
+                if (!TimeCursor.TryParse(cursor, out var createdAt, out var id))
                 {
                     return TypedResults.Problem(title: "Invalid cursor.", statusCode: StatusCodes.Status400BadRequest);
                 }
@@ -47,7 +43,7 @@ public static class ListComments
                 query = query.Where(c => c.CreatedAt < createdAt || (c.CreatedAt == createdAt && c.Id.CompareTo(id) < 0));
             }
 
-            var take = Math.Clamp(limit ?? DefaultLimit, 1, MaxLimit);
+            var take = TimeCursor.Take(limit);
             var page = await query
                 .OrderByDescending(c => c.CreatedAt)
                 .ThenByDescending(c => c.Id)
@@ -55,28 +51,8 @@ public static class ListComments
                 .Select(CommentView.Project)
                 .ToListAsync(ct);
 
-            var next = page.Count > take ? Format(page[take - 1]) : null;
+            var next = page.Count > take ? TimeCursor.Format(page[take - 1].CreatedAt, page[take - 1].Id) : null;
             return TypedResults.Ok(new Response([.. page.Take(take)], next));
-        }
-
-        private static string Format(CommentView last) =>
-            $"{last.CreatedAt.UtcTicks.ToString(CultureInfo.InvariantCulture)}_{last.Id:N}";
-
-        private static bool TryParse(string cursor, out DateTimeOffset createdAt, out Guid id)
-        {
-            createdAt = default;
-            id = default;
-            var parts = cursor.Split('_');
-            if (parts.Length != 2
-                || !long.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var ticks)
-                || ticks > DateTimeOffset.MaxValue.UtcTicks
-                || !Guid.TryParseExact(parts[1], "N", out id))
-            {
-                return false;
-            }
-
-            createdAt = new DateTimeOffset(ticks, TimeSpan.Zero);
-            return true;
         }
     }
 }

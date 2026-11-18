@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -42,7 +43,7 @@ public static class MoveCard
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -69,7 +70,7 @@ public static class MoveCard
             var target = await db.Lists
                 .AsNoTracking()
                 .Where(l => l.Id == request.ListId && l.BoardId == boardId)
-                .Select(l => new { l.ArchivedAt })
+                .Select(l => new { l.Name, l.ArchivedAt })
                 .FirstOrDefaultAsync(ct);
             if (target is null)
             {
@@ -96,6 +97,16 @@ public static class MoveCard
                 return BoardResults.Conflict("The list's cards changed. Reload and try again.");
             }
 
+            if (card.ListId == request.ListId)
+            {
+                await activity.RecordCardAsync(ActivityTypes.CardMoved, boardId, cardId, new { list = target.Name }, ct);
+            }
+            else
+            {
+                var fromList = await db.Lists.Where(l => l.Id == card.ListId).Select(l => l.Name).FirstAsync(ct);
+                await activity.RecordCardAsync(ActivityTypes.CardMoved, boardId, cardId, new { fromList, toList = target.Name }, ct);
+            }
+
             card.ListId = request.ListId;
             var renumbered = NeighbourSlot.Place(others, card, index, c => c.Position, (c, p) => c.Position = p);
 
@@ -107,8 +118,6 @@ public static class MoveCard
             {
                 return Stale();
             }
-
-            // activity: card moved
 
             var summary = await CardSummaries.FindAsync(db, boardId, cardId, ct);
             return TypedResults.Ok(new Response(summary!, renumbered));

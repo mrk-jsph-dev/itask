@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -28,7 +29,7 @@ public static class AddComment
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<CommentView>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
             if ((await CardGuard.CheckMemberAsync(boardId, db, access, ct)).Denied is { } denied)
             {
@@ -43,9 +44,8 @@ public static class AddComment
             var comment = new Comment { CardId = cardId, AuthorId = user.Id, Body = request.Body.Trim() };
             await CommentMentions.SyncAsync(db, boardId, comment, ct);
             db.Comments.Add(comment);
+            await activity.RecordCardAsync(ActivityTypes.CommentAdded, boardId, cardId, new { commentId = comment.Id }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: comment added
 
             return TypedResults.Created(
                 $"/api/boards/{boardId}/cards/{cardId}/comments/{comment.Id}",

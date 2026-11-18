@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -38,7 +39,7 @@ public static class RenameList
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -75,12 +76,20 @@ public static class RenameList
                 }
             }
 
+            var emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
+            if (list.Name != name)
+            {
+                activity.Record(ActivityTypes.ListRenamed, boardId, null, new { list = name, from = list.Name });
+            }
+            else if (list.Emoji != emoji || list.WipLimit != request.WipLimit)
+            {
+                activity.Record(ActivityTypes.ListUpdated, boardId, null, new { list = name });
+            }
+
             list.Name = name;
-            list.Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
+            list.Emoji = emoji;
             list.WipLimit = request.WipLimit;
             await db.SaveChangesAsync(ct);
-
-            // activity: list renamed
 
             return TypedResults.Ok(new Response(list.Id, list.Name, list.Emoji, list.Position, list.WipLimit));
         }

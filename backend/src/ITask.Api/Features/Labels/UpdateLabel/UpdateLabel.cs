@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -34,7 +35,7 @@ public static class UpdateLabel
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<LabelChip>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid labelId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid labelId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -57,9 +58,22 @@ public static class UpdateLabel
                 return BoardResults.Conflict("A label with this name already exists on the board.");
             }
 
+            var color = request.Color.ToUpperInvariant();
+            var emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
+            if (label.Name != name || label.Color != color || label.Emoji != emoji)
+            {
+                activity.Record(ActivityTypes.LabelUpdated, boardId, null, new
+                {
+                    label = name,
+                    emoji,
+                    color,
+                    from = label.Name != name ? label.Name : null,
+                });
+            }
+
             label.Name = name;
-            label.Color = request.Color.ToUpperInvariant();
-            label.Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
+            label.Color = color;
+            label.Emoji = emoji;
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok(new LabelChip(label.Id, label.Name, label.Color, label.Emoji));

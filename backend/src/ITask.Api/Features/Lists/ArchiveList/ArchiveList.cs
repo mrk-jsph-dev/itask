@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
@@ -28,15 +29,15 @@ public static class ArchiveList
         }
 
         private static Task<Results<NoContent, NotFound, ProblemHttpResult>> Archive(
-            Guid boardId, Guid listId, AppDbContext db, IBoardAccess access, TimeProvider clock, CancellationToken ct)
-            => SetArchivedAsync(boardId, listId, clock.GetUtcNow(), db, access, ct);
+            Guid boardId, Guid listId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, TimeProvider clock, CancellationToken ct)
+            => SetArchivedAsync(boardId, listId, clock.GetUtcNow(), db, access, activity, ct);
 
         private static Task<Results<NoContent, NotFound, ProblemHttpResult>> Restore(
-            Guid boardId, Guid listId, AppDbContext db, IBoardAccess access, CancellationToken ct)
-            => SetArchivedAsync(boardId, listId, null, db, access, ct);
+            Guid boardId, Guid listId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            => SetArchivedAsync(boardId, listId, null, db, access, activity, ct);
 
         private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> SetArchivedAsync(
-            Guid boardId, Guid listId, DateTimeOffset? archivedAt, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid listId, DateTimeOffset? archivedAt, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -86,9 +87,9 @@ public static class ArchiveList
             }
 
             list.ArchivedAt = archivedAt;
+            activity.Record(
+                archivedAt is null ? ActivityTypes.ListRestored : ActivityTypes.ListArchived, boardId, null, new { list = list.Name });
             await db.SaveChangesAsync(ct);
-
-            // activity: list archived / restored
 
             return TypedResults.NoContent();
         }

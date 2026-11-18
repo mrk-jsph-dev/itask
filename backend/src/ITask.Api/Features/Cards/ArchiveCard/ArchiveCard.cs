@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -28,15 +29,15 @@ public static class ArchiveCard
         }
 
         private static Task<Results<Ok<CardSummary>, ProblemHttpResult>> Archive(
-            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, TimeProvider clock, CancellationToken ct)
-            => SetArchivedAsync(boardId, cardId, clock.GetUtcNow(), db, access, ct);
+            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, TimeProvider clock, CancellationToken ct)
+            => SetArchivedAsync(boardId, cardId, clock.GetUtcNow(), db, access, activity, ct);
 
         private static Task<Results<Ok<CardSummary>, ProblemHttpResult>> Restore(
-            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, CancellationToken ct)
-            => SetArchivedAsync(boardId, cardId, null, db, access, ct);
+            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            => SetArchivedAsync(boardId, cardId, null, db, access, activity, ct);
 
         private static async Task<Results<Ok<CardSummary>, ProblemHttpResult>> SetArchivedAsync(
-            Guid boardId, Guid cardId, DateTimeOffset? archivedAt, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, DateTimeOffset? archivedAt, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -65,9 +66,10 @@ public static class ArchiveCard
                 }
 
                 card.ArchivedAt = archivedAt;
+                var list = await db.Lists.Where(l => l.Id == card.ListId).Select(l => l.Name).FirstAsync(ct);
+                await activity.RecordCardAsync(
+                    archivedAt is null ? ActivityTypes.CardRestored : ActivityTypes.CardArchived, boardId, cardId, new { list }, ct);
                 await db.SaveChangesAsync(ct);
-
-                // activity: card archived / restored
             }
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);

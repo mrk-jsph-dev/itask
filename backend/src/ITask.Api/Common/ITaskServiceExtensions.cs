@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -63,6 +64,7 @@ public static class ITaskServiceExtensions
 
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IBoardAccess, BoardAccess>();
+        services.AddScoped<IActivityRecorder, ActivityRecorder>();
 
         services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
         services.AddSingleton<IAiService, DisabledAiService>();

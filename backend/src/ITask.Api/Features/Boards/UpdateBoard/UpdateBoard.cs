@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -47,7 +48,7 @@ public static class UpdateBoard
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -64,11 +65,33 @@ public static class UpdateBoard
             ValidationRules.TryDecode(request.RowVersion, out var rowVersion);
             db.Entry(board).Property(b => b.RowVersion).OriginalValue = rowVersion;
 
+            var before = new { board.Name, board.Emoji, board.Description, board.Color, board.KeyPrefix };
             board.Name = request.Name.Trim();
             board.Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji;
             board.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
             board.Color = request.Color.ToUpperInvariant();
             board.KeyPrefix = request.KeyPrefix ?? board.KeyPrefix;
+
+            var fields = new (string Name, bool Changed)[]
+                {
+                    ("name", before.Name != board.Name),
+                    ("emoji", before.Emoji != board.Emoji),
+                    ("description", before.Description != board.Description),
+                    ("color", before.Color != board.Color),
+                    ("keyPrefix", before.KeyPrefix != board.KeyPrefix),
+                }
+                .Where(f => f.Changed)
+                .Select(f => f.Name)
+                .ToArray();
+            if (fields.Length > 0)
+            {
+                activity.Record(ActivityTypes.BoardUpdated, boardId, null, new
+                {
+                    name = board.Name,
+                    fields,
+                    from = before.Name != board.Name ? before.Name : null,
+                });
+            }
 
             try
             {
@@ -78,8 +101,6 @@ public static class UpdateBoard
             {
                 return BoardResults.Conflict("The board was changed by someone else. Reload and try again.");
             }
-
-            // activity: board updated
 
             return TypedResults.Ok(new Response(
                 board.Id, board.Name, board.Emoji, board.Description, board.Color, board.KeyPrefix, Convert.ToBase64String(board.RowVersion)));

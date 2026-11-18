@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
@@ -36,7 +37,7 @@ public static class CreateList
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<Response>, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -79,9 +80,8 @@ public static class CreateList
                 Position = PositionCalculator.Append(active.Count == 0 ? null : active.Max(l => l.Position)),
             };
             db.Lists.Add(list);
+            activity.Record(ActivityTypes.ListCreated, boardId, null, new { list = list.Name, emoji = list.Emoji });
             await db.SaveChangesAsync(ct);
-
-            // activity: list created
 
             return TypedResults.Created(
                 $"/api/boards/{boardId}/lists/{list.Id}",

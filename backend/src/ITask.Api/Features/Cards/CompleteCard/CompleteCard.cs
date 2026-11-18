@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -24,15 +25,15 @@ public static class CompleteCard
         }
 
         private static Task<Results<Ok<CardSummary>, ProblemHttpResult>> Complete(
-            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, TimeProvider clock, CancellationToken ct)
-            => SetCompletedAsync(boardId, cardId, clock.GetUtcNow(), db, access, ct);
+            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, TimeProvider clock, CancellationToken ct)
+            => SetCompletedAsync(boardId, cardId, clock.GetUtcNow(), db, access, activity, ct);
 
         private static Task<Results<Ok<CardSummary>, ProblemHttpResult>> Reopen(
-            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, CancellationToken ct)
-            => SetCompletedAsync(boardId, cardId, null, db, access, ct);
+            Guid boardId, Guid cardId, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            => SetCompletedAsync(boardId, cardId, null, db, access, activity, ct);
 
         private static async Task<Results<Ok<CardSummary>, ProblemHttpResult>> SetCompletedAsync(
-            Guid boardId, Guid cardId, DateTimeOffset? completedAt, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, DateTimeOffset? completedAt, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -48,9 +49,9 @@ public static class CompleteCard
             if ((card.CompletedAt is null) != (completedAt is null))
             {
                 card.CompletedAt = completedAt;
+                await activity.RecordCardAsync(
+                    completedAt is null ? ActivityTypes.CardReopened : ActivityTypes.CardCompleted, boardId, cardId, null, ct);
                 await db.SaveChangesAsync(ct);
-
-                // activity: card completed / reopened
             }
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);
