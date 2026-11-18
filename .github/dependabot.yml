@@ -24,6 +24,9 @@ updates:
       # Node typings follow the Node LTS used at runtime (22).
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # typescript-eslint must support a TypeScript major before the compiler moves to it.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
