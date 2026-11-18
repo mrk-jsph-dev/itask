@@ -236,7 +236,14 @@ namespace ITask.Api.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("SearchName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("SearchName");
 
                     b.ToTable("Boards");
                 });
@@ -429,6 +436,11 @@ namespace ITask.Api.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("SearchTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<DateTimeOffset?>("StartAt")
                         .HasColumnType("datetimeoffset");
 
@@ -443,6 +455,8 @@ namespace ITask.Api.Migrations
 
                     b.HasIndex("BoardId", "Number")
                         .IsUnique();
+
+                    b.HasIndex("BoardId", "SearchTitle");
 
                     b.HasIndex("ListId", "Position");
 
@@ -539,6 +553,11 @@ namespace ITask.Api.Migrations
 
                     b.Property<DateTimeOffset?>("EditedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SearchBody")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

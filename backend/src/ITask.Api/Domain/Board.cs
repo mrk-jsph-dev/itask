@@ -10,6 +10,9 @@ public class Board
 
     public required string Name { get; set; }
 
+    /// <summary>Lower-cased <see cref="Name"/> for search; set by <c>AppDbContext</c> on save.</summary>
+    public string SearchName { get; set; } = "";
+
     public string? Emoji { get; set; }
 
     public string? Description { get; set; }

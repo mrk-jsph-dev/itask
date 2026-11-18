@@ -5,28 +5,36 @@ import { RouterLink, RouterView, useRouter } from 'vue-router'
 import AppLogo from '@/shared/ui/AppLogo.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { useAuthStore } from '@/features/auth/store'
+import SearchPalette from '@/features/search/components/SearchPalette.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const menuOpen = ref(false)
 const menu = useTemplateRef('menu')
+const searchOpen = ref(false)
+const searchShortcut = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘K' : 'Ctrl K'
 
 function closeOnOutside(event: MouseEvent) {
   if (menuOpen.value && !menu.value?.contains(event.target as Node)) menuOpen.value = false
 }
 
-function closeOnEscape(event: KeyboardEvent) {
+function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') menuOpen.value = false
+  if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey) && !event.altKey) {
+    event.preventDefault()
+    menuOpen.value = false
+    searchOpen.value = !searchOpen.value
+  }
 }
 
 onMounted(() => {
   document.addEventListener('click', closeOnOutside)
-  document.addEventListener('keydown', closeOnEscape)
+  document.addEventListener('keydown', onKeydown)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', closeOnOutside)
-  document.removeEventListener('keydown', closeOnEscape)
+  document.removeEventListener('keydown', onKeydown)
 })
 
 async function signOut() {
@@ -68,50 +76,82 @@ async function signOut() {
           >🛡 Admin</RouterLink
         >
       </nav>
-      <div ref="menu" class="relative">
+      <div class="flex items-center gap-2">
         <button
           type="button"
-          class="press flex items-center rounded-full"
-          aria-haspopup="menu"
-          :aria-expanded="menuOpen"
-          aria-controls="account-menu"
-          :aria-label="`Account menu for ${auth.user?.displayName || auth.user?.email}`"
-          @click="menuOpen = !menuOpen"
+          class="ghost flex h-10 items-center gap-2 rounded-full bg-panel px-3 text-sm text-muted sm:px-4"
+          aria-label="Search"
+          aria-haspopup="dialog"
+          :aria-keyshortcuts="searchShortcut === '⌘K' ? 'Meta+K' : 'Control+K'"
+          @click="searchOpen = true"
         >
-          <UserAvatar
-            :name="auth.user?.displayName"
-            :email="auth.user?.email"
-            :color="auth.user?.avatarColor"
-          />
-        </button>
-        <div
-          v-if="menuOpen"
-          id="account-menu"
-          role="menu"
-          class="pop absolute right-0 z-20 mt-2 flex w-56 flex-col gap-1 rounded-2xl bg-panel p-2 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
-        >
-          <div class="flex flex-col px-3 py-2">
-            <span class="truncate text-sm font-semibold">{{ auth.user?.displayName }}</span>
-            <span class="truncate text-xs text-muted">{{ auth.user?.email }}</span>
-          </div>
-          <RouterLink
-            to="/profile"
-            role="menuitem"
-            class="ghost rounded-xl px-3 py-2 text-sm text-ink no-underline"
-            @click="menuOpen = false"
-            >👤 Profile</RouterLink
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
           >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <span class="hidden sm:inline" aria-hidden="true">Search</span>
+          <kbd class="hidden rounded-md border border-line px-1.5 text-xs sm:inline">{{
+            searchShortcut
+          }}</kbd>
+        </button>
+        <div ref="menu" class="relative">
           <button
             type="button"
-            role="menuitem"
-            class="ghost rounded-xl px-3 py-2 text-left text-sm"
-            @click="signOut"
+            class="press flex items-center rounded-full"
+            aria-haspopup="menu"
+            :aria-expanded="menuOpen"
+            aria-controls="account-menu"
+            :aria-label="`Account menu for ${auth.user?.displayName || auth.user?.email}`"
+            @click="menuOpen = !menuOpen"
           >
-            ↩ Sign out
+            <UserAvatar
+              :name="auth.user?.displayName"
+              :email="auth.user?.email"
+              :color="auth.user?.avatarColor"
+            />
           </button>
+          <div
+            v-if="menuOpen"
+            id="account-menu"
+            role="menu"
+            class="pop absolute right-0 z-20 mt-2 flex w-56 flex-col gap-1 rounded-2xl bg-panel p-2 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+          >
+            <div class="flex flex-col px-3 py-2">
+              <span class="truncate text-sm font-semibold">{{ auth.user?.displayName }}</span>
+              <span class="truncate text-xs text-muted">{{ auth.user?.email }}</span>
+            </div>
+            <RouterLink
+              to="/profile"
+              role="menuitem"
+              class="ghost rounded-xl px-3 py-2 text-sm text-ink no-underline"
+              @click="menuOpen = false"
+              >👤 Profile</RouterLink
+            >
+            <button
+              type="button"
+              role="menuitem"
+              class="ghost rounded-xl px-3 py-2 text-left text-sm"
+              @click="signOut"
+            >
+              ↩ Sign out
+            </button>
+          </div>
         </div>
       </div>
     </header>
+    <SearchPalette
+      v-if="searchOpen && auth.user"
+      :user-id="auth.user.id"
+      @close="searchOpen = false"
+    />
     <main class="mx-auto max-w-7xl rounded-[var(--radius-panel)] bg-panel p-6 md:p-8">
       <RouterView />
     </main>
