@@ -5,7 +5,13 @@ param serverName string
 param databaseName string
 param adminIdentityName string
 param adminIdentityClientId string
+
+@description('Optional Entra group (object id) to use as SQL admin instead of the API identity. It must contain the API identity.')
+param adminGroupId string = ''
+param adminGroupName string = 'itask-sql-admins'
 param tags object
+
+var useGroup = !empty(adminGroupId)
 
 resource server 'Microsoft.Sql/servers@2023-08-01' = {
   name: serverName
@@ -18,9 +24,9 @@ resource server 'Microsoft.Sql/servers@2023-08-01' = {
       // Entra-only authentication: SQL logins are disabled.
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
-      login: adminIdentityName
-      sid: adminIdentityClientId
-      principalType: 'Application'
+      login: useGroup ? adminGroupName : adminIdentityName
+      sid: useGroup ? adminGroupId : adminIdentityClientId
+      principalType: useGroup ? 'Group' : 'Application'
       tenantId: tenant().tenantId
     }
   }

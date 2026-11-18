@@ -583,6 +583,20 @@ namespace ITask.Api.Migrations
                     b.ToTable("CommentMentions");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.JobRun", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset>("LastRunAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("JobRuns");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.Label", b =>
                 {
                     b.Property<Guid>("Id")

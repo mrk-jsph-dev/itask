@@ -6,7 +6,7 @@
 //     --parameters infra/bootstrap/bootstrap.bicepparam
 //
 // Creates the resource group, identities, GitHub OIDC federated credential, role
-// assignments and budget. The deploy identity receives Contributor on the resource
+// assignments, budget and the budget kill switch. The deploy identity receives Contributor on the resource
 // group only, so CI cannot create role assignments.
 targetScope = 'subscription'
 
@@ -28,6 +28,9 @@ param alertEmail string
 @description('Monthly subscription budget in your billing currency.')
 param monthlyBudget int = 5
 
+@description('Name of the API Container App that the kill switch stops.')
+param apiAppName string = 'ca-itask-api'
+
 @description('First day of the budget period, yyyy-MM-01. Must be this month or later.')
 param budgetStartDate string = '${utcNow('yyyy-MM')}-01'
 
@@ -44,6 +47,33 @@ module identities 'identities.bicep' = {
     location: location
     githubRepository: githubRepository
     githubEnvironment: githubEnvironment
+  }
+}
+
+// Least privilege for the kill switch: read and stop the API, nothing else.
+resource stopperRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(subscription().id, rg.id, 'itask-api-stopper')
+  properties: {
+    roleName: 'iTask API stopper'
+    description: 'Reads and stops the iTask API Container App.'
+    type: 'CustomRole'
+    permissions: [
+      {
+        actions: ['Microsoft.App/containerApps/read', 'Microsoft.App/containerApps/stop/action']
+        notActions: []
+      }
+    ]
+    assignableScopes: [rg.id]
+  }
+}
+
+module killSwitch 'killswitch.bicep' = {
+  scope: rg
+  name: 'itask-killswitch'
+  params: {
+    location: location
+    apiAppName: apiAppName
+    stopperRoleId: stopperRole.id
   }
 }
 
@@ -67,6 +97,8 @@ resource budget 'Microsoft.Consumption/budgets@2024-08-01' = {
         operator: 'GreaterThanOrEqualTo'
         threshold: 100
         contactEmails: [alertEmail]
+        // Stops the API (scale to zero, no more compute) once the budget is spent.
+        contactGroups: [killSwitch.outputs.actionGroupId]
         thresholdType: 'Actual'
       }
       forecast100: {

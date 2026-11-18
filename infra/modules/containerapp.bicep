@@ -16,7 +16,19 @@ param allowedOrigin string
 @description('Blob service endpoint for attachments.')
 param blobEndpoint string
 param blobContainer string
+param demoEnabled bool
+param crossSiteCookies bool
+@secure()
+param demoPassword string
+@secure()
+param turnstileSecretKey string
 param tags object
+
+// App secrets are Container Apps secrets (free), passed in on every deploy. Empty ones are left out.
+var optionalSecrets = filter([
+  { name: 'demo-password', value: demoPassword, env: 'Demo__Password' }
+  { name: 'turnstile-secret', value: turnstileSecretKey, env: 'Turnstile__SecretKey' }
+], s => !empty(s.value))
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
   name: logAnalyticsName
@@ -63,9 +75,10 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
           allowedHeaders: ['*']
         }
       }
-      secrets: [
-        { name: 'appinsights-connection', value: appInsightsConnectionString }
-      ]
+      secrets: concat(
+        [{ name: 'appinsights-connection', value: appInsightsConnectionString }],
+        map(optionalSecrets, s => { name: s.name, value: s.value })
+      )
     }
     template: {
       containers: [
@@ -73,7 +86,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
           name: 'api'
           image: image
           resources: { cpu: json('0.25'), memory: '0.5Gi' }
-          env: [
+          env: concat([
             { name: 'ASPNETCORE_ENVIRONMENT', value: 'Production' }
             { name: 'AZURE_CLIENT_ID', value: identityClientId }
             { name: 'Database__Provider', value: 'SqlServer' }
@@ -84,12 +97,24 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Storage__BlobEndpoint', value: blobEndpoint }
             { name: 'Storage__Container', value: blobContainer }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection' }
-          ]
+            { name: 'Demo__Enabled', value: string(demoEnabled) }
+            { name: 'Auth__CookieSameSite', value: crossSiteCookies ? 'None' : 'Lax' }
+            // No email sender yet, so sign-up can't wait for a confirmation link.
+            { name: 'Auth__RequireConfirmedEmail', value: 'false' }
+          ], map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
           probes: [
             {
               type: 'Liveness'
               httpGet: { path: '/api/health', port: 8080 }
               periodSeconds: 30
+            }
+            {
+              // Generous threshold: a paused free-tier database takes about a minute to resume.
+              type: 'Readiness'
+              httpGet: { path: '/api/health/ready', port: 8080 }
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 10
             }
           ]
         }

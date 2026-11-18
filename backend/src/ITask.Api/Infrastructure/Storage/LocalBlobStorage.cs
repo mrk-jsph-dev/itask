@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -69,6 +70,26 @@ internal sealed partial class LocalBlobStorage : IBlobStorage
         }
 
         return Task.CompletedTask;
+    }
+
+    public async IAsyncEnumerable<string> ListNamesAsync(
+        DateTimeOffset modifiedBefore, [EnumeratorCancellation] CancellationToken ct)
+    {
+        if (!Directory.Exists(_root))
+        {
+            yield break;
+        }
+
+        foreach (var path in Directory.EnumerateFiles(_root, "*", SearchOption.AllDirectories))
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!path.EndsWith(TypeSuffix, StringComparison.Ordinal) && File.GetLastWriteTimeUtc(path) < modifiedBefore.UtcDateTime)
+            {
+                yield return Path.GetRelativePath(_root, path).Replace(Path.DirectorySeparatorChar, '/');
+            }
+        }
+
+        await Task.CompletedTask;
     }
 
     /// <summary>True when the signature matches and the link hasn't expired.</summary>

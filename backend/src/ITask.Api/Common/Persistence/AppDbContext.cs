@@ -37,6 +37,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<ActivityEntry> Activity => Set<ActivityEntry>();
 
+    public DbSet<JobRun> JobRuns => Set<JobRun>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -222,6 +224,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             if (Database.IsSqlite())
             {
                 entry.Property(a => a.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
+        });
+
+        builder.Entity<JobRun>(run =>
+        {
+            run.HasKey(r => r.Name);
+            run.Property(r => r.Name).HasMaxLength(JobRun.NameMaxLength);
+
+            if (Database.IsSqlite())
+            {
+                run.Property(r => r.LastRunAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
             }
         });
 

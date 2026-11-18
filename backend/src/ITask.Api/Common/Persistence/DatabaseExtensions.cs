@@ -51,6 +51,7 @@ public static class DatabaseExtensions
         }
         else
         {
+            // EF Core takes an sp_getapplock for the migration, so replicas starting together don't race.
             await db.Database.MigrateAsync();
         }
     }

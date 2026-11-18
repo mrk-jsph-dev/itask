@@ -9,7 +9,8 @@ for a fix before any disclosure.
 ## How this repo is protected
 
 - No secrets in the repository. Azure is reached from CI through OpenID Connect,
-  and the app uses managed identities; the few remaining secrets live in Key Vault.
+  and the app uses managed identities; the few remaining app secrets are Container Apps secrets
+  set from GitHub environment secrets at deploy time.
 - Deployments run only from `main`, only in the `production` environment, and only
   after the owner approves. Pull requests, including from forks, never get cloud access.
 - Actions are pinned to full commit SHAs and run with read-only tokens by default.
