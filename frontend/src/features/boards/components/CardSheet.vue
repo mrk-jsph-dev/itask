@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
+import CardActivity from '@/features/activity/components/CardActivity.vue'
 import { useAuthStore } from '@/features/auth/store'
 import SideSheet from '@/shared/ui/SideSheet.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
@@ -31,6 +32,14 @@ const auth = useAuthStore()
 /** Live summary from the board, so tile and sheet stay in step. */
 const spot = computed(() => cards.find(props.cardId))
 const card = computed(() => (spot.value ? spot.value.list.cards[spot.value.index]! : null))
+
+/** Below the attachments: comments with the composer, the card's activity, or both mixed. */
+const timelineTabs = [
+  { value: 'comments', label: '💬 Comments' },
+  { value: 'activity', label: '⚡ Activity' },
+  { value: 'all', label: 'All' },
+] as const
+const timeline = ref<(typeof timelineTabs)[number]['value']>('comments')
 
 const title = ref(card.value?.title ?? '')
 const description = ref('')
@@ -299,7 +308,37 @@ const sectionTitle = 'text-[13px] font-semibold'
       <template v-else>
         <CardChecklist :editable="editable" />
         <CardAttachments :editable="editable" :is-demo="!!auth.user?.isDemo" />
-        <CardComments :can-post="canComment" />
+        <div class="flex flex-col gap-3">
+          <div
+            role="tablist"
+            aria-label="Card timeline"
+            class="flex w-fit rounded-[12px] bg-hover p-1"
+          >
+            <button
+              v-for="tab in timelineTabs"
+              :key="tab.value"
+              type="button"
+              role="tab"
+              :aria-selected="timeline === tab.value"
+              class="h-8 rounded-[10px] px-3 text-sm"
+              :class="
+                timeline === tab.value
+                  ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+                  : 'font-medium text-muted'
+              "
+              @click="timeline = tab.value"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+          <CardComments v-if="timeline === 'comments'" :can-post="canComment" />
+          <CardActivity
+            v-else
+            :board-id="lists.boardId!"
+            :card-id="cardId"
+            :comments="timeline === 'all' ? detail.comments : undefined"
+          />
+        </div>
       </template>
 
       <button

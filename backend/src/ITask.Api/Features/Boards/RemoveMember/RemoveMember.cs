@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -21,7 +22,7 @@ public static class RemoveMember
                 .RequireAuthorization();
 
         private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Guid userId, AppDbContext db, IBoardAccess access, ICurrentUser user, CancellationToken ct)
+            Guid boardId, Guid userId, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -51,11 +52,16 @@ public static class RemoveMember
                 await db.BoardStars.Where(s => s.BoardId == boardId && s.UserId == userId).ToListAsync(ct));
             db.CardAssignees.RemoveRange(
                 await db.CardAssignees.Where(a => a.UserId == userId && a.Card!.BoardId == boardId).ToListAsync(ct));
+            var name = await db.Users.Where(u => u.Id == userId).Select(u => u.DisplayName).FirstAsync(ct);
+            activity.Record(
+                userId == user.Id ? ActivityTypes.MemberLeft : ActivityTypes.MemberRemoved,
+                boardId,
+                null,
+                new { member = new { id = userId, name } });
             await db.SaveChangesAsync(ct);
             await db.ChecklistItems
                 .Where(i => i.AssigneeId == userId && i.Card!.BoardId == boardId)
                 .ExecuteUpdateAsync(set => set.SetProperty(i => i.AssigneeId, (Guid?)null), ct);
-            // activity: member removed
 
             return TypedResults.NoContent();
         }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -44,7 +45,7 @@ public static class UpdateChecklistItem
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<ChecklistItemView>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -67,6 +68,7 @@ public static class UpdateChecklistItem
                 });
             }
 
+            var before = new { item.Text, item.DueAt, item.AssigneeId };
             if (request.Text.HasValue)
             {
                 item.Text = request.Text.Value.Trim();
@@ -74,9 +76,16 @@ public static class UpdateChecklistItem
 
             item.DueAt = request.DueAt.Or(item.DueAt);
             item.AssigneeId = request.AssigneeId.Or(item.AssigneeId);
-            await db.SaveChangesAsync(ct);
+            if (before.Text != item.Text || before.DueAt != item.DueAt || before.AssigneeId != item.AssigneeId)
+            {
+                await activity.RecordCardAsync(ActivityTypes.ChecklistUpdated, boardId, cardId, new
+                {
+                    item = item.Text,
+                    from = before.Text != item.Text ? before.Text : null,
+                }, ct);
+            }
 
-            // activity: checklist item updated
+            await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok(ChecklistItemView.From(item));
         }

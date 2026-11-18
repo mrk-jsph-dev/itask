@@ -205,7 +205,7 @@ function onArchivedToggle(event: Event) {
         </button>
       </div>
     </header>
-    <BoardToolbar :members="store.members" />
+    <BoardToolbar :board-id="boardId" :members="store.members" />
 
     <div v-if="lists.lists === null" class="board-grid" aria-busy="true" aria-label="Loading lists">
       <div v-for="i in 4" :key="i" class="flex flex-col gap-2.5">

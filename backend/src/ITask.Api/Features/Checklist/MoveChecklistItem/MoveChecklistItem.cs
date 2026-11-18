@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -35,7 +36,7 @@ public static class MoveChecklistItem
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Guid itemId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -59,9 +60,8 @@ public static class MoveChecklistItem
             }
 
             var renumbered = NeighbourSlot.Place(items, item, index, i => i.Position, (i, p) => i.Position = p);
+            await activity.RecordCardAsync(ActivityTypes.ChecklistMoved, boardId, cardId, new { item = item.Text }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: checklist item moved
 
             return TypedResults.Ok(new Response(ChecklistItemView.From(item), renumbered));
         }

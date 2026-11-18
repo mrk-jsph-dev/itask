@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -28,7 +29,7 @@ public static class ChangeMemberRole
                 .WithValidation<Request>();
 
         private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, Guid userId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid userId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -53,9 +54,18 @@ public static class ChangeMemberRole
                 return BoardResults.Conflict("A board needs at least one Owner.");
             }
 
-            member.Role = request.Role;
-            await db.SaveChangesAsync(ct);
-            // activity: member role changed
+            if (member.Role != request.Role)
+            {
+                var name = await db.Users.Where(u => u.Id == userId).Select(u => u.DisplayName).FirstAsync(ct);
+                activity.Record(ActivityTypes.MemberRoleChanged, boardId, null, new
+                {
+                    member = new { id = userId, name },
+                    from = member.Role.ToString(),
+                    to = request.Role.ToString(),
+                });
+                member.Role = request.Role;
+                await db.SaveChangesAsync(ct);
+            }
 
             return TypedResults.NoContent();
         }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -36,6 +37,7 @@ public static class EditComment
             AppDbContext db,
             IBoardAccess access,
             ICurrentUser user,
+            IActivityRecorder activity,
             TimeProvider time,
             CancellationToken ct)
         {
@@ -62,9 +64,8 @@ public static class EditComment
             comment.Body = request.Body.Trim();
             comment.EditedAt = time.GetUtcNow();
             await CommentMentions.SyncAsync(db, boardId, comment, ct);
+            await activity.RecordCardAsync(ActivityTypes.CommentEdited, boardId, cardId, new { commentId }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: comment edited
 
             return TypedResults.Ok(await CommentMentions.ViewAsync(db, comment.Id, ct));
         }

@@ -50,6 +50,17 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'boards/:boardId/activity',
+          name: 'board-activity',
+          component: () => import('@/features/activity/views/ActivityView.vue'),
+          props: true,
+        },
+        {
+          path: 'activity',
+          name: 'activity',
+          component: () => import('@/features/activity/views/ActivityView.vue'),
+        },
+        {
           path: 'invite/:token',
           name: 'invite',
           component: () => import('@/features/boards/views/AcceptInviteView.vue'),

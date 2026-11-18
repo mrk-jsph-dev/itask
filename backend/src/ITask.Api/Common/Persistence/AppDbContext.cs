@@ -35,6 +35,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Attachment> Attachments => Set<Attachment>();
 
+    public DbSet<ActivityEntry> Activity => Set<ActivityEntry>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -197,6 +199,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             attachment.HasIndex(a => a.CardId);
             attachment.HasIndex(a => a.BlobName).IsUnique();
             attachment.HasIndex(a => a.UploadedById);
+        });
+
+        builder.Entity<ActivityEntry>(entry =>
+        {
+            entry.ToTable("Activity");
+            entry.Property(a => a.Type).HasMaxLength(ActivityEntry.TypeMaxLength);
+            entry.HasOne(a => a.Board).WithMany().HasForeignKey(a => a.BoardId);
+            entry.HasOne(a => a.Actor).WithMany().HasForeignKey(a => a.ActorId).OnDelete(DeleteBehavior.NoAction);
+            entry.HasIndex(a => new { a.BoardId, a.CreatedAt });
+            entry.HasIndex(a => new { a.CardId, a.CreatedAt });
+            entry.HasIndex(a => new { a.ActorId, a.CreatedAt });
+
+            // Same as comments: SQLite orders the feeds by UTC ticks.
+            if (Database.IsSqlite())
+            {
+                entry.Property(a => a.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
         });
 
         builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);

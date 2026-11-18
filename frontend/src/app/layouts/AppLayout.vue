@@ -55,6 +55,12 @@ async function signOut() {
           >🏠 Home</RouterLink
         >
         <RouterLink
+          to="/activity"
+          class="ghost rounded-full px-4 py-2 text-muted"
+          active-class="!bg-ink !text-white"
+          >⚡ Activity</RouterLink
+        >
+        <RouterLink
           v-if="auth.user?.isPlatformAdmin"
           to="/admin/users"
           class="ghost rounded-full px-4 py-2 text-muted"

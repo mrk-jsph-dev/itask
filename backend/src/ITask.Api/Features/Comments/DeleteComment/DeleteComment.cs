@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -19,7 +20,7 @@ public static class DeleteComment
                 .RequireAuthorization();
 
         private static async Task<Results<NoContent, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Guid commentId, AppDbContext db, IBoardAccess access, ICurrentUser user, CancellationToken ct)
+            Guid boardId, Guid cardId, Guid commentId, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
             var (role, denied) = await CardGuard.CheckMemberAsync(boardId, db, access, ct);
             if (denied is not null)
@@ -40,9 +41,8 @@ public static class DeleteComment
             }
 
             db.Comments.Remove(comment);
+            await activity.RecordCardAsync(ActivityTypes.CommentDeleted, boardId, cardId, new { commentId }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: comment deleted
 
             return TypedResults.NoContent();
         }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -38,7 +39,7 @@ public static class CreateCard
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<CardSummary>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, CancellationToken ct)
+            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -48,7 +49,7 @@ public static class CreateCard
             var list = await db.Lists
                 .AsNoTracking()
                 .Where(l => l.Id == listId && l.BoardId == boardId)
-                .Select(l => new { l.ArchivedAt })
+                .Select(l => new { l.Name, l.ArchivedAt })
                 .FirstOrDefaultAsync(ct);
             if (list is null)
             {
@@ -78,6 +79,7 @@ public static class CreateCard
                 };
                 board.NextCardNumber++;
                 db.Cards.Add(card);
+                await activity.RecordCardAsync(ActivityTypes.CardCreated, boardId, card.Id, new { list = list.Name }, ct);
 
                 try
                 {
@@ -92,8 +94,6 @@ public static class CreateCard
                 {
                     return BoardResults.Conflict("The board is busy. Try again.");
                 }
-
-                // activity: card created
 
                 var summary = await CardSummaries.FindAsync(db, boardId, card.Id, ct);
                 return TypedResults.Created($"/api/boards/{boardId}/cards/{card.Id}", summary!);

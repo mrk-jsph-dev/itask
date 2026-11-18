@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
+
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import type { Member } from '../api'
 
-defineProps<{ members: Member[] }>()
+defineProps<{ boardId: string; members: Member[] }>()
 
 const views = [
   { label: 'Board', icon: 'M3 4h18v16H3zM9 4v16M15 4v16', active: true },
@@ -54,6 +56,11 @@ const shown = 5
       </button>
     </div>
     <div class="flex flex-wrap items-center gap-1">
+      <RouterLink
+        :to="{ name: 'board-activity', params: { boardId } }"
+        class="ghost flex h-[38px] items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-ink no-underline"
+        ><span aria-hidden="true">⚡</span> Activity</RouterLink
+      >
       <button
         v-for="tool in tools"
         :key="tool.label"

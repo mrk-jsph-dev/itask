@@ -1,3 +1,4 @@
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -27,6 +28,7 @@ public static class DeleteAttachment
             IBoardAccess access,
             IBlobStorage storage,
             ICurrentUser user,
+            IActivityRecorder activity,
             CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
@@ -48,9 +50,8 @@ public static class DeleteAttachment
 
             await storage.DeleteAsync(attachment.BlobName, ct);
             db.Attachments.Remove(attachment);
+            await activity.RecordCardAsync(ActivityTypes.AttachmentDeleted, boardId, cardId, new { fileName = attachment.FileName }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: attachment deleted
 
             return TypedResults.NoContent();
         }

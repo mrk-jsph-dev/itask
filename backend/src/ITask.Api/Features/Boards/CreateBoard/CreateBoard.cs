@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -37,7 +38,7 @@ public static class CreateBoard
                 .WithValidation<Request>();
 
         private static async Task<Created<Response>> Handle(
-            Request request, AppDbContext db, ICurrentUser user, CancellationToken ct)
+            Request request, AppDbContext db, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
             var name = request.Name.Trim();
             var board = new Board
@@ -52,6 +53,7 @@ public static class CreateBoard
             board.Lists.AddRange(BoardList.CreateDefaults());
 
             db.Boards.Add(board);
+            activity.Record(ActivityTypes.BoardCreated, board.Id, null, new { name = board.Name });
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Created(

@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -30,7 +31,7 @@ public static class AddChecklistItem
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<ChecklistItemView>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -66,9 +67,8 @@ public static class AddChecklistItem
                 Position = PositionCalculator.Append(positions.Count == 0 ? null : positions.Max()),
             };
             db.ChecklistItems.Add(item);
+            await activity.RecordCardAsync(ActivityTypes.ChecklistAdded, boardId, cardId, new { item = item.Text }, ct);
             await db.SaveChangesAsync(ct);
-
-            // activity: checklist item added
 
             return TypedResults.Created(
                 $"/api/boards/{boardId}/cards/{cardId}/checklist/{item.Id}", ChecklistItemView.From(item));

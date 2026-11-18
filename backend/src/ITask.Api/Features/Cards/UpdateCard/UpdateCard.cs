@@ -1,4 +1,5 @@
 using FluentValidation;
+using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
@@ -66,7 +67,7 @@ public static class UpdateCard
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<CardSummary>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -89,6 +90,7 @@ public static class UpdateCard
                 });
             }
 
+            var before = new { card.Title, card.Description, card.DueAt, card.StartAt, card.Priority, card.CoverColor };
             if (request.Title.HasValue)
             {
                 card.Title = request.Title.Value.Trim();
@@ -107,9 +109,30 @@ public static class UpdateCard
                 card.CoverColor = request.CoverColor.Value?.ToUpperInvariant();
             }
 
-            await db.SaveChangesAsync(ct);
+            var fields = new (string Name, bool Changed)[]
+                {
+                    ("title", before.Title != card.Title),
+                    ("description", before.Description != card.Description),
+                    ("dueAt", before.DueAt != card.DueAt),
+                    ("startAt", before.StartAt != card.StartAt),
+                    ("priority", before.Priority != card.Priority),
+                    ("coverColor", before.CoverColor != card.CoverColor),
+                }
+                .Where(f => f.Changed)
+                .Select(f => f.Name)
+                .ToArray();
+            if (fields.Length > 0)
+            {
+                await activity.RecordCardAsync(ActivityTypes.CardUpdated, boardId, cardId, new
+                {
+                    fields,
+                    from = before.Title != card.Title ? before.Title : null,
+                    dueAt = card.DueAt,
+                    priority = before.Priority != card.Priority ? card.Priority.ToString() : null,
+                }, ct);
+            }
 
-            // activity: card updated
+            await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);
         }
