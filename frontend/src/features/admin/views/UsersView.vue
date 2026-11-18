@@ -48,7 +48,7 @@ onMounted(loadMore)
 </script>
 
 <template>
-  <section class="flex flex-col gap-6">
+  <section class="flex flex-col gap-6 p-5 md:p-7">
     <div class="flex flex-col gap-1">
       <h1 class="text-2xl font-bold tracking-tight">Users</h1>
       <p class="text-sm text-muted">

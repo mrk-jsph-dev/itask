@@ -120,6 +120,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             card.Property(c => c.SearchTitle).HasMaxLength(Card.TitleMaxLength);
             card.Property(c => c.Description).HasMaxLength(Card.DescriptionMaxLength);
             card.Property(c => c.CoverColor).HasMaxLength(7);
+            card.Property(c => c.Emoji).HasMaxLength(Card.EmojiMaxLength);
             card.Property(c => c.Priority).HasConversion<string>().HasMaxLength(16);
             card.HasOne(c => c.Board).WithMany(b => b.Cards).HasForeignKey(c => c.BoardId);
 

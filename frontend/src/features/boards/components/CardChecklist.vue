@@ -80,33 +80,31 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
 
 <template>
   <section class="flex flex-col gap-3" aria-labelledby="checklist-title">
-    <div class="flex items-center justify-between gap-3">
-      <h3 id="checklist-title" class="text-[13px] font-semibold">
-        ☑️ Subtasks
-        <span v-if="items.length" class="ml-1 font-normal text-muted">
-          {{ detail.done }}/{{ items.length }}
-        </span>
-      </h3>
-    </div>
-    <div
-      v-if="items.length"
-      class="h-1.5 overflow-hidden rounded-full bg-hover"
-      role="progressbar"
-      :aria-valuenow="detail.progress"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      aria-label="Checklist progress"
-    >
+    <div class="flex items-center gap-2.5">
+      <h3 id="checklist-title" class="text-base font-semibold">☑️ Subtasks</h3>
+      <span v-if="items.length" class="text-[13px] text-muted"
+        >{{ detail.done }}/{{ items.length }}</span
+      >
       <div
-        class="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
-        :style="{ width: `${detail.progress}%` }"
-      />
+        v-if="items.length"
+        class="h-1.5 flex-1 overflow-hidden rounded-full bg-line-soft"
+        role="progressbar"
+        :aria-valuenow="detail.progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-label="Checklist progress"
+      >
+        <div
+          class="h-full rounded-full bg-accent transition-[width] duration-300"
+          :style="{ width: `${detail.progress}%` }"
+        />
+      </div>
     </div>
 
     <VueDraggable
       v-model="items"
       tag="ul"
-      class="flex flex-col gap-0.5"
+      class="flex flex-col rounded-2xl border-[1.5px] border-dashed border-line p-1.5 empty:hidden"
       :disabled="!editable"
       handle=".item-handle"
       ghost-class="drag-ghost"
@@ -118,7 +116,7 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
       <li
         v-for="(item, i) in items"
         :key="item.id"
-        class="group flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-hover"
+        class="group flex min-h-11 items-center gap-2.5 rounded-[10px] px-2.5 hover:bg-hover"
       >
         <span
           v-if="editable"
@@ -128,7 +126,7 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
         >
         <input
           type="checkbox"
-          class="h-4 w-4 shrink-0 accent-emerald-600"
+          class="pop-check h-[18px] w-[18px] shrink-0 accent-accent"
           :checked="item.isDone"
           :disabled="!editable"
           :aria-label="`${item.isDone ? 'Uncheck' : 'Check'} ${item.text}`"
@@ -147,8 +145,8 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
         <button
           v-else
           type="button"
-          class="min-w-0 flex-1 text-left text-[15px] break-words"
-          :class="item.isDone ? 'text-muted line-through' : ''"
+          class="strike min-w-0 flex-1 text-left text-sm break-words"
+          :class="item.isDone ? 'text-[#6B7280] line-through' : 'text-ink'"
           :disabled="!editable"
           @click="startEdit(item)"
         >

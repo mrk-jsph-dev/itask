@@ -10,6 +10,8 @@ public class Card
 
     public const int DescriptionMaxLength = 10_000;
 
+    public const int EmojiMaxLength = 16;
+
     /// <summary>Most labels or assignees one card can carry.</summary>
     public const int MaxLabelsOrAssignees = 10;
 
@@ -26,6 +28,9 @@ public class Card
     public int Number { get; set; }
 
     public required string Title { get; set; }
+
+    /// <summary>One emoji shown before the title.</summary>
+    public string? Emoji { get; set; }
 
     /// <summary>Lower-cased <see cref="Title"/> for search; set by <c>AppDbContext</c> on save.</summary>
     public string SearchTitle { get; set; } = "";

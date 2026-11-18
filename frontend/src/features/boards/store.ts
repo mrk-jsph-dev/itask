@@ -24,6 +24,10 @@ export const useBoardsStore = defineStore('boards', () => {
   /** Boards on the home page; null while loading. */
   const boards = ref<BoardSummary[] | null>(null)
   const showArchived = ref(false)
+  /** Active boards for the sidebar, kept apart from `boards` so the Archived view doesn't replace them. */
+  const navBoards = ref<BoardSummary[] | null>(null)
+  /** The New board dialog, opened from Home or the sidebar. */
+  const creating = ref(false)
 
   /** The board open on the board page, with its members and pending invites. */
   const current = ref<BoardDetail | null>(null)
@@ -37,31 +41,34 @@ export const useBoardsStore = defineStore('boards', () => {
     showArchived.value = archived
     boards.value = null
     boards.value = await boardsApi.mine({ archived })
+    if (!archived) navBoards.value = boards.value
+  }
+
+  async function loadNav() {
+    navBoards.value = await boardsApi.mine()
   }
 
   async function create(input: BoardInput) {
     const created = await boardsApi.create(input)
+    const summary: BoardSummary = { ...created, isStarred: false, memberCount: 1, archivedAt: null }
     if (boards.value && !showArchived.value) {
-      const summary: BoardSummary = {
-        ...created,
-        isStarred: false,
-        memberCount: 1,
-        archivedAt: null,
-      }
       boards.value = [...boards.value, summary].sort(byName)
     }
+    if (navBoards.value) navBoards.value = [...navBoards.value, summary].sort(byName)
     return created
   }
 
   function patchBoard(id: string, changes: Partial<BoardSummary>) {
-    if (boards.value) {
-      boards.value = boards.value.map((b) => (b.id === id ? { ...b, ...changes } : b))
-    }
+    const patch = (list: BoardSummary[]) =>
+      list.map((b) => (b.id === id ? { ...b, ...changes } : b))
+    if (boards.value) boards.value = patch(boards.value)
+    if (navBoards.value) navBoards.value = patch(navBoards.value)
     if (current.value?.id === id) current.value = { ...current.value, ...changes }
   }
 
   function dropBoard(id: string) {
     if (boards.value) boards.value = boards.value.filter((b) => b.id !== id)
+    if (navBoards.value) navBoards.value = navBoards.value.filter((b) => b.id !== id)
   }
 
   /** Flips the star at once and rolls back with a toast if the request fails. */
@@ -102,6 +109,7 @@ export const useBoardsStore = defineStore('boards', () => {
   async function restore(id: string) {
     await boardsApi.restore(id)
     dropBoard(id)
+    void loadNav().catch(() => {})
     if (current.value?.id === id) current.value = { ...current.value, archivedAt: null }
   }
 
@@ -153,6 +161,9 @@ export const useBoardsStore = defineStore('boards', () => {
   return {
     boards,
     showArchived,
+    navBoards,
+    creating,
+    loadNav,
     starred,
     current,
     members,

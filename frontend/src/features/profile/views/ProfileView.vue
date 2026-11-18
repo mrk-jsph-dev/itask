@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { ApiError } from '@/shared/api/http'
 import { useAuthStore } from '@/features/auth/store'
@@ -88,9 +89,8 @@ async function signOut() {
 </script>
 
 <template>
-  <section class="mx-auto flex max-w-2xl flex-col gap-6">
-    <h1 class="text-2xl font-bold tracking-tight">Your profile</h1>
-
+  <PanelHeader title="Your profile" :user="auth.user" />
+  <section class="flex w-full max-w-2xl flex-col gap-6 px-5 py-6 md:px-7">
     <div
       class="fade-up flex items-center gap-4 rounded-[20px] border border-line-soft p-5"
       style="--i: 0"

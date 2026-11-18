@@ -1,7 +1,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 
 const items = (menu: HTMLElement | null) => [
-  ...(menu?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []),
+  ...(menu?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]:not(:disabled)') ?? []),
 ]
 
 /**

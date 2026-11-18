@@ -28,8 +28,10 @@ test('demo buttons sign in as the chosen role', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in as demo Editor' }).click()
 
   await expect(page.getByRole('heading', { name: 'Your boards' })).toBeVisible()
-  await page.getByRole('button', { name: /Account menu for Demo Editor/ }).click()
-  await page.getByRole('menuitem', { name: /Profile/ }).click()
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Profile' })
+    .click()
   await expect(page.getByText("Demo accounts can't change their password.")).toBeVisible()
 })
 
@@ -39,6 +41,6 @@ test('demo buttons stay hidden when demo mode is off', async ({ page }) => {
 
   await page.goto('/sign-in')
 
-  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Try a demo' })).toBeHidden()
 })

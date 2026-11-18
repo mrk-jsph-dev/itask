@@ -10,7 +10,7 @@ public sealed record LabelChip(Guid Id, string Name, string Color, string? Emoji
 public sealed record AssigneeChip(Guid UserId, string DisplayName, string AvatarColor);
 
 /// <summary>
-/// What a card tile shows. <c>RowVersion</c> (base64) goes back with MoveCard.
+/// What a card tile shows. <c>AttachmentCount</c> counts confirmed uploads only (rows exist after ConfirmUpload). <c>RowVersion</c> (base64) goes back with MoveCard.
 /// </summary>
 public sealed record CardSummary(
     Guid Id,
@@ -18,6 +18,7 @@ public sealed record CardSummary(
     int Number,
     string Key,
     string Title,
+    string? Emoji,
     double Position,
     DateTimeOffset? DueAt,
     DateTimeOffset? StartAt,
@@ -30,6 +31,7 @@ public sealed record CardSummary(
     int ChecklistDone,
     int ChecklistTotal,
     int CommentCount,
+    int AttachmentCount,
     string RowVersion);
 
 /// <summary>Loads <see cref="CardSummary"/> rows in one query per call.</summary>
@@ -53,6 +55,7 @@ public static class CardSummaries
                 c.ListId,
                 c.Number,
                 c.Title,
+                c.Emoji,
                 c.Position,
                 c.DueAt,
                 c.StartAt,
@@ -69,6 +72,7 @@ public static class CardSummaries
                 ChecklistDone = c.Checklist.Count(i => i.IsDone),
                 ChecklistTotal = c.Checklist.Count,
                 CommentCount = c.Comments.Count,
+                AttachmentCount = c.Attachments.Count,
                 c.RowVersion,
             })
             .ToListAsync(ct);
@@ -79,6 +83,7 @@ public static class CardSummaries
             c.Number,
             Card.Key(prefix, c.Number),
             c.Title,
+            c.Emoji,
             c.Position,
             c.DueAt,
             c.StartAt,
@@ -91,6 +96,7 @@ public static class CardSummaries
             c.ChecklistDone,
             c.ChecklistTotal,
             c.CommentCount,
+            c.AttachmentCount,
             Convert.ToBase64String(c.RowVersion)))];
     }
 

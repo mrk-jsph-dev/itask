@@ -102,20 +102,22 @@ test('owner creates a board and makes an invite link', async ({ page }) => {
   await expect(page).toHaveURL(/\/boards\/b2$/)
   await expect(page.getByRole('heading', { name: 'Launch' })).toBeVisible()
 
-  await page.getByRole('button', { name: /Settings/ }).click()
+  await page.getByRole('button', { name: 'Board settings' }).click()
   const settings = page.getByRole('dialog', { name: 'Board settings' })
   await settings.getByRole('button', { name: 'Create invite link' }).click()
   await expect(settings.getByLabel('Invite link')).toHaveValue(/\/invite\/tok123$/)
   await expect(settings.getByRole('list', { name: 'Pending invites' })).toContainText('Link invite')
 })
 
-test('starring a board adds it to the Starred row', async ({ page }) => {
-  await mockApi(page, [{ ...roadmap }])
+test('starring a board moves it first and marks it in the sidebar', async ({ page }) => {
+  await mockApi(page, [{ ...roadmap, id: 'b0', name: 'Archive' }, { ...roadmap }])
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Starred' })).toBeHidden()
+  const sidebar = page.getByRole('navigation', { name: 'Main' })
+  await expect(sidebar.getByRole('link', { name: /Roadmap/ })).not.toContainText('Starred')
   await page.getByRole('button', { name: 'Star Roadmap' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Starred' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Unstar Roadmap' })).toHaveCount(2)
+  await expect(page.getByRole('button', { name: 'Unstar Roadmap' })).toHaveCount(1)
+  await expect(sidebar.getByRole('link', { name: /Roadmap/ })).toContainText('Starred')
+  await expect(sidebar.getByRole('listitem').first()).toContainText('Roadmap')
 })

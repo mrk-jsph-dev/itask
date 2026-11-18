@@ -13,6 +13,7 @@ const card = (title: string, listId: string): Card => ({
   number: 1,
   key: `ITK-${title}`,
   title,
+  emoji: null,
   position: 1,
   dueAt: null,
   startAt: null,
@@ -25,6 +26,7 @@ const card = (title: string, listId: string): Card => ({
   checklistDone: 0,
   checklistTotal: 0,
   commentCount: 0,
+  attachmentCount: 0,
   rowVersion: `rv-${title}`,
 })
 
@@ -57,12 +59,10 @@ describe('cards store', () => {
   })
 
   it('moves to another list at once and sends the target and neighbours', async () => {
-    const move = vi
-      .spyOn(cardsApi, 'move')
-      .mockImplementation(async (_b, id) => ({
-        card: { ...card('A', 'done'), id },
-        renumbered: false,
-      }))
+    const move = vi.spyOn(cardsApi, 'move').mockImplementation(async (_b, id) => ({
+      card: { ...card('A', 'done'), id },
+      renumbered: false,
+    }))
     const { lists, cards } = await loaded()
 
     await cards.move('a', 'done', 0)

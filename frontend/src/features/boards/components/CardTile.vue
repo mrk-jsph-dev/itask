@@ -83,14 +83,15 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         class="card-open min-w-0 flex-1 text-left after:absolute after:inset-0 after:content-['']"
         @click="emit('open')"
       >
-        <span class="block text-xs font-semibold tracking-wide text-muted">{{ card.key }}</span>
         <span
-          class="mt-1 block text-[15px] leading-snug font-medium break-words"
+          class="flex gap-2 text-[15px] leading-[1.4] font-medium break-words"
           :class="{ 'text-muted line-through': card.completedAt }"
         >
-          <span v-if="card.completedAt" class="mr-1 text-emerald-600 no-underline" aria-label="Done"
+          <span v-if="card.completedAt" class="text-emerald-600 no-underline" aria-label="Done"
             >✓</span
-          >{{ card.title }}
+          >
+          <span v-else-if="card.emoji" aria-hidden="true">{{ card.emoji }}</span>
+          <span class="min-w-0">{{ card.title }}</span>
         </span>
       </button>
       <template v-if="editable">
@@ -187,14 +188,12 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
     </ul>
 
     <div
-      v-if="
-        priority || card.dueAt || card.assignees.length || card.checklistTotal || card.commentCount
-      "
-      class="flex flex-wrap items-center gap-2.5 border-t border-[#EEF1F6] pt-2.5 text-[13px]"
+      v-if="priority || card.checklistTotal || card.attachmentCount"
+      class="flex items-center gap-2.5 text-[13px] text-[#374151]"
     >
       <span
         v-if="priority"
-        class="flex items-center gap-1 rounded-lg px-2 py-0.5 font-semibold"
+        class="flex items-center gap-[5px] rounded-lg px-[9px] py-[3px] font-semibold"
         :style="{ color: priority.color, backgroundColor: priority.bg }"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -202,13 +201,56 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         </svg>
         {{ card.priority }}
       </span>
-      <span v-if="card.checklistTotal" class="text-[#374151]" title="Checklist">
-        ☑️ {{ card.checklistDone }}/{{ card.checklistTotal }}
+      <span
+        v-if="card.checklistTotal"
+        class="ml-auto flex items-center gap-1"
+        :aria-label="`Subtasks ${card.checklistDone} of ${card.checklistTotal} done`"
+        title="Subtasks"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+        </svg>
+        {{ card.checklistDone }}/{{ card.checklistTotal }}
       </span>
-      <span v-if="card.commentCount" class="text-[#374151]" title="Comments">
-        💬 {{ card.commentCount }}
+      <span
+        v-if="card.attachmentCount"
+        class="flex items-center gap-1"
+        :class="{ 'ml-auto': !card.checklistTotal }"
+        :aria-label="`${card.attachmentCount} ${card.attachmentCount === 1 ? 'file' : 'files'}`"
+        title="Files"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 3H6a1 1 0 00-1 1v16a1 1 0 001 1h12a1 1 0 001-1V8z" />
+          <path d="M14 3v5h5" />
+        </svg>
+        {{ card.attachmentCount }}
       </span>
-      <span v-if="card.assignees.length" class="ml-auto flex" aria-label="Assignees">
+    </div>
+
+    <div
+      v-if="card.assignees.length || card.dueAt || card.commentCount"
+      class="flex items-center gap-2.5 border-t border-[#EEF1F6] pt-2.5 text-[13px] text-[#374151]"
+    >
+      <span v-if="card.assignees.length" class="flex" aria-label="Assignees">
         <span
           v-for="(person, i) in shownAssignees"
           :key="person.userId"
@@ -225,17 +267,38 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         >
       </span>
       <span
+        v-if="card.commentCount"
+        class="ml-auto flex items-center gap-1"
+        :aria-label="`${card.commentCount} ${card.commentCount === 1 ? 'comment' : 'comments'}`"
+        title="Comments"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" />
+        </svg>
+        {{ card.commentCount }}
+      </span>
+      <span
         v-if="card.dueAt && due"
-        class="flex items-center gap-1 rounded-lg px-1.5 py-0.5"
+        class="flex items-center gap-[5px] rounded-lg px-1.5 py-0.5"
         :class="[
-          card.assignees.length ? '' : 'ml-auto',
+          card.commentCount ? '' : 'ml-auto',
           due === 'overdue'
             ? 'bg-red-50 font-semibold text-red-700'
             : due === 'soon'
               ? 'bg-amber-50 text-amber-800'
               : due === 'done'
                 ? 'text-muted'
-                : 'text-[#374151]',
+                : '',
         ]"
         :title="due === 'overdue' ? 'Overdue' : 'Due'"
       >

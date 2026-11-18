@@ -3,8 +3,13 @@ import { nextTick, onBeforeUnmount, onMounted, useId, useTemplateRef } from 'vue
 
 defineProps<{
   title: string
-  /** Wider panel for dense content such as card detail. */
+  /** Wider, inset, rounded panel for dense content such as card detail. */
   wide?: boolean
+}>()
+defineSlots<{
+  default(): unknown
+  /** Replaces the title row; the dialog is then labelled by `title`. */
+  header?(): unknown
 }>()
 const emit = defineEmits<{ close: [] }>()
 
@@ -38,11 +43,17 @@ onBeforeUnmount(() => {
       ref="panel"
       role="dialog"
       aria-modal="true"
-      :aria-labelledby="titleId"
-      :class="wide ? 'max-w-xl' : 'max-w-md'"
-      class="sheet fixed inset-y-0 right-0 z-40 flex w-full flex-col gap-5 overflow-y-auto bg-panel p-6 shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+      :aria-labelledby="$slots.header ? undefined : titleId"
+      :aria-label="$slots.header ? title : undefined"
+      :class="
+        wide
+          ? 'max-w-[760px] md:inset-y-4 md:right-4 md:w-[calc(100%-32px)] md:rounded-[24px] md:shadow-[0_24px_60px_rgb(17_24_39/0.18)]'
+          : 'gap-5 p-6 max-w-md'
+      "
+      class="sheet fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto bg-panel shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
     >
-      <div class="flex items-center justify-between gap-4">
+      <slot v-if="$slots.header" name="header" />
+      <div v-else class="flex items-center justify-between gap-4" :class="{ 'px-6 pt-6': wide }">
         <h2 :id="titleId" class="text-lg font-bold tracking-tight">{{ title }}</h2>
         <button
           type="button"

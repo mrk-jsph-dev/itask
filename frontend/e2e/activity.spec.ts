@@ -137,7 +137,7 @@ test('my activity groups by day and filters by type', async ({ page }) => {
   await expect(page.getByText('created in To do')).toBeVisible()
 
   await page.getByRole('button', { name: 'Tasks' }).click()
-  await expect(page.getByRole('listitem')).toHaveCount(1)
+  await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(1)
   await expect(page.getByText('completed the subtask “Outline” on')).toBeVisible()
 
   await expect(page.getByRole('link', { name: 'Write the spec' })).toHaveAttribute(
@@ -150,13 +150,13 @@ test('board activity opens from the toolbar and filters by member', async ({ pag
   const requests = await mockApi(page)
   await page.goto('/boards/b1')
 
-  await page.getByRole('link', { name: 'Activity', exact: true }).click()
+  await page.getByRole('link', { name: 'Board activity' }).click()
   await expect(page).toHaveURL(/\/boards\/b1\/activity$/)
   await expect(page.getByRole('heading', { name: '🚀 Roadmap activity' })).toBeVisible()
-  await expect(page.getByRole('listitem')).toHaveCount(4)
+  await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(4)
 
   await page.getByLabel('Filter by member').selectOption({ label: 'Grace Hopper' })
-  await expect(page.getByRole('listitem')).toHaveCount(1)
+  await expect(page.getByRole('main').getByRole('listitem')).toHaveCount(1)
   await expect(page.getByText('commented on')).toBeVisible()
   expect(requests).toContain(`/api/boards/b1/activity?actorId=${grace.id}`)
 })

@@ -71,7 +71,27 @@ export interface CreatedInvite {
 
 const board = (id: string) => `/boards/${id}`
 
+/** An open card on Home's ⏰ Due soon list. */
+export interface DueSoonItem {
+  id: string
+  boardId: string
+  boardName: string
+  boardEmoji: string | null
+  title: string
+  emoji: string | null
+  priority: CardPriority
+  dueAt: string
+}
+
+/** Cards due within 7 days (overdue included), assigned to the caller or to nobody. */
+export interface DueSoon {
+  dueThisWeek: number
+  overdue: number
+  items: DueSoonItem[]
+}
+
 export const boardsApi = {
+  dueSoon: () => api.get<DueSoon>('/me/due-soon'),
   mine: (filter: { archived?: boolean } = {}) =>
     api.get<BoardSummary[]>(filter.archived ? '/boards?archived=true' : '/boards'),
   get: (id: string) => api.get<BoardDetail>(board(id)),
@@ -161,6 +181,7 @@ export interface Card {
   number: number
   key: string
   title: string
+  emoji: string | null
   position: number
   dueAt: string | null
   startAt: string | null
@@ -173,6 +194,8 @@ export interface Card {
   checklistDone: number
   checklistTotal: number
   commentCount: number
+  /** Confirmed uploads only. */
+  attachmentCount: number
   rowVersion: string
 }
 
@@ -242,6 +265,7 @@ export interface CardPatch {
   startAt?: string | null
   priority?: CardPriority
   coverColor?: string | null
+  emoji?: string | null
 }
 
 /** Target list and the ids of the cards the moved card ends up between. */

@@ -21,6 +21,8 @@ function cancel() {
   title.value = ''
 }
 
+defineExpose({ start })
+
 /** Saves and stays open for the next card. */
 function submit() {
   const trimmed = title.value.trim()
@@ -41,7 +43,7 @@ function submit() {
     @submit.prevent="submit"
     @keydown.esc.stop="cancel"
   >
-    <label class="sr-only" :for="inputId">Card title</label>
+    <label class="sr-only" :for="inputId">Task title</label>
     <textarea
       :id="inputId"
       ref="input"
@@ -65,17 +67,17 @@ function submit() {
         class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
         :disabled="busy || !title.trim()"
       >
-        Add card
+        Add task
       </button>
     </div>
   </form>
   <button
     v-else
     type="button"
-    class="ghost h-11 rounded-[12px] border border-line bg-panel text-sm font-medium"
-    :aria-label="`Add card to ${listName}`"
+    class="ghost h-11 rounded-[12px] border border-line bg-panel text-sm font-medium text-ink"
+    :aria-label="`Add task to ${listName}`"
     @click="start"
   >
-    + Add card
+    + Add task
   </button>
 </template>

@@ -81,3 +81,10 @@ export function typeBadge(attachment: Pick<Attachment, 'fileName' | 'contentType
   const ext = attachment.fileName.includes('.') ? attachment.fileName.split('.').pop()! : ''
   return (ext || attachment.contentType.split('/').pop() || 'file').slice(0, 4).toUpperCase()
 }
+
+/** Badge colours per frame C5: images blue, PDFs red, everything else grey. */
+export function badgeClass(attachment: Pick<Attachment, 'contentType'>): string {
+  if (attachment.contentType.startsWith('image/')) return 'bg-[#EFF4FF] text-[#1D4ED8]'
+  if (attachment.contentType === 'application/pdf') return 'bg-[#FEF2F2] text-[#B91C1C]'
+  return 'bg-hover text-muted'
+}

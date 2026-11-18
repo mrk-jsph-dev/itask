@@ -128,7 +128,7 @@ async function older() {
 
 <template>
   <section class="flex flex-col gap-3" aria-labelledby="comments-title">
-    <h3 id="comments-title" class="text-[13px] font-semibold">💬 Comments</h3>
+    <h3 id="comments-title" class="sr-only">💬 Comments</h3>
     <button
       v-if="detail.nextCursor"
       type="button"
@@ -140,8 +140,8 @@ async function older() {
     </button>
     <ol class="flex flex-col gap-4" aria-label="Comments">
       <li v-for="comment in detail.comments" :key="comment.id" class="fade-up flex gap-3">
-        <UserAvatar :name="comment.authorName" :color="comment.authorColor" :size="30" />
-        <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <UserAvatar :name="comment.authorName" :color="comment.authorColor" :size="34" />
+        <div class="flex min-w-0 flex-1 flex-col gap-1 rounded-[14px] bg-[#F6F8FB] px-3.5 py-2.5">
           <p class="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span class="font-semibold">{{ comment.authorName }}</span>
             <time class="text-xs text-muted" :datetime="comment.createdAt">

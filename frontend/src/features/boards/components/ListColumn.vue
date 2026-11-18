@@ -44,6 +44,13 @@ function onCardDrop(event: SortableEvent) {
   if (cardId && moved) emit('dropCard', cardId)
 }
 
+const newCard = useTemplateRef('newCard')
+/** Opens the add-task form (header `+`, board "+ New task"). */
+function addCard() {
+  void newCard.value?.start()
+}
+defineExpose({ addCard })
+
 const menuId = useId()
 const editing = ref(false)
 const saving = ref(false)
@@ -85,11 +92,11 @@ function save(input: ListInput) {
     />
     <header
       v-else
-      class="list-handle relative flex h-10 items-center gap-2 rounded-xl px-1"
+      class="list-handle relative flex h-10 items-center gap-2 rounded-xl px-1 pt-1"
       :class="editable ? 'cursor-grab active:cursor-grabbing' : ''"
     >
-      <span v-if="list.emoji" class="text-lg" aria-hidden="true">{{ list.emoji }}</span>
-      <h2 class="min-w-0 truncate text-[15px] font-semibold">{{ list.name }}</h2>
+      <span v-if="list.emoji" class="text-xl" aria-hidden="true">{{ list.emoji }}</span>
+      <h2 class="min-w-0 truncate text-base font-semibold">{{ list.name }}</h2>
       <span
         class="text-[13px]"
         :class="overLimit ? 'font-semibold text-red-700' : 'text-muted'"
@@ -109,6 +116,14 @@ function save(input: ListInput) {
           @click.stop="openMenu"
         >
           ···
+        </button>
+        <button
+          type="button"
+          class="ghost h-[30px] w-[30px] rounded-lg text-lg text-[#374151]"
+          :aria-label="`Add task to ${list.name} list`"
+          @click.stop="addCard"
+        >
+          +
         </button>
         <div
           v-if="menuOpen"
@@ -160,12 +175,12 @@ function save(input: ListInput) {
       <span
         v-if="cards.length === 0"
         class="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] text-muted"
-        >No cards yet</span
+        >No tasks yet</span
       >
       <VueDraggable
         v-model="cards"
         tag="ol"
-        class="flex min-h-24 flex-col gap-2.5 rounded-[18px] border-[1.5px] border-dashed border-line p-2"
+        class="flex min-h-24 flex-col gap-2 rounded-[18px] border-[1.5px] border-dashed border-line p-2"
         :aria-label="`${list.name} cards`"
         group="cards"
         :disabled="!editable"
@@ -204,6 +219,7 @@ function save(input: ListInput) {
     </div>
     <NewCardForm
       v-if="editable"
+      ref="newCard"
       :list-name="list.name"
       @create="(title, done) => emit('createCard', title, done)"
     />
