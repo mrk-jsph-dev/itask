@@ -1,14 +1,16 @@
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ITask.Api.Tests.Infrastructure;
 
 /// <summary>
 /// Hosts the API in-process against a per-factory SQLite file that is deleted on dispose.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>
+public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"itask-test-{Guid.NewGuid():N}.db");
 
@@ -23,20 +25,32 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             ["Demo:Enabled"] = "false",
             ["Auth:RequireConfirmedEmail"] = "false",
             ["RateLimits:AuthPerMinute"] = "1000",
-        }));
+        }).AddInMemoryCollection(ExtraConfig));
+        builder.ConfigureTestServices(ConfigureServices);
+    }
+
+    /// <summary>Configuration layered over the test defaults.</summary>
+    protected virtual Dictionary<string, string?> ExtraConfig => [];
+
+    /// <summary>Replaces services after the app registered its own.</summary>
+    protected virtual void ConfigureServices(IServiceCollection services)
+    {
     }
 
     public HttpClient CreateHttpsClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
 
+    public const string Password = "Test-password-123!";
+
     /// <summary>Registers a fresh user and returns a client holding their auth cookie.</summary>
-    public async Task<HttpClient> CreateSignedInClientAsync()
+    public async Task<HttpClient> CreateSignedInClientAsync(string? email = null)
     {
         var client = CreateHttpsClient();
-        var email = $"user-{Guid.NewGuid():N}@example.com";
-        const string password = "Test-password-123!";
+        email ??= $"user-{Guid.NewGuid():N}@example.com";
+        const string password = Password;
 
-        (await client.PostAsJsonAsync("/api/auth/register", new { email, password })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/auth/register", new { displayName = "Test User", email, password }))
+            .EnsureSuccessStatusCode();
         (await client.PostAsJsonAsync("/api/auth/login?useCookies=true", new { email, password })).EnsureSuccessStatusCode();
 
         return client;

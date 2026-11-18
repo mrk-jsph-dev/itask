@@ -19,6 +19,12 @@ describe('http', () => {
     )
   })
 
+  it('returns undefined for an empty success body', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 200 }))
+
+    expect(await http('/auth/register')).toBeUndefined()
+  })
+
   it('turns ProblemDetails into ApiError', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ title: 'Validation failed', errors: { Name: ['Required'] } }), {

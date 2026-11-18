@@ -6,6 +6,8 @@ using ITask.Api.Common.Security;
 using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Ai;
 using ITask.Api.Infrastructure.Demo;
+using ITask.Api.Infrastructure.Email;
+using ITask.Api.Infrastructure.Turnstile;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 
@@ -47,6 +49,11 @@ public static class ITaskServiceExtensions
             options.SlidingExpiration = true;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
         });
+
+        services.AddSingleton<IEmailSender<AppUser>, LoggingEmailSender>();
+
+        services.Configure<TurnstileOptions>(config.GetSection(TurnstileOptions.Section));
+        services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>(client => client.Timeout = TimeSpan.FromSeconds(10));
 
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IBoardAccess, BoardAccess>();

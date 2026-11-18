@@ -7,9 +7,8 @@ using Microsoft.Extensions.Options;
 namespace ITask.Api.Infrastructure.Demo;
 
 /// <summary>
-/// Idempotently creates one demo account per role (Platform admin, board Owner,
-/// Editor, Viewer) and a shared sample board. Addresses use the reserved example.com
-/// domain. Runs only when <c>Demo:Enabled</c> is true and <c>Demo:Password</c> is set.
+/// Idempotently creates the <see cref="DemoAccounts"/> (Platform admin, board Owner,
+/// Editor, Viewer) and a shared sample board. Runs only when <c>Demo:Enabled</c> is true and <c>Demo:Password</c> is set.
 /// </summary>
 public sealed partial class DemoSeeder(
     AppDbContext db,
@@ -18,14 +17,6 @@ public sealed partial class DemoSeeder(
     IOptions<DemoOptions> options,
     ILogger<DemoSeeder> logger)
 {
-    private static readonly (string Email, string Name, BoardRole? Role, bool Admin)[] Accounts =
-    [
-        ("demo-admin@example.com", "Demo Admin", null, true),
-        ("demo-owner@example.com", "Demo Owner", BoardRole.Owner, false),
-        ("demo-editor@example.com", "Demo Editor", BoardRole.Editor, false),
-        ("demo-viewer@example.com", "Demo Viewer", BoardRole.Viewer, false),
-    ];
-
     public async Task SeedAsync(CancellationToken ct)
     {
         var settings = options.Value;
@@ -53,7 +44,7 @@ public sealed partial class DemoSeeder(
             db.Boards.Add(board);
         }
 
-        foreach (var (email, name, role, admin) in Accounts)
+        foreach (var (_, email, name, role, admin) in DemoAccounts.All)
         {
             var user = await users.FindByEmailAsync(email);
             if (user is null)

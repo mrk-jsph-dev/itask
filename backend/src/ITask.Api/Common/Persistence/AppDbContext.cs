@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<AppUser>(user =>
         {
             user.Property(u => u.DisplayName).HasMaxLength(100);
+            user.Property(u => u.AvatarColor).HasMaxLength(7);
+            user.Property(u => u.TimeZone).HasMaxLength(64);
         });
 
         builder.Entity<Board>(board =>

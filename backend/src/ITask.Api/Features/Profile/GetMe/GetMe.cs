@@ -5,17 +5,25 @@ using ITask.Api.Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 
-namespace ITask.Api.Features.Auth;
+namespace ITask.Api.Features.Profile.GetMe;
 
 public static class GetMe
 {
-    public sealed record Response(Guid Id, string Email, string DisplayName, bool IsPlatformAdmin, bool IsDemo);
+    public sealed record Response(
+        Guid Id,
+        string Email,
+        string DisplayName,
+        string AvatarColor,
+        string TimeZone,
+        bool IsPlatformAdmin,
+        bool IsDemo,
+        DateTimeOffset CreatedAt);
 
     internal sealed class Endpoint : IEndpoint
     {
         public void Map(IEndpointRouteBuilder app) =>
             app.MapGet("/me", Handle)
-                .WithTags("Auth")
+                .WithTags("Profile")
                 .RequireAuthorization();
 
         private static async Task<Results<Ok<Response>, UnauthorizedHttpResult>> Handle(
@@ -28,7 +36,15 @@ public static class GetMe
             }
 
             var isAdmin = await users.IsInRoleAsync(user, PlatformRoles.PlatformAdmin);
-            return TypedResults.Ok(new Response(user.Id, user.Email ?? string.Empty, user.DisplayName, isAdmin, user.IsDemo));
+            return TypedResults.Ok(new Response(
+                user.Id,
+                user.Email ?? string.Empty,
+                user.DisplayName,
+                user.AvatarColor,
+                user.TimeZone,
+                isAdmin,
+                user.IsDemo,
+                user.CreatedAt));
         }
     }
 }

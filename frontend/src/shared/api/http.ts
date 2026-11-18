@@ -38,14 +38,16 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
     throw new ApiError(response.status, title, errors)
   }
 
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
-    return undefined as T
-  }
-  return (await response.json()) as T
+  if (response.status === 204) return undefined as T
+  const text = await response.text()
+  return (text ? JSON.parse(text) : undefined) as T
 }
+
+const json = (body: unknown) => (body === undefined ? undefined : JSON.stringify(body))
 
 export const api = {
   get: <T>(path: string) => http<T>(path),
-  post: <T>(path: string, body?: unknown) =>
-    http<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) }),
+  post: <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+    http<T>(path, { method: 'POST', body: json(body), headers }),
+  put: <T>(path: string, body?: unknown) => http<T>(path, { method: 'PUT', body: json(body) }),
 }
