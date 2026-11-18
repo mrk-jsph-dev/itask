@@ -44,6 +44,12 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'boards/:boardId/cards/:cardId',
+          name: 'card',
+          component: () => import('@/features/boards/views/BoardView.vue'),
+          props: true,
+        },
+        {
           path: 'invite/:token',
           name: 'invite',
           component: () => import('@/features/boards/views/AcceptInviteView.vue'),

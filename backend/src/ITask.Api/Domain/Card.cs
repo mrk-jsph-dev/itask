@@ -58,6 +58,12 @@ public class Card
 
     public List<CardAssignee> Assignees { get; } = [];
 
+    public List<ChecklistItem> Checklist { get; } = [];
+
+    public List<Comment> Comments { get; } = [];
+
+    public List<Attachment> Attachments { get; } = [];
+
     /// <summary>Display key such as ITK-42.</summary>
     public static string Key(string prefix, int number) => $"{prefix}-{number}";
 }

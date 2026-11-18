@@ -54,6 +54,12 @@ export const useCardsStore = defineStore('cards', () => {
     spot.list.cards = cards
   }
 
+  /** Merges `change` into one card, e.g. to keep tile counts in step with the detail sheet. */
+  function patch(cardId: string, change: Partial<Card>) {
+    const spot = find(cardId)
+    if (spot) put({ ...spot.list.cards[spot.index]!, ...change })
+  }
+
   function takeSnapshot() {
     snapshot = new Map((listsStore.lists ?? []).map((l) => [l.id, [...l.cards]]))
   }
@@ -220,6 +226,7 @@ export const useCardsStore = defineStore('cards', () => {
   return {
     labels,
     find,
+    patch,
     loadLabels,
     create,
     update,

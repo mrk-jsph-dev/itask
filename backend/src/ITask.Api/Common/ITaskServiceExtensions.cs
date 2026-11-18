@@ -7,6 +7,7 @@ using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Ai;
 using ITask.Api.Infrastructure.Demo;
 using ITask.Api.Infrastructure.Email;
+using ITask.Api.Infrastructure.Storage;
 using ITask.Api.Infrastructure.Turnstile;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -65,6 +66,8 @@ public static class ITaskServiceExtensions
 
         services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
         services.AddSingleton<IAiService, DisabledAiService>();
+
+        services.AddBlobStorage(config);
 
         services.Configure<DemoOptions>(config.GetSection(DemoOptions.Section));
         services.AddScoped<DemoSeeder>();

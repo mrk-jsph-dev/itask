@@ -10,8 +10,7 @@ public sealed record LabelChip(Guid Id, string Name, string Color, string? Emoji
 public sealed record AssigneeChip(Guid UserId, string DisplayName, string AvatarColor);
 
 /// <summary>
-/// What a card tile shows. Checklist and comment counts are placeholders until card detail exists.
-/// <c>RowVersion</c> (base64) goes back with MoveCard.
+/// What a card tile shows. <c>RowVersion</c> (base64) goes back with MoveCard.
 /// </summary>
 public sealed record CardSummary(
     Guid Id,
@@ -67,6 +66,9 @@ public static class CardSummaries
                 Assignees = c.Assignees
                     .Select(a => new AssigneeChip(a.UserId, a.User!.DisplayName, a.User.AvatarColor))
                     .ToList(),
+                ChecklistDone = c.Checklist.Count(i => i.IsDone),
+                ChecklistTotal = c.Checklist.Count,
+                CommentCount = c.Comments.Count,
                 c.RowVersion,
             })
             .ToListAsync(ct);
@@ -86,9 +88,9 @@ public static class CardSummaries
             c.ArchivedAt,
             [.. c.Labels.OrderBy(l => l.Name, StringComparer.OrdinalIgnoreCase)],
             [.. c.Assignees.OrderBy(a => a.DisplayName, StringComparer.OrdinalIgnoreCase)],
-            0,
-            0,
-            0,
+            c.ChecklistDone,
+            c.ChecklistTotal,
+            c.CommentCount,
             Convert.ToBase64String(c.RowVersion)))];
     }
 

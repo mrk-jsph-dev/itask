@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
@@ -15,7 +16,9 @@ import { useCardsStore } from '../cardsStore'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
 
-const props = defineProps<{ boardId: string }>()
+/** `cardId` comes from `/boards/:boardId/cards/:cardId` and opens the card sheet. */
+const props = defineProps<{ boardId: string; cardId?: string }>()
+const router = useRouter()
 const store = useBoardsStore()
 const lists = useListsStore()
 const cards = useCardsStore()
@@ -26,8 +29,26 @@ const settingsOpen = ref(false)
 const settledId = ref<string | null>(null)
 /** The card that just dropped, for a brief glow. */
 const settledCardId = ref<string | null>(null)
-/** Card open in the detail sheet. */
-const openCardId = ref<string | null>(null)
+/** Card open in the detail sheet, once the board's cards are loaded. */
+const openCardId = computed(() =>
+  props.cardId && lists.boardId === props.boardId && lists.lists ? props.cardId : null,
+)
+
+function openCard(cardId: string) {
+  void router.push({ name: 'card', params: { boardId: props.boardId, cardId } })
+}
+
+function closeCard() {
+  void router.push({ name: 'board', params: { boardId: props.boardId } })
+}
+
+// A link to a card that isn't on the board (archived, moved away, or never existed).
+watch(openCardId, (id) => {
+  if (id && !cards.find(id)) {
+    toast('That card is not on this board.', 'error')
+    void router.replace({ name: 'board', params: { boardId: props.boardId } })
+  }
+})
 
 /** Editors and owners change lists, unless the board is archived. */
 const editable = computed(
@@ -44,7 +65,6 @@ watch(
   async (id) => {
     notFound.value = false
     settingsOpen.value = false
-    openCardId.value = null
     try {
       await Promise.all([store.open(id), lists.load(id), cards.loadLabels(id)])
     } catch (e) {
@@ -226,7 +246,7 @@ function onArchivedToggle(event: Event) {
           @move="(delta) => moveBy(i, delta)"
           @archive="lists.archive(list.id)"
           @create-card="(title, done) => createCard(list.id, title, done)"
-          @open-card="(cardId) => (openCardId = cardId)"
+          @open-card="openCard"
           @move-card="moveCard"
           @toggle-complete="cards.toggleComplete"
           @archive-card="cards.archive"
@@ -269,7 +289,8 @@ function onArchivedToggle(event: Event) {
       v-if="openCardId"
       :card-id="openCardId"
       :editable="editable"
-      @close="openCardId = null"
+      :can-comment="!store.current.archivedAt"
+      @close="closeCard"
     />
   </section>
 

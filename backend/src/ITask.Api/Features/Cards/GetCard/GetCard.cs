@@ -7,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Cards.GetCard;
 
-/// <summary>One card with its description, including archived cards. Any member may read.</summary>
+/// <summary>
+/// One card with its description, checklist and files, including archived cards. Any member may
+/// read. Comments load separately, paged.
+/// </summary>
 public static class GetCard
 {
     public sealed record Response(
@@ -15,7 +18,9 @@ public static class GetCard
         string? Description,
         Guid CreatedById,
         string? CreatedByName,
-        DateTimeOffset CreatedAt);
+        DateTimeOffset CreatedAt,
+        IReadOnlyList<ChecklistItemView> Checklist,
+        IReadOnlyList<AttachmentView> Attachments);
 
     internal sealed class Endpoint : IEndpoint
     {
@@ -49,9 +54,26 @@ public static class GetCard
                     CreatedByName = db.Users.Where(u => u.Id == c.CreatedById).Select(u => u.DisplayName).FirstOrDefault(),
                 })
                 .FirstAsync(ct);
+            var checklist = await db.ChecklistItems
+                .AsNoTracking()
+                .Where(i => i.CardId == cardId)
+                .OrderBy(i => i.Position)
+                .Select(ChecklistItemView.Project)
+                .ToListAsync(ct);
+            var attachments = await db.Attachments
+                .AsNoTracking()
+                .Where(a => a.CardId == cardId)
+                .Select(AttachmentView.Project)
+                .ToListAsync(ct);
 
             return TypedResults.Ok(new Response(
-                summary, detail.Description, detail.CreatedById, detail.CreatedByName, detail.CreatedAt));
+                summary,
+                detail.Description,
+                detail.CreatedById,
+                detail.CreatedByName,
+                detail.CreatedAt,
+                checklist,
+                [.. attachments.OrderBy(a => a.CreatedAt)]));
         }
     }
 }

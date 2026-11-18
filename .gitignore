@@ -31,6 +31,7 @@ obj/
 *.db-shm
 *.db-wal
 TestResults/
+App_Data/
 
 # ---- Node / Vue ----
 node_modules/

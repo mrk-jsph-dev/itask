@@ -176,12 +176,62 @@ export interface Card {
   rowVersion: string
 }
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  isDone: boolean
+  position: number
+  dueAt: string | null
+  assigneeId: string | null
+}
+
+/** Fields to change; absent ones stay, `null` clears. */
+export interface ChecklistPatch {
+  text?: string
+  dueAt?: string | null
+  assigneeId?: string | null
+}
+
+export interface Attachment {
+  id: string
+  fileName: string
+  contentType: string
+  sizeBytes: number
+  uploadedById: string
+  uploadedByName: string | null
+  createdAt: string
+}
+
+export interface Comment {
+  id: string
+  authorId: string
+  authorName: string
+  authorColor: string
+  body: string
+  createdAt: string
+  editedAt: string | null
+  mentions: { userId: string; displayName: string }[]
+}
+
+export interface CommentPage {
+  items: Comment[]
+  nextCursor: string | null
+}
+
+export interface UploadSlot {
+  blobName: string
+  uploadUrl: string
+  expiresAt: string
+}
+
 export interface CardDetail {
   card: Card
   description: string | null
   createdById: string
   createdByName: string | null
   createdAt: string
+  checklist: ChecklistItem[]
+  attachments: Attachment[]
 }
 
 /** Fields to change; absent ones stay, `null` clears. */
@@ -223,6 +273,53 @@ export const cardsApi = {
     api.put<Card>(`${cards(boardId)}/${cardId}/labels`, { labelIds }),
   setAssignees: (boardId: string, cardId: string, userIds: string[]) =>
     api.put<Card>(`${cards(boardId)}/${cardId}/assignees`, { userIds }),
+}
+
+const card = (boardId: string, cardId: string) => `${cards(boardId)}/${cardId}`
+
+export const checklistApi = {
+  add: (boardId: string, cardId: string, text: string) =>
+    api.post<ChecklistItem>(`${card(boardId, cardId)}/checklist`, { text }),
+  update: (boardId: string, cardId: string, itemId: string, patch: ChecklistPatch) =>
+    api.patch<ChecklistItem>(`${card(boardId, cardId)}/checklist/${itemId}`, patch),
+  setDone: (boardId: string, cardId: string, itemId: string, isDone: boolean) =>
+    api.put<ChecklistItem>(`${card(boardId, cardId)}/checklist/${itemId}/done`, { isDone }),
+  move: (boardId: string, cardId: string, itemId: string, neighbours: ListNeighbours) =>
+    api.put<{ item: ChecklistItem; renumbered: boolean }>(
+      `${card(boardId, cardId)}/checklist/${itemId}/position`,
+      neighbours,
+    ),
+  remove: (boardId: string, cardId: string, itemId: string) =>
+    api.del(`${card(boardId, cardId)}/checklist/${itemId}`),
+}
+
+export const commentsApi = {
+  page: (boardId: string, cardId: string, cursor: string | null = null) =>
+    api.get<CommentPage>(
+      `${card(boardId, cardId)}/comments${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`,
+    ),
+  add: (boardId: string, cardId: string, body: string) =>
+    api.post<Comment>(`${card(boardId, cardId)}/comments`, { body }),
+  edit: (boardId: string, cardId: string, commentId: string, body: string) =>
+    api.put<Comment>(`${card(boardId, cardId)}/comments/${commentId}`, { body }),
+  remove: (boardId: string, cardId: string, commentId: string) =>
+    api.del(`${card(boardId, cardId)}/comments/${commentId}`),
+}
+
+export const attachmentsApi = {
+  requestUpload: (
+    boardId: string,
+    cardId: string,
+    file: { fileName: string; contentType: string; sizeBytes: number },
+  ) => api.post<UploadSlot>(`${card(boardId, cardId)}/attachments/upload-url`, file),
+  confirm: (boardId: string, cardId: string, blobName: string, fileName: string) =>
+    api.post<Attachment>(`${card(boardId, cardId)}/attachments`, { blobName, fileName }),
+  downloadUrl: (boardId: string, cardId: string, attachmentId: string) =>
+    api.get<{ url: string; expiresAt: string }>(
+      `${card(boardId, cardId)}/attachments/${attachmentId}/url`,
+    ),
+  remove: (boardId: string, cardId: string, attachmentId: string) =>
+    api.del(`${card(boardId, cardId)}/attachments/${attachmentId}`),
 }
 
 const labels = (boardId: string) => `${board(boardId)}/labels`

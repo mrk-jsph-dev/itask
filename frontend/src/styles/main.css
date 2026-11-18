@@ -8,3 +8,64 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* Rendered markdown (descriptions, comments). */
+.md-body {
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+.md-body > * + * {
+  margin-top: 0.6em;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.md-body h1 {
+  font-size: 1.2em;
+}
+.md-body h2 {
+  font-size: 1.1em;
+}
+.md-body ul {
+  list-style: disc;
+  padding-left: 1.25em;
+}
+.md-body ol {
+  list-style: decimal;
+  padding-left: 1.25em;
+}
+.md-body a {
+  color: var(--color-accent-strong);
+  text-decoration: underline;
+}
+.md-body code {
+  border-radius: 6px;
+  background: var(--color-hover);
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+.md-body pre {
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  background: var(--color-hover);
+  padding: 0.75em;
+}
+.md-body pre code {
+  background: none;
+  padding: 0;
+}
+.md-body blockquote {
+  border-left: 3px solid var(--color-line);
+  padding-left: 0.75em;
+  color: var(--color-muted);
+}
+.mention {
+  border-radius: 6px;
+  background: #eff4ff;
+  padding: 0 0.2em;
+  font-weight: 600;
+  color: var(--color-accent-strong);
+}

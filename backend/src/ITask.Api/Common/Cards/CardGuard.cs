@@ -38,6 +38,37 @@ public static class CardGuard
         return null;
     }
 
+    /// <summary>
+    /// The caller's role when they may add content to the board (any member, e.g. comments);
+    /// otherwise a 404 for non-members or 409 when the board is archived.
+    /// </summary>
+    public static async Task<(BoardRole? Role, ProblemHttpResult? Denied)> CheckMemberAsync(
+        Guid boardId, AppDbContext db, IBoardAccess access, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(access);
+
+        var role = await access.GetRoleAsync(boardId, ct);
+        if (role is null)
+        {
+            return (null, NotFound());
+        }
+
+        if (await db.Boards.AnyAsync(b => b.Id == boardId && b.ArchivedAt != null, ct))
+        {
+            return (role, BoardResults.Archived());
+        }
+
+        return (role, null);
+    }
+
+    /// <summary>True when the card exists on the board (archived cards included).</summary>
+    public static Task<bool> CardExistsAsync(AppDbContext db, Guid boardId, Guid cardId, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(db);
+        return db.Cards.AnyAsync(c => c.Id == cardId && c.BoardId == boardId, ct);
+    }
+
     /// <summary>404 as ProblemDetails, for a board, list, card or label the caller can't see.</summary>
     public static ProblemHttpResult NotFound() => TypedResults.Problem(
         title: "Not found.",
