@@ -13,9 +13,9 @@ namespace ITask.Api.Features.Boards.CreateBoard;
 /// </summary>
 public static class CreateBoard
 {
-    public sealed record Request(string Name, string? Emoji);
+    public sealed record Request(string Name, string? Emoji, string? Description = null, string? Color = null);
 
-    public sealed record Response(Guid Id, string Name, string? Emoji, BoardRole Role);
+    public sealed record Response(Guid Id, string Name, string? Emoji, string? Description, string Color, BoardRole Role);
 
     public sealed class Validator : AbstractValidator<Request>
     {
@@ -23,6 +23,8 @@ public static class CreateBoard
         {
             RuleFor(r => r.Name).NotEmpty().MaximumLength(120);
             RuleFor(r => r.Emoji).MaximumLength(16);
+            RuleFor(r => r.Description).MaximumLength(500);
+            RuleFor(r => r.Color).HexColor().When(r => r.Color is not null);
         }
     }
 
@@ -37,7 +39,13 @@ public static class CreateBoard
         private static async Task<Created<Response>> Handle(
             Request request, AppDbContext db, ICurrentUser user, CancellationToken ct)
         {
-            var board = new Board { Name = request.Name.Trim(), Emoji = request.Emoji };
+            var board = new Board
+            {
+                Name = request.Name.Trim(),
+                Emoji = string.IsNullOrWhiteSpace(request.Emoji) ? null : request.Emoji,
+                Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+                Color = request.Color?.ToUpperInvariant() ?? Board.DefaultColor,
+            };
             board.Members.Add(new BoardMember { UserId = user.Id, Role = BoardRole.Owner });
 
             db.Boards.Add(board);
@@ -45,7 +53,7 @@ public static class CreateBoard
 
             return TypedResults.Created(
                 $"/api/boards/{board.Id}",
-                new Response(board.Id, board.Name, board.Emoji, BoardRole.Owner));
+                new Response(board.Id, board.Name, board.Emoji, board.Description, board.Color, BoardRole.Owner));
         }
     }
 }

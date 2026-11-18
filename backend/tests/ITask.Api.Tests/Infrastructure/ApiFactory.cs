@@ -25,6 +25,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["Demo:Enabled"] = "false",
             ["Auth:RequireConfirmedEmail"] = "false",
             ["RateLimits:AuthPerMinute"] = "1000",
+            ["RateLimits:PerMinute"] = "10000",
         }).AddInMemoryCollection(ExtraConfig));
         builder.ConfigureTestServices(ConfigureServices);
     }

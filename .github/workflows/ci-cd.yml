@@ -1,4 +1,5 @@
-# Push to main: run CI, then deploy. The deploy job uses the "production" environment
+# Push to main: run CI only. Deploy runs only on a manual "Run workflow" (workflow_dispatch)
+# from main, after CI passes. The deploy job uses the "production" environment
 # (required reviewers, main only) and signs in to Azure via OIDC (azure/login).
 name: ci-cd
 
@@ -24,7 +25,7 @@ jobs:
   deploy:
     name: Deploy to Azure
     needs: ci
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:

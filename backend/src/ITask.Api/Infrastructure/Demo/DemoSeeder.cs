@@ -40,7 +40,13 @@ public sealed partial class DemoSeeder(
         var board = await db.Boards.Include(b => b.Members).FirstOrDefaultAsync(b => b.Name == boardName, ct);
         if (board is null)
         {
-            board = new Board { Name = boardName, Emoji = "🚀" };
+            board = new Board
+            {
+                Name = boardName,
+                Emoji = "🚀",
+                Description = "Sample board shared by the demo accounts.",
+                Color = "#0F766E",
+            };
             db.Boards.Add(board);
         }
 

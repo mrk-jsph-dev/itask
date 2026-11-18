@@ -29,7 +29,9 @@ public static class ITaskServiceExtensions
 
         services.AddDatabase(config);
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy(PlatformRoles.PlatformAdmin, policy => policy.RequireRole(PlatformRoles.PlatformAdmin));
+        services.AddSingleton(TimeProvider.System);
         services.AddIdentityApiEndpoints<AppUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -49,6 +51,9 @@ public static class ITaskServiceExtensions
             options.SlidingExpiration = true;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
         });
+
+        // Re-check the security stamp often so a locked account's cookie stops working quickly.
+        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
 
         services.AddSingleton<IEmailSender<AppUser>, LoggingEmailSender>();
 

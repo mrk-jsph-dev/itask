@@ -14,11 +14,12 @@ public static class RateLimits
 
     public static IServiceCollection AddITaskRateLimits(this IServiceCollection services, IConfiguration config)
     {
-        var perMinute = config.GetValue("RateLimits:PerMinute", 120);
-        var authPerMinute = config.GetValue("RateLimits:AuthPerMinute", 10);
-
         services.AddRateLimiter(options =>
         {
+            // Read here, not at registration, so test host overrides apply.
+            var perMinute = config.GetValue("RateLimits:PerMinute", 120);
+            var authPerMinute = config.GetValue("RateLimits:AuthPerMinute", 10);
+
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>

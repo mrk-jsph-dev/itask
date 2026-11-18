@@ -51,8 +51,15 @@ async function signOut() {
         <RouterLink
           to="/"
           class="ghost rounded-full px-4 py-2 text-muted"
-          active-class="!bg-ink !text-white"
+          exact-active-class="!bg-ink !text-white"
           >🏠 Home</RouterLink
+        >
+        <RouterLink
+          v-if="auth.user?.isPlatformAdmin"
+          to="/admin/users"
+          class="ghost rounded-full px-4 py-2 text-muted"
+          active-class="!bg-ink !text-white"
+          >🛡 Admin</RouterLink
         >
       </nav>
       <div ref="menu" class="relative">
