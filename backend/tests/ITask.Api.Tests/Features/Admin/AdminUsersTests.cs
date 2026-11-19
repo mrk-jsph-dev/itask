@@ -1,39 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
-using ITask.Api.Domain;
 using ITask.Api.Features.Admin.ListUsers;
 using ITask.Api.Features.Admin.LockUser;
 using ITask.Api.Tests.Infrastructure;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ITask.Api.Tests.Features.Admin;
 
 public sealed class AdminUsersTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    private async Task<HttpClient> CreateAdminAsync()
-    {
-        var email = $"admin-{Guid.NewGuid():N}@example.com";
-        var client = await factory.CreateSignedInClientAsync(email);
-
-        await using (var scope = factory.Services.CreateAsyncScope())
-        {
-            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-            if (!await roles.RoleExistsAsync(PlatformRoles.PlatformAdmin))
-            {
-                await roles.CreateAsync(new IdentityRole<Guid>(PlatformRoles.PlatformAdmin));
-            }
-
-            var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-            await users.AddToRoleAsync((await users.FindByEmailAsync(email))!, PlatformRoles.PlatformAdmin);
-        }
-
-        // Sign in again so the cookie carries the role claim.
-        (await client.PostAsJsonAsync("/api/auth/login?useCookies=true", new { email, password = ApiFactory.Password }))
-            .EnsureSuccessStatusCode();
-        return client;
-    }
-
     [Fact]
     public async Task Regular_users_are_forbidden()
     {
@@ -47,7 +21,7 @@ public sealed class AdminUsersTests(ApiFactory factory) : IClassFixture<ApiFacto
     [Fact]
     public async Task Admin_pages_through_users()
     {
-        var admin = await CreateAdminAsync();
+        var admin = await factory.CreateAdminAsync();
         await factory.CreateSignedInClientAsync();
         await factory.CreateSignedInClientAsync();
 
@@ -64,7 +38,7 @@ public sealed class AdminUsersTests(ApiFactory factory) : IClassFixture<ApiFacto
     [Fact]
     public async Task Locked_users_cannot_sign_in_until_unlocked()
     {
-        var admin = await CreateAdminAsync();
+        var admin = await factory.CreateAdminAsync();
         var email = $"locked-{Guid.NewGuid():N}@example.com";
         var victim = await factory.CreateSignedInClientAsync(email);
         var victimId = await victim.GetUserIdAsync();
@@ -85,7 +59,7 @@ public sealed class AdminUsersTests(ApiFactory factory) : IClassFixture<ApiFacto
     [Fact]
     public async Task Admins_cannot_lock_themselves()
     {
-        var admin = await CreateAdminAsync();
+        var admin = await factory.CreateAdminAsync();
         var adminId = await admin.GetUserIdAsync();
 
         var response = await admin.PutAsJsonAsync($"/api/admin/users/{adminId}/lock", new LockUser.Request(true));
