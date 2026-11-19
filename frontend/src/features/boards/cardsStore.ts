@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+import { useAutomationsStore, doorwayRefusal } from '@/features/automations/store'
 import { ApiError } from '@/shared/api/http'
 import { toast, toastWithUndo } from '@/shared/ui/toast'
 import {
@@ -195,9 +196,10 @@ export const useCardsStore = defineStore('cards', () => {
 
   /**
    * Saves a card's current spot (already applied to the lists) to the server. On error the
-   * order before the change comes back; a 409 also reloads, since the board moved on.
+   * order before the change comes back; a 409 also reloads, since the board moved on. A
+   * doorway's refusal is shown by the automations feature instead of a toast.
    */
-  async function commit(cardId: string) {
+  async function commit(cardId: string, overrideDoorway = false) {
     const spot = find(cardId)
     if (!spot) return
     const card = spot.list.cards[spot.index]!
@@ -207,12 +209,18 @@ export const useCardsStore = defineStore('cards', () => {
         cardId,
         { listId: spot.list.id, ...neighbours(spot.list.cards, spot.index) },
         card.rowVersion,
+        overrideDoorway,
       )
       snapshot = null
       put(saved)
       if (renumbered) await reloadLists()
     } catch (e) {
       restoreSnapshot()
+      const refusal = doorwayRefusal(e)
+      if (refusal) {
+        useAutomationsStore().refused = { ...refusal, cardId, listId: spot.list.id, index: spot.index }
+        return
+      }
       toast(errorText(e, "Couldn't move the card."), 'error')
       if (e instanceof ApiError && e.status === 409) await reloadLists()
     }
@@ -229,7 +237,7 @@ export const useCardsStore = defineStore('cards', () => {
   }
 
   /** Keyboard move: puts the card at `index` of `listId` (clamped), then saves it. */
-  async function move(cardId: string, listId: string, index: number) {
+  async function move(cardId: string, listId: string, index: number, overrideDoorway = false) {
     const from = find(cardId)
     const target = listsStore.lists?.find((l) => l.id === listId)
     if (!from || !target) return
@@ -241,7 +249,7 @@ export const useCardsStore = defineStore('cards', () => {
     if (from.list.id !== listId) from.list.cards = from.list.cards.filter((c) => c.id !== cardId)
     rest.splice(to, 0, { ...card, listId })
     target.cards = rest
-    await commit(cardId)
+    await commit(cardId, overrideDoorway)
   }
 
   async function createLabel(input: LabelInput) {

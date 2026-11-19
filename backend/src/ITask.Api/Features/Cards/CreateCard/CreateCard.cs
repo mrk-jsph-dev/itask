@@ -1,6 +1,7 @@
 using FluentValidation;
 using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
@@ -16,6 +17,7 @@ namespace ITask.Api.Features.Cards.CreateCard;
 /// <summary>
 /// Adds a card at the end of an active list. Editor or above. The card takes the board's next
 /// number; the board's row version makes concurrent creates retry instead of sharing a number.
+/// A block-mode doorway on the list returns 409 with <c>code: "doorway"</c>.
 /// </summary>
 public static class CreateCard
 {
@@ -65,6 +67,11 @@ public static class CreateCard
             if (await DataLimits.CheckCardsAsync(db, boardId, ct) is { } full)
             {
                 return full;
+            }
+
+            if (await ListDoorways.CheckAsync(db, new Card { BoardId = boardId, Title = request.Title }, null, listId, ct) is { } blocked)
+            {
+                return blocked.ToProblem();
             }
 
             for (var attempt = 1; ; attempt++)

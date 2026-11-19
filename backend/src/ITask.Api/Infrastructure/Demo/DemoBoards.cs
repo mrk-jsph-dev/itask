@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ITask.Api.Common.Activity;
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Notifications;
 using ITask.Api.Common.Ordering;
@@ -120,6 +121,51 @@ public static class DemoBoards
                 var cardPosition = positions.GetValueOrDefault(cardSpec.List) + PositionCalculator.Step;
                 positions[cardSpec.List] = cardPosition;
                 AddCard(cardSpec, cardPosition, labels);
+            }
+
+            if (ReferenceEquals(spec, Data.Boards[0]))
+            {
+                AddAutomations(people[owner].Id, created, labels);
+            }
+        }
+
+        /// <summary>A doorway and two rules on the first board, so the demo shows automations at work.</summary>
+        private void AddAutomations(Guid ownerId, DateTimeOffset created, Dictionary<string, Label> labels)
+        {
+            var review = _board.Lists.FirstOrDefault(l => l.Name == "Review");
+            var done = _board.Lists.FirstOrDefault(l => l.Name == "Done");
+            if (review is null || done is null)
+            {
+                return;
+            }
+
+            void Add(AutomationKind kind, string name, AutomationSpec automation, Guid? listId = null, DoorwayMode? mode = null)
+            {
+                var rule = new AutomationRule
+                {
+                    BoardId = _board.Id,
+                    Kind = kind,
+                    Name = name,
+                    ListId = listId,
+                    Direction = listId is null ? null : DoorwayDirection.Enter,
+                    Mode = mode,
+                    CreatedById = ownerId,
+                    CreatedAt = created.AddHours(2),
+                };
+                automation.WriteTo(rule);
+                db.AutomationRules.Add(rule);
+            }
+
+            Add(AutomationKind.Doorway, "Review gate",
+                new AutomationSpec(AutomationSpec.DoorwayTrigger(review.Id, DoorwayDirection.Enter), [new ConditionSpec(AutomationCatalog.IfAssigneeSet)], []),
+                review.Id, DoorwayMode.Block);
+            Add(AutomationKind.Rule, "Finish flow",
+                new AutomationSpec(new TriggerSpec(AutomationCatalog.CardCompleted), [], [new ActionSpec(AutomationCatalog.DoMove, ListId: done.Id)]));
+            if (labels.TryGetValue("Bug", out var bug))
+            {
+                Add(AutomationKind.Rule, "Bug priority",
+                    new AutomationSpec(new TriggerSpec(AutomationCatalog.LabelAdded, LabelId: bug.Id), [],
+                        [new ActionSpec(AutomationCatalog.DoPriority, Priority: CardPriority.High)]));
             }
         }
 

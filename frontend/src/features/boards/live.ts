@@ -52,6 +52,7 @@ export function planFor(e: BoardEvent, plan: LivePlan) {
     case 'checklist':
     case 'attachment':
     case 'comment':
+    case 'doorway':
       if (!e.cardId) break
       plan.cards.add(e.cardId)
       plan.view = true
@@ -68,6 +69,15 @@ export function planFor(e: BoardEvent, plan: LivePlan) {
       break
     case 'board':
       plan.board = true
+      break
+    case 'automation':
+      // The board reload also reloads its automations; an undo also changed a card.
+      plan.board = true
+      if (e.cardId) {
+        plan.cards.add(e.cardId)
+        plan.view = true
+        detail(plan, e.cardId, 'card')
+      }
       break
     case 'member':
       plan.board = true

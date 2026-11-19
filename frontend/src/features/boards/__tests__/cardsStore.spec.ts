@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { useAutomationsStore } from '@/features/automations/store'
 import { ApiError } from '@/shared/api/http'
 import { runToastAction, toasts } from '@/shared/ui/toast'
 import { cardsApi, labelsApi, listsApi, type BoardList, type Card } from '../api'
@@ -74,6 +75,7 @@ describe('cards store', () => {
       'a',
       { listId: 'done', beforeId: null, afterId: 'd' },
       'rv-A',
+      false,
     )
   })
 
@@ -98,6 +100,29 @@ describe('cards store', () => {
     expect(titles(lists)).toEqual({ todo: ['A', 'B', 'C'], done: ['D'] })
     expect(lastToast()).toMatchObject({ text: 'The card was changed.', tone: 'error' })
     expect(listsApi.all).toHaveBeenCalledTimes(2)
+  })
+
+  it('hands a doorway refusal to the automations store instead of toasting', async () => {
+    vi.spyOn(cardsApi, 'move').mockRejectedValue(
+      new ApiError(409, 'Done needs an assignee first.', undefined, undefined, {
+        code: 'doorway',
+        rule: 'Gate',
+        unmet: ['an assignee'],
+      }),
+    )
+    const { lists, cards } = await loaded()
+    const toasts = lastToast()
+
+    await cards.move('a', 'done', 1)
+
+    expect(titles(lists)).toEqual({ todo: ['A', 'B', 'C'], done: ['D'] })
+    expect(useAutomationsStore().refused).toMatchObject({
+      cardId: 'a',
+      listId: 'done',
+      rule: 'Gate',
+      unmet: ['an assignee'],
+    })
+    expect(lastToast()).toBe(toasts)
   })
 
   it('restores the pre-drag order when a drop fails', async () => {

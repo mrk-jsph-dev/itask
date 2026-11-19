@@ -54,6 +54,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
 
+    public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
+
+    public DbSet<AutomationRun> AutomationRuns => Set<AutomationRun>();
+
+    /// <summary>Set by bulk writers (demo seeding) whose saves must not trigger board automations.</summary>
+    public bool SuppressAutomations { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -149,6 +156,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             if (Database.IsSqlite())
             {
                 card.Property(c => c.RowVersion).ValueGeneratedNever();
+
+                // The automation timers compare it in the database; SQLite only can as UTC ticks.
+                card.Property(c => c.ListEnteredAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
             }
         });
 
@@ -319,10 +329,57 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             counter.Property(c => c.Name).HasMaxLength(UsageCounter.NameMaxLength);
         });
 
+        builder.Entity<AutomationRule>(rule =>
+        {
+            rule.Property(r => r.Kind).HasConversion<string>().HasMaxLength(16);
+            rule.Property(r => r.Direction).HasConversion<string>().HasMaxLength(16);
+            rule.Property(r => r.Mode).HasConversion<string>().HasMaxLength(16);
+            rule.Property(r => r.Name).HasMaxLength(AutomationRule.NameMaxLength);
+            rule.Property(r => r.Trigger).HasMaxLength(AutomationRule.JsonMaxLength);
+            rule.Property(r => r.Conditions).HasMaxLength(AutomationRule.JsonMaxLength);
+            rule.Property(r => r.Actions).HasMaxLength(AutomationRule.JsonMaxLength);
+            rule.HasOne(r => r.Board).WithMany().HasForeignKey(r => r.BoardId);
+            rule.HasOne<AppUser>().WithMany().HasForeignKey(r => r.CreatedById).OnDelete(DeleteBehavior.NoAction);
+            rule.HasIndex(r => r.BoardId);
+            rule.HasIndex(r => r.CreatedById);
+
+            if (Database.IsSqlite())
+            {
+                rule.Property(r => r.RowVersion).ValueGeneratedNever();
+            }
+        });
+
+        builder.Entity<AutomationRun>(run =>
+        {
+            run.Property(r => r.Key).HasMaxLength(AutomationRun.KeyMaxLength);
+            run.Property(r => r.Outcome).HasConversion<string>().HasMaxLength(16);
+            run.HasOne<AutomationRule>().WithMany().HasForeignKey(r => r.RuleId).OnDelete(DeleteBehavior.Cascade);
+
+            // Board deletes cascade through the rule; cards and users are not keys so history survives them.
+            run.HasIndex(r => new { r.BoardId, r.CreatedAt });
+            run.HasIndex(r => r.CardId);
+            run.HasIndex(r => new { r.RuleId, r.CardId, r.Key }).IsUnique().HasFilter("[Key] IS NOT NULL");
+
+            if (Database.IsSqlite())
+            {
+                run.Property(r => r.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
+        });
+
         builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        PrepareForSave();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>
+    /// Fills the search columns and, on SQLite, stamps row versions. Save interceptors that change
+    /// entities call it again so their changes are prepared too.
+    /// </summary>
+    internal void PrepareForSave()
     {
         NormalizeSearchColumns();
 
@@ -337,8 +394,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 }
             }
         }
-
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     /// <summary>Keeps the lower-cased search copies in step with the text they mirror.</summary>

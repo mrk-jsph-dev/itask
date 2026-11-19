@@ -7,7 +7,7 @@ public sealed class MaintenanceRunnerTests(ApiFactory factory) : IClassFixture<A
 {
     private static readonly string[] DailyJobs = ["activity-retention", "demo-reset", "notification-retention", "orphan-uploads", "unverified-accounts"];
 
-    private static readonly string[] HourlyJobs = ["due-reminders", "notification-digest", "recurring-cards"];
+    private static readonly string[] HourlyJobs = ["automation-timers", "due-reminders", "notification-digest", "recurring-cards"];
 
     [Fact]
     public async Task Each_job_runs_once_per_slot()

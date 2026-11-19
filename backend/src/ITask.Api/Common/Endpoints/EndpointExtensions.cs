@@ -1,4 +1,5 @@
 using System.Reflection;
+using ITask.Api.Common.Automations;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace ITask.Api.Common.Endpoints;
@@ -18,6 +19,7 @@ public static class EndpointExtensions
     public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.MapGroup("/api");
+        api.AddEndpointFilter(AutomationHeader.InvokeAsync);
         foreach (var endpoint in app.ServiceProvider.GetRequiredService<IEnumerable<IEndpoint>>())
         {
             endpoint.Map(api);

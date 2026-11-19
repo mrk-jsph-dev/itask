@@ -2,7 +2,16 @@ import { api } from '@/shared/api/http'
 
 /** Server-side categories: the part of an activity type before the dot. */
 export type ActivityCategory =
-  'board' | 'member' | 'list' | 'card' | 'label' | 'checklist' | 'comment' | 'attachment'
+  | 'board'
+  | 'member'
+  | 'list'
+  | 'card'
+  | 'label'
+  | 'checklist'
+  | 'comment'
+  | 'attachment'
+  | 'automation'
+  | 'doorway'
 
 export interface ActivityEntry {
   id: string

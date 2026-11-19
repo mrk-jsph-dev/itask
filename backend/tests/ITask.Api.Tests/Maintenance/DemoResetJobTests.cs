@@ -42,6 +42,8 @@ public sealed class DemoResetJobTests(DemoApiFactory factory) : IClassFixture<De
             Assert.True(await db.Comments.AnyAsync(c => c.Mentions.Any(m => m.UserId == owner.Id)));
             Assert.True(await db.Activity.CountAsync() > 100);
             Assert.Equal(4, await db.CardRecurrences.CountAsync());
+            Assert.Equal(3, await db.AutomationRules.CountAsync());
+            Assert.Equal(0, await db.AutomationRuns.CountAsync());
             Assert.Equal(DemoBoards.People.Count, await db.Users.CountAsync(u => u.IsDemo && u.PasswordHash == null));
         });
     }

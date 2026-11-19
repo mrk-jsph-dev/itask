@@ -1,7 +1,13 @@
 import { api } from '@/shared/api/http'
 
 export type NotificationType =
-  'mentioned' | 'assigned' | 'due_soon' | 'overdue' | 'invited' | 'comment_on_my_card'
+  | 'mentioned'
+  | 'assigned'
+  | 'due_soon'
+  | 'overdue'
+  | 'invited'
+  | 'comment_on_my_card'
+  | 'automation'
 
 export interface AppNotification {
   id: string

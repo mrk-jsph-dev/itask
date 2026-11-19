@@ -8,6 +8,12 @@ import AiQuickAddDialog from '@/features/ai/components/AiQuickAddDialog.vue'
 import type { QuickAddCard } from '@/features/ai/draft'
 import { useAiStore } from '@/features/ai/store'
 import { useAuthStore } from '@/features/auth/store'
+import AutomationsSheet from '@/features/automations/components/AutomationsSheet.vue'
+import DoorwayMarker from '@/features/automations/components/DoorwayMarker.vue'
+import DoorwayRefusal from '@/features/automations/components/DoorwayRefusal.vue'
+import { unmetRequirements, type BoardRefs } from '@/features/automations/catalog'
+import { useAutomationNotices } from '@/features/automations/notices'
+import { useAutomationsStore } from '@/features/automations/store'
 import { useMenu } from '@/shared/ui/menu'
 import { OFFLINE_HINT, online } from '@/shared/pwa/network'
 import PanelHeader from '@/shared/ui/PanelHeader.vue'
@@ -43,6 +49,7 @@ const cards = useCardsStore()
 const views = useViewsStore()
 const detail = useCardDetailStore()
 const auth = useAuthStore()
+const automations = useAutomationsStore()
 const { state, view, set: setState } = useBoardState(toRef(props, 'boardId'))
 
 /** Column components by list id, so "+ New task" can open the first list's form. */
@@ -62,6 +69,7 @@ async function newTask() {
 
 const notFound = ref(false)
 const settingsOpen = ref(false)
+const automationsOpen = ref(false)
 /** The list that just dropped, for a brief glow. */
 const settledId = ref<string | null>(null)
 /** The card that just dropped, for a brief glow. */
@@ -214,6 +222,10 @@ watch(
     calendarRange.value = null
     notFound.value = false
     settingsOpen.value = false
+    automationsOpen.value = false
+    automations.reset()
+    // Doorways are shown on the columns; failing to load them leaves the board usable.
+    void automations.load(id).catch(() => undefined)
     try {
       await Promise.all([store.open(id), lists.load(id), cards.loadLabels(id)])
       loadView()
@@ -231,7 +243,7 @@ const live = useBoardLive(toRef(props, 'boardId'), () => openCardId.value, {
   reloadLists: () => lists.refresh(),
   refreshCard: (cardId) => cards.refresh(cardId),
   reloadLabels: () => cards.refreshLabels(),
-  reloadBoard: () => Promise.all([store.refreshCurrent(), store.loadNav()]),
+  reloadBoard: () => Promise.all([store.refreshCurrent(), store.loadNav(), automations.refresh()]),
   refreshDetail: (cardId, part) => detail.refresh(cardId, part),
   reloadView: loadView,
   gone: () => {
@@ -240,6 +252,48 @@ const live = useBoardLive(toRef(props, 'boardId'), () => openCardId.value, {
     void router.push('/')
   },
 })
+
+// Automations that ran on this tab's own changes: toast with Undo, then reload what they touched.
+useAutomationNotices(
+  () => props.boardId,
+  () => {
+    void lists.refresh()
+    loadView()
+  },
+)
+
+/** Lists, labels and members the automations sheet and doorway markers name. */
+const automationRefs = computed<BoardRefs>(() => ({
+  lists: ordered.value.map((l) => ({ id: l.id, name: l.name })),
+  labels: (cards.labels ?? []).map((l) => ({ id: l.id, name: l.name })),
+  members: store.members.map((m) => ({ userId: m.userId, displayName: m.displayName, role: m.role })),
+}))
+
+/** Cards that sit in a list while missing its warn-mode doorway's requirements. */
+function doorwayWarnings(list: BoardList) {
+  const warn = automations
+    .doorwaysFor(list.id)
+    .filter((d) => d.mode === 'Warn' && d.direction === 'Enter' && d.conditions.length)
+  if (!warn.length) return []
+  return list.cards
+    .map((c) => ({
+      title: c.title,
+      unmet: warn.flatMap((d) => unmetRequirements(c, d, automationRefs.value)),
+    }))
+    .filter((w) => w.unmet.length)
+}
+
+function openRefusedCard() {
+  const refusal = automations.refused
+  automations.refused = null
+  if (refusal) openCard(refusal.cardId)
+}
+
+async function moveAnyway() {
+  const refusal = automations.refused
+  automations.refused = null
+  if (refusal) await cards.move(refusal.cardId, refusal.listId, refusal.index, true)
+}
 
 function onDrop(event: SortableEvent) {
   const from = event.oldDraggableIndex
@@ -378,6 +432,30 @@ function onArchivedToggle(event: Event) {
             <path d="M13 2L3 14h9l-1 8 10-12h-9z" />
           </svg>
         </RouterLink>
+        <button
+          v-if="store.current.role !== 'Viewer'"
+          type="button"
+          class="ghost flex h-[42px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold"
+          aria-label="Automations"
+          title="Automations"
+          @click="automationsOpen = true"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="3" width="6" height="6" rx="1.5" />
+            <rect x="15" y="15" width="6" height="6" rx="1.5" />
+            <path d="M9 6h4a3 3 0 0 1 3 3v6" />
+          </svg>
+        </button>
         <button
           type="button"
           class="ghost flex h-[42px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold"
@@ -580,7 +658,17 @@ function onArchivedToggle(event: Event) {
               @archive-card="cards.archive"
               @drag-start="cards.beginDrag"
               @drop-card="onCardDrop"
-            />
+            >
+              <template #marker>
+                <DoorwayMarker
+                  v-if="automations.doorwaysFor(list.id).length"
+                  :doorways="automations.doorwaysFor(list.id)"
+                  :refs="automationRefs"
+                  :list-name="list.name"
+                  :warnings="doorwayWarnings(list)"
+                />
+              </template>
+            </ListColumn>
           </div>
           <NewListColumn v-if="editable" @create="create" />
         </VueDraggable>
@@ -615,6 +703,21 @@ function onArchivedToggle(event: Event) {
       </template>
     </div>
     <BoardSettingsSheet v-if="settingsOpen" @close="settingsOpen = false" />
+    <AutomationsSheet
+      v-if="automationsOpen"
+      :board-id="boardId"
+      :refs="automationRefs"
+      :can-manage="store.isOwner && !store.current.archivedAt && online"
+      @close="automationsOpen = false"
+    />
+    <DoorwayRefusal
+      v-if="automations.refused"
+      :refusal="automations.refused"
+      :can-override="store.isOwner"
+      @open-card="openRefusedCard"
+      @move-anyway="moveAnyway"
+      @close="automations.refused = null"
+    />
     <CardSheet
       v-if="openCardId"
       :card-id="openCardId"

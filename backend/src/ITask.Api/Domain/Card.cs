@@ -57,6 +57,9 @@ public class Card
 
     public DateTimeOffset? ArchivedAt { get; set; }
 
+    /// <summary>When the card arrived in its current list; set on save when it is created or changes list.</summary>
+    public DateTimeOffset ListEnteredAt { get; set; } = DateTimeOffset.UtcNow;
+
     /// <summary>Optimistic concurrency token. SQL Server generates it; on SQLite the context stamps it.</summary>
     [Timestamp]
     public byte[] RowVersion { get; set; } = [];

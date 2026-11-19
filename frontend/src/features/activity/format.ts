@@ -30,6 +30,8 @@ const emojis: Record<string, string> = {
   checklist: '☑️',
   comment: '💬',
   attachment: '📎',
+  automation: '⚡',
+  doorway: '🚪',
 }
 
 const fieldNames: Record<string, string> = {
@@ -246,6 +248,26 @@ function sentence(type: string, data: Record<string, unknown>): [string, string 
     case 'attachment.deleted':
       return [`removed ${str(data.fileName) ?? 'a file'} from`, card]
 
+    case 'automation.created':
+      return [`added the ${data.kind === 'Doorway' ? 'doorway' : 'automation'}`, str(data.rule)]
+    case 'automation.updated':
+      return [
+        data.enabled === false
+          ? 'turned off the automation'
+          : data.enabled === true
+            ? 'turned on the automation'
+            : 'changed the automation',
+        str(data.rule),
+      ]
+    case 'automation.deleted':
+      return ['deleted the automation', str(data.rule)]
+    case 'automation.disabled':
+      return [`turned off ${quoted(data.rule)} because it refers to something gone`, null]
+    case 'automation.undone':
+      return [`undid ${quoted(data.rule)} on`, card]
+    case 'doorway.overridden':
+      return [`moved past the ${quoted(data.rule)} doorway with`, card]
+
     default:
       return card ? ['changed', card] : ['made a change', null]
   }
@@ -253,8 +275,21 @@ function sentence(type: string, data: Record<string, unknown>): [string, string 
 
 /** Builds the readable line for an entry; unknown types fall back to a generic sentence. */
 export function describeActivity(entry: Pick<ActivityEntry, 'type' | 'data'>): ActivityLine {
-  const [what, target] = sentence(entry.type, entry.data ?? {})
+  const data = entry.data ?? {}
+  const [what, target] = sentence(entry.type, data)
+  const rule = automationOf(data)
+  // Changes an automation made read "… (⚡ Finish flow)" so the feed explains itself.
+  if (rule && !entry.type.startsWith('automation.')) {
+    return { emoji: '⚡', what, target: `${target ?? ''} (⚡ ${rule.name})`.trim() }
+  }
   return { emoji: emojis[categoryOf(entry.type)] ?? '⚡', what, target: target || null }
+}
+
+/** The automation run that made an entry, or null for a person's own change. */
+export function automationOf(data: Record<string, unknown>): { name: string; runId: string | null } | null {
+  const marker = data.automation as { name?: unknown; runId?: unknown } | undefined
+  const name = str(marker?.name)
+  return name ? { name, runId: str(marker?.runId) } : null
 }
 
 export { dayLabel, groupByDay, timeLabel, type DayGroup } from '@/shared/ui/dates'

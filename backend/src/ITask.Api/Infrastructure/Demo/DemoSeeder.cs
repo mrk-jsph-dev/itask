@@ -78,7 +78,17 @@ public sealed partial class DemoSeeder(
             && !await db.BoardMembers.AnyAsync(m => m.UserId == people["owner"].Id, ct))
         {
             DemoBoards.Add(db, people, clock.GetUtcNow());
-            await db.SaveChangesAsync(ct);
+
+            // The seeded history is a story, not new changes; the demo boards' automations must not act on it.
+            db.SuppressAutomations = true;
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            finally
+            {
+                db.SuppressAutomations = false;
+            }
         }
     }
 

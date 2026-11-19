@@ -53,9 +53,16 @@ public static class ActivityTypes
     public const string AttachmentAdded = "attachment.added";
     public const string AttachmentDeleted = "attachment.deleted";
 
+    public const string AutomationCreated = "automation.created";
+    public const string AutomationUpdated = "automation.updated";
+    public const string AutomationDeleted = "automation.deleted";
+    public const string AutomationDisabled = "automation.disabled";
+    public const string AutomationUndone = "automation.undone";
+    public const string DoorwayOverridden = "doorway.overridden";
+
     /// <summary>Categories accepted by the feeds' <c>type</c> filter.</summary>
     public static readonly IReadOnlySet<string> Categories = new HashSet<string>(StringComparer.Ordinal)
     {
-        "board", "member", "list", "card", "label", "checklist", "comment", "attachment",
+        "board", "member", "list", "card", "label", "checklist", "comment", "attachment", "automation", "doorway",
     };
 }

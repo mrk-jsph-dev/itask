@@ -1,11 +1,13 @@
 using FluentValidation;
 using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Validation;
+using ITask.Api.Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,10 +19,12 @@ namespace ITask.Api.Features.Cards.MoveCard;
 /// (neither appends). The response is 409 when <c>RowVersion</c> no longer matches (someone else
 /// changed the card) or the neighbours are not adjacent (the client's order is stale).
 /// <c>Renumbered</c> says the target list's positions were reset, so other cards' row versions changed.
+/// A block-mode doorway on the lists it leaves or enters returns 409 with <c>code: "doorway"</c>;
+/// an Owner can pass <c>OverrideDoorway</c> to move it anyway, which is recorded.
 /// </summary>
 public static class MoveCard
 {
-    public sealed record Request(Guid ListId, Guid? BeforeId, Guid? AfterId, string RowVersion);
+    public sealed record Request(Guid ListId, Guid? BeforeId, Guid? AfterId, string RowVersion, bool? OverrideDoorway = null);
 
     public sealed record Response(CardSummary Card, bool Renumbered);
 
@@ -95,6 +99,21 @@ public static class MoveCard
             if (NeighbourSlot.Find(others, c => c.Id, request.BeforeId, request.AfterId) is not { } index)
             {
                 return BoardResults.Conflict("The list's cards changed. Reload and try again.");
+            }
+
+            if (await ListDoorways.CheckAsync(db, card, card.ListId, request.ListId, ct) is { } blocked)
+            {
+                if (request.OverrideDoorway != true || !await access.HasAtLeastAsync(boardId, BoardRole.Owner, ct))
+                {
+                    return blocked.ToProblem();
+                }
+
+                await activity.RecordCardAsync(ActivityTypes.DoorwayOverridden, boardId, cardId, new
+                {
+                    rule = blocked.Rule.Name,
+                    list = blocked.ListName,
+                    unmet = blocked.Unmet,
+                }, ct);
             }
 
             if (card.ListId == request.ListId)
