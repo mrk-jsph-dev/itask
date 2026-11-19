@@ -39,7 +39,7 @@ const lists = [
   archivedAt: null,
 }))
 
-const card = {
+const baseCard = {
   id: 'c1',
   listId: 'l1',
   number: 1,
@@ -84,6 +84,7 @@ const runsHeader = (runs: unknown[]) => Buffer.from(JSON.stringify(runs), 'utf8'
 
 /** Mocks a board whose Done list has a block-mode doorway that needs an assignee. */
 async function mockApi(page: Page) {
+  const card = { ...baseCard }
   const automations = [
     automation({
       id: 'a1',
@@ -253,7 +254,9 @@ test('show me once turns recorded steps into a rule, replayed before it is added
   await page.getByRole('menuitem', { name: /Move to list/ }).click()
   await page.getByRole('menuitem', { name: /In progress/ }).click()
   await expect(page.getByText('Do the rest of the steps')).toBeVisible()
+  const drafted = page.waitForResponse((r) => r.url().endsWith('/automations/from-recording'))
   await page.getByRole('button', { name: '⏹ Stop' }).click()
+  await drafted
 
   const editor = page.getByRole('dialog', { name: '⚡ Automations' })
   await expect(editor.getByLabel('Name')).toHaveValue('In progress routine')
