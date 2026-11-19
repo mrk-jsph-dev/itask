@@ -34,7 +34,10 @@ const emit = defineEmits<{
   showUndated: []
 }>()
 
-/** Phones show one week instead of the month. */
+/** Tasks a month cell lists before folding the rest behind "+N more". */
+const perCell = 3
+
+/** Phones always show one week, stacked by day. */
 const narrow = ref(false)
 let media: MediaQueryList | null = null
 const onMedia = () => (narrow.value = !!media?.matches)
@@ -45,21 +48,32 @@ onMounted(() => {
 })
 onBeforeUnmount(() => media?.removeEventListener('change', onMedia))
 
+const picked = ref<'month' | 'week'>('month')
+const mode = computed(() => (narrow.value ? 'week' : picked.value))
+
 const today = dayKey(new Date())
 const shownMonth = computed(() => parseMonth(props.month))
-/** Week mode's anchor day; starts at today, or the 1st when another month is in the URL. */
-const weekAnchor = ref(
-  props.month && props.month !== monthKey(new Date()) ? shownMonth.value : new Date(),
-)
+/** First day to show in week mode: today in the current month, else the 1st of the shown month. */
+const anchorFor = () =>
+  monthKey(shownMonth.value) === monthKey(new Date()) ? new Date() : shownMonth.value
+const weekAnchor = ref(anchorFor())
+
+function pickMode(value: 'month' | 'week') {
+  if (value === 'week') weekAnchor.value = anchorFor()
+  picked.value = value
+}
 
 const days = computed(() =>
-  narrow.value ? weekDays(weekAnchor.value) : monthGrid(shownMonth.value),
+  mode.value === 'week' ? weekDays(weekAnchor.value) : monthGrid(shownMonth.value),
 )
 const byDate = computed(() => byDay(props.cards ?? []))
+/** Month cells opened past the "+N more" fold. */
+const expanded = ref(new Set<string>())
 
 watch(
   days,
   (value, old) => {
+    expanded.value = new Set()
     if (!old || dayKey(value[0]!) !== dayKey(old[0]!) || value.length !== old.length)
       emit('range', rangeOf(value))
   },
@@ -67,12 +81,10 @@ watch(
 )
 
 const title = computed(() => {
-  if (!narrow.value)
+  if (mode.value === 'month')
     return shownMonth.value.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-  const first = days.value[0]!
-  const last = days.value[6]!
   const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  return `${fmt(first)} – ${fmt(last)}`
+  return `${fmt(days.value[0]!)} – ${fmt(days.value[6]!)}`
 })
 
 function setMonth(date: Date) {
@@ -81,7 +93,7 @@ function setMonth(date: Date) {
 }
 
 function step(delta: -1 | 1) {
-  if (narrow.value) {
+  if (mode.value === 'week') {
     weekAnchor.value = addDays(weekAnchor.value, delta * 7)
     setMonth(weekAnchor.value)
   } else {
@@ -95,8 +107,26 @@ function goToday() {
 }
 
 const weekdayNames = computed(() =>
-  weekDays(new Date()).map((d) => d.toLocaleDateString(undefined, { weekday: 'short' })),
+  weekDays(new Date()).map((d) => ({
+    long: d.toLocaleDateString(undefined, { weekday: 'long' }),
+    short: d.toLocaleDateString(undefined, { weekday: 'short' }),
+  })),
 )
+
+function shown(day: Date) {
+  const all = byDate.value.get(dayKey(day)) ?? []
+  if (mode.value === 'week' || expanded.value.has(dayKey(day))) return all
+  return all.slice(0, perCell)
+}
+
+const hiddenCount = (day: Date) =>
+  mode.value === 'week' || expanded.value.has(dayKey(day))
+    ? 0
+    : Math.max(0, (byDate.value.get(dayKey(day))?.length ?? 0) - perCell)
+
+function expand(day: Date) {
+  expanded.value = new Set([...expanded.value, dayKey(day)])
+}
 
 const dragging = ref<string | null>(null)
 const over = ref<string | null>(null)
@@ -127,47 +157,87 @@ function onChipKey(event: KeyboardEvent, card: Card) {
   emit('move', card.id, moveToDay(card.dueAt, dayKey(target)))
 }
 
-const chipClass = (card: Card) => {
+/** A task's accent: red when overdue, grey when done, else its first label's colour or the app accent. */
+function tone(card: Card): string {
   const state = card.dueAt ? dueState(card.dueAt, card.completedAt) : null
-  if (state === 'done') return 'bg-[#F3F4F6] text-muted line-through'
-  if (state === 'overdue') return 'bg-[#FEF2F2] text-red-800'
-  return 'bg-[#EFF4FF] text-[#1E3A8A]'
+  if (state === 'done') return '#9CA3AF'
+  if (state === 'overdue') return '#DC2626'
+  return card.labels[0]?.color ?? '#1D5BF5'
 }
+
+const time = (card: Card) =>
+  card.dueAt
+    ? new Date(card.dueAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    : ''
 
 const dayLabel = (d: Date) =>
   d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+const outside = (d: Date) => mode.value === 'month' && d.getMonth() !== shownMonth.value.getMonth()
+
+const segment = (active: boolean) =>
+  active
+    ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+    : 'font-medium text-[#374151] hover:text-ink'
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
-    <div class="flex flex-wrap items-center gap-2">
-      <h2 class="mr-auto text-lg font-semibold" aria-live="polite">{{ title }}</h2>
+  <div class="flex flex-col gap-4">
+    <div class="cal-head">
+      <div
+        v-if="!narrow"
+        role="radiogroup"
+        aria-label="Calendar range"
+        class="flex gap-1 justify-self-start rounded-[12px] bg-hover p-1"
+      >
+        <button
+          v-for="value in ['week', 'month'] as const"
+          :key="value"
+          type="button"
+          role="radio"
+          :aria-checked="mode === value"
+          class="seg h-8 rounded-[9px] px-3.5 text-sm capitalize"
+          :class="segment(mode === value)"
+          @click="pickMode(value)"
+        >
+          {{ value }}
+        </button>
+      </div>
+
+      <div class="flex items-center justify-center gap-1 justify-self-center">
+        <button
+          type="button"
+          class="ghost flex h-9 w-9 items-center justify-center rounded-full text-lg text-muted"
+          :aria-label="mode === 'week' ? 'Previous week' : 'Previous month'"
+          @click="step(-1)"
+        >
+          ‹
+        </button>
+        <h2
+          class="min-w-[11ch] text-center text-lg font-semibold tracking-tight"
+          aria-live="polite"
+        >
+          {{ title }}
+        </h2>
+        <button
+          type="button"
+          class="ghost flex h-9 w-9 items-center justify-center rounded-full text-lg text-muted"
+          :aria-label="mode === 'week' ? 'Next week' : 'Next month'"
+          @click="step(1)"
+        >
+          ›
+        </button>
+      </div>
+
       <button
         type="button"
-        class="ghost h-9 rounded-full border border-line px-3 text-sm font-semibold"
+        class="ghost h-9 justify-self-end rounded-full border border-line px-4 text-sm font-semibold"
         @click="goToday"
       >
         Today
       </button>
-      <button
-        type="button"
-        class="ghost h-9 w-9 rounded-full border border-line"
-        :aria-label="narrow ? 'Previous week' : 'Previous month'"
-        @click="step(-1)"
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        class="ghost h-9 w-9 rounded-full border border-line"
-        :aria-label="narrow ? 'Next week' : 'Next month'"
-        @click="step(1)"
-      >
-        ›
-      </button>
     </div>
 
-    <p v-if="undatedCount" class="text-sm text-muted">
+    <p v-if="undatedCount" class="-mt-1 text-sm text-muted">
       {{ undatedCount }} {{ undatedCount === 1 ? 'task has' : 'tasks have' }} no due date.
       <button type="button" class="font-semibold text-accent" @click="emit('showUndated')">
         Show in List
@@ -177,59 +247,83 @@ const dayLabel = (d: Date) =>
       Drag a task to another day, or focus it and press Alt with an arrow key.
     </p>
 
-    <div v-if="cards === null" class="cal-grid" aria-busy="true" aria-label="Loading calendar">
-      <SkeletonBlock v-for="i in narrow ? 7 : 35" :key="i" height="96px" />
+    <div
+      v-if="cards === null"
+      class="cal-frame"
+      :class="mode"
+      aria-busy="true"
+      aria-label="Loading calendar"
+    >
+      <div v-for="i in mode === 'week' ? 7 : 35" :key="i" class="bg-panel p-2.5">
+        <SkeletonBlock height="14px" width="24px" />
+      </div>
     </div>
 
-    <div v-else class="cal-grid" :class="{ week: narrow }" role="grid" :aria-label="title">
+    <div
+      v-else
+      class="cal-frame"
+      :class="[mode, { stacked: narrow }]"
+      role="grid"
+      :aria-label="title"
+    >
       <template v-if="!narrow">
         <div
           v-for="name in weekdayNames"
-          :key="name"
-          class="px-2 pb-1 text-xs font-semibold text-muted"
+          :key="name.long"
           role="columnheader"
+          class="bg-[#F8FAFD] py-2.5 text-center text-[13px] font-semibold text-[#374151]"
         >
-          {{ name }}
+          <span class="hidden lg:inline">{{ name.long }}</span>
+          <span class="lg:hidden">{{ name.short }}</span>
         </div>
       </template>
+
       <div
         v-for="(day, i) in days"
         :key="dayKey(day)"
         role="gridcell"
         :aria-label="dayLabel(day)"
         :data-day="dayKey(day)"
-        class="day fade-up flex min-h-24 min-w-0 flex-col gap-1 rounded-[14px] border p-1.5"
+        class="day fade-in flex min-w-0 flex-col gap-1.5 p-2"
         :class="[
-          !narrow && day.getMonth() !== shownMonth.getMonth()
-            ? 'bg-hover/60 text-muted'
-            : 'bg-panel',
-          over === dayKey(day) ? 'border-accent ring-2 ring-accent/20' : 'border-line-soft',
+          outside(day) ? 'bg-[#FAFBFD]' : 'bg-panel',
+          { 'is-over': over === dayKey(day), 'is-today': dayKey(day) === today },
         ]"
-        :style="{ '--i': Math.min(i % 7, 6) }"
+        :style="{ '--i': Math.min(i, 12) }"
         @dragover.prevent="editable && (over = dayKey(day))"
         @dragleave="over === dayKey(day) && (over = null)"
         @drop.prevent="onDrop($event, dayKey(day))"
       >
-        <span
-          class="flex h-6 items-center gap-1.5 px-1 text-xs font-semibold"
-          :class="dayKey(day) === today ? 'text-accent' : ''"
-        >
-          <span v-if="narrow">{{ day.toLocaleDateString(undefined, { weekday: 'short' }) }}</span>
-          <span :class="dayKey(day) === today ? 'rounded-full bg-accent px-1.5 text-white' : ''">{{
-            day.getDate()
+        <span class="flex items-center gap-2 px-0.5">
+          <span
+            class="flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-[15px] font-semibold"
+            :class="
+              dayKey(day) === today
+                ? 'bg-accent text-white'
+                : outside(day)
+                  ? 'text-[#B6BDC9]'
+                  : 'text-ink'
+            "
+            >{{ day.getDate() }}</span
+          >
+          <span v-if="narrow" class="text-xs font-semibold text-muted">{{
+            day.toLocaleDateString(undefined, { weekday: 'long' })
           }}</span>
         </span>
+
         <button
-          v-for="card in byDate.get(dayKey(day)) ?? []"
+          v-for="card in shown(day)"
           :key="card.id"
           type="button"
           :draggable="editable"
           :data-card-chip="card.id"
-          class="press truncate rounded-lg px-2 py-1 text-left text-xs font-semibold"
-          :class="[
-            chipClass(card),
-            { 'opacity-50': dragging === card.id, 'cursor-grab': editable },
-          ]"
+          class="task lift flex min-w-0 flex-col items-start gap-0.5 rounded-[8px] py-1.5 pr-2 pl-2.5 text-left"
+          :class="{
+            'is-dragging': dragging === card.id,
+            'cursor-grab': editable,
+            'is-done': !!card.completedAt,
+          }"
+          :style="{ '--tone': tone(card) }"
           :aria-label="`${card.key} ${card.title}`"
           :aria-keyshortcuts="
             editable ? 'Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown' : undefined
@@ -239,7 +333,28 @@ const dayLabel = (d: Date) =>
           @dragstart="onDragStart($event, card)"
           @dragend="dragging = null"
         >
-          <span v-if="card.emoji" aria-hidden="true">{{ card.emoji }} </span>{{ card.title }}
+          <span
+            v-if="card.labels[0] && mode === 'week'"
+            class="text-[11px] font-semibold opacity-80"
+            >{{ card.labels[0].name }}</span
+          >
+          <span
+            class="w-full truncate text-xs font-semibold"
+            :class="{ 'line-clamp-2 whitespace-normal': mode === 'week' }"
+            ><span v-if="card.emoji" aria-hidden="true">{{ card.emoji }} </span
+            >{{ card.title }}</span
+          >
+          <span v-if="mode === 'week'" class="text-[11px] opacity-70">{{ time(card) }}</span>
+        </button>
+
+        <button
+          v-if="hiddenCount(day)"
+          type="button"
+          class="ghost self-start rounded-md px-1.5 py-0.5 text-xs font-semibold text-muted"
+          :aria-label="`Show ${hiddenCount(day)} more tasks on ${dayLabel(day)}`"
+          @click="expand(day)"
+        >
+          +{{ hiddenCount(day) }} more
         </button>
       </div>
     </div>
@@ -247,19 +362,78 @@ const dayLabel = (d: Date) =>
 </template>
 
 <style scoped>
-.cal-grid {
+.cal-head {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
 }
 
-.cal-grid.week {
+/* Hairline grid: the frame's background shows through 1px gaps between cells. */
+.cal-frame {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--color-line-soft);
+  border-radius: 18px;
+  background: var(--color-line-soft);
+}
+
+.cal-frame.month .day {
+  min-height: 112px;
+}
+
+.cal-frame.week .day {
+  min-height: 320px;
+}
+
+.cal-frame.stacked {
   grid-template-columns: 1fr;
 }
 
+.cal-frame.stacked .day {
+  min-height: 64px;
+}
+
+.seg,
 .day {
   transition:
-    border-color var(--d-fast) var(--ease-out),
-    box-shadow var(--d-fast) var(--ease-out);
+    background-color var(--d-base) var(--ease-out),
+    box-shadow var(--d-base) var(--ease-out),
+    color var(--d-base) var(--ease-out);
+}
+
+.day.is-today {
+  box-shadow: inset 0 2px 0 var(--color-accent);
+}
+
+.day.is-over {
+  background: color-mix(in srgb, var(--color-accent) 7%, white);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.task {
+  border-left: 3px solid var(--tone);
+  background: color-mix(in srgb, var(--tone) 10%, white);
+  color: color-mix(in srgb, var(--tone) 70%, #111827);
+}
+
+.task:hover {
+  background: color-mix(in srgb, var(--tone) 16%, white);
+}
+
+.task.is-done {
+  text-decoration: line-through;
+}
+
+.task.is-dragging {
+  opacity: 0.45;
+}
+
+@media (max-width: 767px) {
+  .cal-head {
+    grid-template-columns: 1fr auto;
+  }
 }
 </style>
