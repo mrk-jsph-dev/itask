@@ -350,10 +350,12 @@ export const cardsApi = {
   get: (boardId: string, cardId: string) => api.get<CardDetail>(`${cards(boardId)}/${cardId}`),
   update: (boardId: string, cardId: string, patch: CardPatch) =>
     api.patch<Card>(`${cards(boardId)}/${cardId}`, patch),
-  move: (boardId: string, cardId: string, move: CardMove, rowVersion: string) =>
+  /** `overrideDoorway` (Owners) moves the card through a block-mode doorway anyway. */
+  move: (boardId: string, cardId: string, move: CardMove, rowVersion: string, overrideDoorway = false) =>
     api.put<{ card: Card; renumbered: boolean }>(`${cards(boardId)}/${cardId}/position`, {
       ...move,
       rowVersion,
+      ...(overrideDoorway ? { overrideDoorway } : {}),
     }),
   complete: (boardId: string, cardId: string) =>
     api.post<Card>(`${cards(boardId)}/${cardId}/complete`),

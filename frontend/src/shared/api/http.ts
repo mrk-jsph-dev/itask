@@ -10,6 +10,8 @@ export class ApiError extends Error {
     message: string,
     public readonly errors?: Record<string, string[]>,
     public readonly detail?: string,
+    /** Extra ProblemDetails members, e.g. `code` and `unmet` on a doorway refusal. */
+    public readonly extensions: Record<string, unknown> = {},
   ) {
     super(message)
     this.name = 'ApiError'
@@ -23,6 +25,15 @@ let liveConnection: string | null = null
 
 export function setLiveConnection(id: string | null) {
   liveConnection = id
+}
+
+type ResponseListener = (response: Response) => void
+const responseListeners = new Set<ResponseListener>()
+
+/** Calls `listener` with every API response (e.g. to read a header); returns the unsubscribe. */
+export function onApiResponse(listener: ResponseListener): () => void {
+  responseListeners.add(listener)
+  return () => responseListeners.delete(listener)
 }
 
 export async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -40,13 +51,15 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
     },
   })
   noteResponse(response)
+  for (const listener of responseListeners) listener(response)
 
   if (!response.ok) {
     let title = response.statusText
     let errors: Record<string, string[]> | undefined
     let detail: string | undefined
+    let extensions: Record<string, unknown> = {}
     try {
-      const problem = (await response.json()) as {
+      const problem = (await response.json()) as Record<string, unknown> & {
         title?: string
         detail?: string
         errors?: Record<string, string[]>
@@ -54,10 +67,11 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
       title = problem.title ?? title
       errors = problem.errors
       detail = problem.detail
+      extensions = problem
     } catch {
       // Body was not JSON; keep the status text.
     }
-    throw new ApiError(response.status, title, errors, detail)
+    throw new ApiError(response.status, title, errors, detail, extensions)
   }
 
   if (response.status === 204) return undefined as T

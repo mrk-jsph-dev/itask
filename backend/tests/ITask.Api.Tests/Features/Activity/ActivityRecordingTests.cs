@@ -135,6 +135,24 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
         ["comment.deleted"] = new(
             async c => c.Id = await Ctx.CreatedIdAsync(c.Post($"{c.Card.Url}/comments", new { body = "Hi" })),
             c => c.Owner.DeleteAsync(new Uri($"{c.Card.Url}/comments/{c.Id}", UriKind.Relative))),
+        ["automation.created"] = new(null, c => c.Owner.PostAutomationAsync(c.Card.BoardId,
+            AutomationTestKit.Rule(new { type = "card.completed" }, [new { type = "complete" }]))),
+        ["automation.updated"] = new(
+            async c => c.Id = await Ctx.CreatedIdAsync(c.Owner.PostAutomationAsync(c.Card.BoardId,
+                AutomationTestKit.Rule(new { type = "card.completed" }, [new { type = "complete" }]))),
+            c => c.Owner.PutAsJsonAsync($"{c.Board}/automations/{c.Id}/enabled", new { enabled = false })),
+        ["automation.deleted"] = new(
+            async c => c.Id = await Ctx.CreatedIdAsync(c.Owner.PostAutomationAsync(c.Card.BoardId,
+                AutomationTestKit.Rule(new { type = "card.completed" }, [new { type = "complete" }]))),
+            c => c.Owner.DeleteAsync(new Uri($"{c.Board}/automations/{c.Id}", UriKind.Relative))),
+        ["automation.undone"] = new(
+            async c =>
+            {
+                await c.Owner.CreateAutomationAsync(c.Card.BoardId,
+                    AutomationTestKit.Rule(new { type = "card.completed" }, [new { type = "priority", priority = "High" }]));
+                c.Id = (await c.Post($"{c.Card.Url}/complete")).Runs().Single().RunId;
+            },
+            c => c.Post($"{c.Board}/automation-runs/{c.Id}/undo")),
         ["attachment.added"] = new(null, c => c.Factory.UploadPdfAsync(c.Owner, c.Card)),
         ["attachment.deleted"] = new(
             async c => c.Id = await Ctx.CreatedIdAsync(c.Factory.UploadPdfAsync(c.Owner, c.Card)),
@@ -194,7 +212,8 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
             .GetFields()
             .Where(f => f.IsLiteral)
             .Select(f => (string)f.GetRawConstantValue()!)
-            .Where(t => t != "board.created");
+            // These are always recorded next to the change that caused them; AutomationTests cover them.
+            .Where(t => t is not ("board.created" or "automation.disabled" or "doorway.overridden"));
 
         Assert.Empty(constants.Except(Cases.Keys));
     }

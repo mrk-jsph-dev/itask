@@ -1,3 +1,4 @@
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Realtime;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,7 @@ public static class DatabaseExtensions
     {
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
-            options.AddInterceptors(sp.GetRequiredService<BoardEventsInterceptor>());
+            options.AddInterceptors(sp.GetRequiredService<AutomationInterceptor>(), sp.GetRequiredService<BoardEventsInterceptor>());
             var provider = config["Database:Provider"] ?? "SqlServer";
             var connectionString = config.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");

@@ -1,3 +1,4 @@
+using ITask.Api.Infrastructure.Automations;
 using ITask.Api.Infrastructure.Recurrence;
 
 namespace ITask.Api.Infrastructure.Maintenance;
@@ -12,6 +13,7 @@ public static class MaintenanceServiceExtensions
         services.AddScoped<IMaintenanceJob, OrphanUploadsJob>();
         services.AddScoped<IMaintenanceJob, UnverifiedAccountsJob>();
         services.AddScoped<IMaintenanceJob, RecurringCardsJob>();
+        services.AddScoped<IMaintenanceJob, AutomationTimersJob>();
         services.AddScoped<MaintenanceRunner>();
         services.AddHostedService<MaintenanceService>();
         return services;

@@ -106,6 +106,7 @@ function save(input: ListInput) {
         :aria-label="`${cards.length} cards${list.wipLimit ? `, limit ${list.wipLimit}` : ''}`"
         >{{ cards.length }}<template v-if="list.wipLimit">/{{ list.wipLimit }}</template></span
       >
+      <slot name="marker" />
       <template v-if="editable">
         <button
           ref="trigger"

@@ -66,6 +66,17 @@ export function describeNotification(n: AppNotification): NotificationLine {
         suffix: null,
         to: null,
       }
+    case 'automation': {
+      const text = str(n.data.text)
+      return {
+        emoji: '⚡',
+        actor: str(n.data.rule) ?? 'An automation',
+        what: 'flagged',
+        target: card,
+        suffix: text ? ` · ${text}` : null,
+        to,
+      }
+    }
     default:
       return { emoji: '🔔', actor: null, what: 'Update on', target: n.board.name, suffix: null, to }
   }

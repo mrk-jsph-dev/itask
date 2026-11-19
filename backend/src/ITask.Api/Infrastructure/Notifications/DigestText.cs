@@ -25,6 +25,8 @@ public static class DigestText
             NotificationTypes.DueSoon => $"{card} is due {When(root, zone)} · {board}",
             NotificationTypes.Overdue => $"{card} is overdue · {board}",
             NotificationTypes.Invited => $"{who} invited you to {board}",
+            NotificationTypes.Automation =>
+                $"{(root.TryGetProperty("rule", out var rule) ? rule.GetString() : "An automation")} flagged {card} · {board}",
             _ => $"Update on {board}",
         };
     }

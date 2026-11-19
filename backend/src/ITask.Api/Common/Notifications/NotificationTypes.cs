@@ -15,6 +15,9 @@ public static class NotificationTypes
     public const string Invited = "invited";
     public const string CommentOnMyCard = "comment_on_my_card";
 
+    /// <summary>Sent by a board automation's notify action; in-app only.</summary>
+    public const string Automation = "automation";
+
     /// <summary>Whether <paramref name="type"/> goes into the email digest under <paramref name="prefs"/>.</summary>
     public static bool InDigest(string type, NotificationPreference prefs)
     {

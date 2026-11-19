@@ -1,5 +1,6 @@
 using FluentValidation;
 using ITask.Api.Common.Activity;
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Ai;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
@@ -93,6 +94,7 @@ public static class ITaskServiceExtensions
         services.AddScoped<IActivityRecorder, ActivityRecorder>();
         services.AddNotifications();
         services.AddRealtime(config);
+        services.AddAutomations();
 
         services.AddAi(config);
         services.AddScoped<AiGateway>();
@@ -115,6 +117,7 @@ public static class ITaskServiceExtensions
             .WithOrigins(config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
             .AllowAnyHeader()
             .AllowAnyMethod()
+            .WithExposedHeaders(AutomationRunLog.Header)
             .AllowCredentials()));
 
         // Azure Container Apps terminates TLS at its ingress.
