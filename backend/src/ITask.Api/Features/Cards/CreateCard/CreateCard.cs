@@ -21,7 +21,7 @@ namespace ITask.Api.Features.Cards.CreateCard;
 /// </summary>
 public static class CreateCard
 {
-    private const int MaxAttempts = 3;
+    private const int MaxAttempts = 5;
 
     public sealed record Request(string Title);
 
@@ -101,7 +101,9 @@ public static class CreateCard
                 }
                 catch (DbUpdateConcurrencyException) when (attempt < MaxAttempts)
                 {
+                    // A short random pause keeps concurrent creates from colliding again in lockstep.
                     db.ChangeTracker.Clear();
+                    await Task.Delay(Random.Shared.Next(5, 25 * attempt), ct);
                     continue;
                 }
                 catch (DbUpdateConcurrencyException)
