@@ -1,6 +1,8 @@
 # Manual only: "Run workflow" (workflow_dispatch) runs CI, then deploys when run from main.
 # The deploy job uses the "production" environment (required reviewers, main only) and
-# signs in to Azure via OIDC (azure/login).
+# signs in to Azure via OIDC (azure/login). After a successful deploy, the release job tags
+# the commit vX.Y.Z (version from backend/Directory.Build.props) and publishes a GitHub
+# release with that version's CHANGELOG.md section; it does nothing if the release exists.
 name: ci-cd
 
 on:
@@ -114,3 +116,36 @@ jobs:
           echo "::add-mask::$token"
           npx --yes @azure/static-web-apps-cli@2.1.0 deploy frontend/dist \
             --deployment-token "$token" --env production
+
+  release:
+    name: GitHub release
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # create the version tag and release, only in this job
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Publish release notes for this version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' backend/Directory.Build.props)
+          tag="v${version}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish."
+            exit 0
+          fi
+          # The "## <version>" section of CHANGELOG.md, up to the next "## " heading.
+          awk -v heading="## ${version}" 'index($0, heading) == 1 { found = 1; next } found && /^## / { exit } found { print }' \
+            CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::CHANGELOG.md has no '## ${version}' section."
+            exit 1
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "iTask ${tag}" \
+            --notes-file notes.md --generate-notes --latest

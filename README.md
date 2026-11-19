@@ -130,6 +130,11 @@ use admin actions that change other accounts.
 
 The deploy job signs in to Azure with **OIDC** (no stored cloud secret), pushes the
 API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Static Web Apps.
+After a successful deploy, the **release** job tags the commit `vX.Y.Z` (the `<Version>` in
+`backend/Directory.Build.props`) and publishes a GitHub release whose notes are that
+version's section of `CHANGELOG.md` plus the merged pull requests. Deploying the same
+version again leaves the existing release alone, so bump the version (and add its
+CHANGELOG section) for each release.
 
 ## First-time Azure setup (owner only)
 
