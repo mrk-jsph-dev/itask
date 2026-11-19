@@ -22,12 +22,15 @@ param crossSiteCookies bool
 param demoPassword string
 @secure()
 param turnstileSecretKey string
+@secure()
+param platformAdminEmails string
 param tags object
 
 // App secrets are Container Apps secrets (free), passed in on every deploy. Empty ones are left out.
 var optionalSecrets = filter([
   { name: 'demo-password', value: demoPassword, env: 'Demo__Password' }
   { name: 'turnstile-secret', value: turnstileSecretKey, env: 'Turnstile__SecretKey' }
+  { name: 'admin-emails', value: platformAdminEmails, env: 'Admin__Emails' }
 ], s => !empty(s.value))
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {

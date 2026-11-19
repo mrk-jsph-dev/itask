@@ -42,6 +42,10 @@ param demoPassword string = ''
 @secure()
 param turnstileSecretKey string = ''
 
+@description('Emails (; separated) granted Platform admin at startup and registration. Secure so it stays out of logs.')
+@secure()
+param platformAdminEmails string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var tags = { app: appName }
 
@@ -105,6 +109,7 @@ module api 'modules/containerapp.bicep' = {
     crossSiteCookies: crossSiteCookies
     demoPassword: demoPassword
     turnstileSecretKey: turnstileSecretKey
+    platformAdminEmails: platformAdminEmails
     tags: tags
   }
 }

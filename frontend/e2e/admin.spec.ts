@@ -53,3 +53,39 @@ test('platform admins see and lock users', async ({ page }) => {
   await expect(page.getByText('Locked', { exact: true })).toBeVisible()
   expect(locked).toBe(true)
 })
+
+test('platform admins change a user type but not their own', async ({ page }) => {
+  await signInAs(page, true)
+  let sent: unknown = null
+  await page.route('**/api/admin/users', (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          { ...user, isPlatformAdmin: true, isLocked: false },
+          { ...user, id: 'u2', email: 'bob@example.com', displayName: 'Bob', isLocked: false },
+          {
+            ...user,
+            id: 'u3',
+            email: 'demo-editor@example.com',
+            displayName: 'Demo Editor',
+            isDemo: true,
+            isLocked: false,
+          },
+        ],
+        nextCursor: null,
+      },
+    }),
+  )
+  await page.route('**/api/admin/users/u2/type', async (route) => {
+    sent = route.request().postDataJSON()
+    await route.fulfill({ status: 204 })
+  })
+
+  await page.goto('/admin/users')
+
+  await expect(page.getByLabel('User type for ada@example.com')).toBeDisabled()
+  await expect(page.getByLabel('User type for demo-editor@example.com')).toBeDisabled()
+  await page.getByLabel('User type for bob@example.com').selectOption('PlatformAdmin')
+  await expect(page.getByText('Bob is now a Platform admin.')).toBeVisible()
+  expect(sent).toEqual({ type: 'PlatformAdmin' })
+})

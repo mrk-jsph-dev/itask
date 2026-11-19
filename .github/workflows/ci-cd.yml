@@ -69,6 +69,7 @@ jobs:
           # production environment secrets, stored as Container Apps secrets by the Bicep deploy
           ITASK_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
           ITASK_TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          ITASK_PLATFORM_ADMIN_EMAILS: ${{ secrets.PLATFORM_ADMIN_EMAILS }} # optional; a secret so the emails stay out of public logs
           ITASK_SQL_ADMIN_GROUP_ID: ${{ vars.SQL_ADMIN_GROUP_ID }} # optional, not a secret
         run: |
           out=$(az deployment group create \

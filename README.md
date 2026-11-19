@@ -72,7 +72,10 @@ Want SQL Server locally for parity with Azure SQL? See `docker-compose.yml`.
 
 ## Roles
 
-- App level: **Platform admin** and **User**. Admins manage accounts, not other people's boards.
+- App level: **Platform admin** and **User**. Everyone who registers is a User. Platform
+  admins manage accounts (list, lock, change user type) but not other people's boards.
+  The first admin comes from the `PLATFORM_ADMIN_EMAILS` secret (below); after that,
+  admins promote others on Admin › Users. Admins can't demote themselves, so one always remains.
 - Board level: **Owner**, **Editor**, **Viewer** (viewers can comment).
 - Demo accounts (demo environment only): one per role, on a shared sample board.
 
@@ -100,9 +103,12 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
    ```
 2. **GitHub → Settings → Environments → New environment `production`:** add yourself
    as a required reviewer and limit deployment branches to `main`. Add these
-   **environment secrets** (stored as Container Apps secrets on each deploy; both optional):
+   **environment secrets** (stored as Container Apps secrets on each deploy; all optional):
    - `DEMO_PASSWORD`: password of the demo accounts (empty = demo sign-in off)
    - `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key (empty = check skipped)
+   - `PLATFORM_ADMIN_EMAILS`: emails (`;` separated) made Platform admin at startup and
+     when they register. Kept as a secret so the addresses stay out of public run logs.
+     Removing an email later does not demote the account; use Admin › Users for that.
 3. **GitHub → Settings → Secrets and variables → Actions → Variables** (not secrets,
    none of these are sensitive): `AZURE_CLIENT_ID` (bootstrap output `deployClientId`),
    `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and optionally `TURNSTILE_SITE_KEY` and

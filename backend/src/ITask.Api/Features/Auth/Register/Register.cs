@@ -1,5 +1,6 @@
 using System.Text;
 using FluentValidation;
+using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Security;
 using ITask.Api.Common.Validation;
@@ -41,6 +42,7 @@ public static class Register
         private static async Task<Results<Ok, ValidationProblem>> Handle(
             Request request,
             UserManager<AppUser> users,
+            PlatformAdmins admins,
             IEmailSender<AppUser> emailSender,
             HttpContext http)
         {
@@ -54,6 +56,8 @@ public static class Register
                     .GroupBy(e => e.Code)
                     .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray()));
             }
+
+            await admins.GrantIfListedAsync(user);
 
             var code = await users.GenerateEmailConfirmationTokenAsync(user);
             var query = new Dictionary<string, string?>

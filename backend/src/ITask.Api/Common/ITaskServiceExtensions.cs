@@ -79,6 +79,9 @@ public static class ITaskServiceExtensions
 
         services.AddBlobStorage(config);
 
+        services.Configure<PlatformAdminOptions>(config.GetSection(PlatformAdminOptions.Section));
+        services.AddScoped<PlatformAdmins>();
+
         services.Configure<DemoOptions>(config.GetSection(DemoOptions.Section));
         services.AddScoped<DemoSeeder>();
         services.AddMaintenance(config);
@@ -135,5 +138,6 @@ public static class ITaskServiceExtensions
 
         await using var scope = app.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<DemoSeeder>().SeedAsync(CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<PlatformAdmins>().GrantListedAsync();
     }
 }
