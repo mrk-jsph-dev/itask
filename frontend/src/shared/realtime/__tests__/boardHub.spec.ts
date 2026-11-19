@@ -10,12 +10,11 @@ class FakeHub implements HubLike {
   reconnecting = () => {}
   reconnected = () => {}
   closed = () => {}
-  start = vi.fn(async () => {})
-  stop = vi.fn(async () => {})
+  start = vi.fn<() => Promise<void>>(async () => {})
+  stop = vi.fn<() => Promise<void>>(async () => {})
   // `never` fits HubLike's generic result type.
-  invoke = vi.fn(
-    async (..._args: unknown[]) =>
-      [{ userId: 'u2', displayName: 'Bo', avatarColor: '#000' }] as never,
+  invoke = vi.fn<(...args: unknown[]) => Promise<never>>(
+    async () => [{ userId: 'u2', displayName: 'Bo', avatarColor: '#000' }] as never,
   )
 
   on(method: string, handler: (...args: never[]) => void) {
@@ -35,8 +34,13 @@ class FakeHub implements HubLike {
   }
 }
 
-function handlers(): BoardLiveHandlers & Record<string, ReturnType<typeof vi.fn>> {
-  return { event: vi.fn(), presence: vi.fn(), accessLost: vi.fn(), resync: vi.fn() }
+function handlers() {
+  return {
+    event: vi.fn<BoardLiveHandlers['event']>(),
+    presence: vi.fn<BoardLiveHandlers['presence']>(),
+    accessLost: vi.fn<BoardLiveHandlers['accessLost']>(),
+    resync: vi.fn<BoardLiveHandlers['resync']>(),
+  } satisfies BoardLiveHandlers
 }
 
 const flush = () => vi.advanceTimersByTimeAsync(0)

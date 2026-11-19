@@ -16,14 +16,14 @@ const event = (type: string, cardId: string | null = null): BoardEvent => ({
 
 function actions(busy = false) {
   return {
-    busy: vi.fn(() => busy),
-    reloadLists: vi.fn(async () => {}),
-    refreshCard: vi.fn(async () => {}),
-    reloadLabels: vi.fn(async () => {}),
-    reloadBoard: vi.fn(async () => {}),
-    refreshDetail: vi.fn(async () => {}),
-    reloadView: vi.fn(),
-    gone: vi.fn(),
+    busy: vi.fn<LiveActions['busy']>(() => busy),
+    reloadLists: vi.fn<LiveActions['reloadLists']>(async () => {}),
+    refreshCard: vi.fn<LiveActions['refreshCard']>(async () => {}),
+    reloadLabels: vi.fn<LiveActions['reloadLabels']>(async () => {}),
+    reloadBoard: vi.fn<LiveActions['reloadBoard']>(async () => {}),
+    refreshDetail: vi.fn<LiveActions['refreshDetail']>(async () => {}),
+    reloadView: vi.fn<LiveActions['reloadView']>(),
+    gone: vi.fn<LiveActions['gone']>(),
   } satisfies LiveActions
 }
 
