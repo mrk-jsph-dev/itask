@@ -20,6 +20,8 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:5080',
         changeOrigin: true,
+        // The live board hub (SignalR) upgrades to WebSockets.
+        ws: true,
       },
     },
   },

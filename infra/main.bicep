@@ -14,10 +14,10 @@ param appName string = 'itask'
 @description('Full API image reference, e.g. ghcr.io/mrk-jsph-dev/itask-api:<git-sha>.')
 param apiImage string
 
-@description('Maximum API replicas.')
+@description('Maximum API replicas. Live updates (SignalR) and presence are in-process, so keep 1 unless Azure SignalR is switched on.')
 @minValue(0)
 @maxValue(3)
-param apiMaxReplicas int = 2
+param apiMaxReplicas int = 1
 
 @description('Name of the API identity created by the bootstrap step.')
 param apiIdentityName string = 'id-itask-api'

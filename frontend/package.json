@@ -17,6 +17,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.11",
     "dompurify": "^3.4.18",
     "marked": "^18.2.1",
     "pinia": "^4.0.3",

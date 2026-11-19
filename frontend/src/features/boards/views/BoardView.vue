@@ -11,15 +11,18 @@ import { toast } from '@/shared/ui/toast'
 import type { BoardList, Card, CardPatch, ListInput } from '../api'
 import BoardCalendarView from '../components/BoardCalendarView.vue'
 import BoardListView from '../components/BoardListView.vue'
+import BoardPresence from '../components/BoardPresence.vue'
 import BoardSettingsSheet from '../components/BoardSettingsSheet.vue'
 import CardSheet from '../components/CardSheet.vue'
 import BoardToolbar from '../components/BoardToolbar.vue'
 import ListColumn from '../components/ListColumn.vue'
 import NewListColumn from '../components/NewListColumn.vue'
+import { useCardDetailStore } from '../cardDetailStore'
 import { useCardsStore } from '../cardsStore'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
 import { activeCount, compareBy, emptyFilter, matches, type BoardState } from '../filters'
+import { useBoardLive } from '../live'
 import { useBoardState } from '../useBoardState'
 import { useViewsStore } from '../viewsStore'
 
@@ -31,6 +34,7 @@ const store = useBoardsStore()
 const lists = useListsStore()
 const cards = useCardsStore()
 const views = useViewsStore()
+const detail = useCardDetailStore()
 const auth = useAuthStore()
 const { state, view, set: setState } = useBoardState(toRef(props, 'boardId'))
 
@@ -174,6 +178,22 @@ watch(
   { immediate: true },
 )
 
+// Other people's changes, pushed by the API, reload what this page shows.
+const live = useBoardLive(toRef(props, 'boardId'), () => openCardId.value, {
+  busy: () => cards.busy(),
+  reloadLists: () => lists.refresh(),
+  refreshCard: (cardId) => cards.refresh(cardId),
+  reloadLabels: () => cards.refreshLabels(),
+  reloadBoard: () => Promise.all([store.refreshCurrent(), store.loadNav()]),
+  refreshDetail: (cardId, part) => detail.refresh(cardId, part),
+  reloadView: loadView,
+  gone: () => {
+    toast('This board is no longer available.', 'error')
+    void store.loadNav().catch(() => undefined)
+    void router.push('/')
+  },
+})
+
 function onDrop(event: SortableEvent) {
   const from = event.oldDraggableIndex
   const to = event.newDraggableIndex
@@ -268,6 +288,11 @@ function onArchivedToggle(event: Event) {
           class="rounded-full bg-hover px-2.5 py-1 text-xs font-semibold text-muted"
           >{{ store.current.role }}</span
         >
+        <BoardPresence
+          :users="live.presence.value"
+          :me-id="auth.user?.id ?? null"
+          :status="live.status.value"
+        />
       </template>
       <template #actions>
         <button

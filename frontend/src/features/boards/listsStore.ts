@@ -21,6 +21,19 @@ export const useListsStore = defineStore('lists', () => {
     if (boardId.value === id) lists.value = loaded
   }
 
+  /** Reloads the lists and their cards without the loading state, e.g. after a live event. */
+  async function refresh() {
+    const id = boardId.value
+    if (!id) return
+    const [loaded, hidden] = await Promise.all([
+      listsApi.all(id),
+      archived.value ? listsApi.archived(id) : Promise.resolve(null),
+    ])
+    if (boardId.value !== id) return
+    lists.value = loaded
+    if (hidden) archived.value = hidden
+  }
+
   async function loadArchived() {
     archived.value = await listsApi.archived(boardId.value!)
   }
@@ -98,6 +111,7 @@ export const useListsStore = defineStore('lists', () => {
     lists,
     archived,
     load,
+    refresh,
     loadArchived,
     create,
     rename,

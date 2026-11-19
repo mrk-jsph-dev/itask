@@ -77,6 +77,50 @@ export const useCardsStore = defineStore('cards', () => {
     await listsStore.load(boardId()).catch(() => undefined)
   }
 
+  /** True while a drag or move waits for the server; live refreshes hold off until then. */
+  function busy() {
+    return snapshot !== null
+  }
+
+  /**
+   * Puts `card` where the server has it: in its list by position. Archived cards, and cards
+   * whose list isn't shown, leave the board. Applying the same card twice changes nothing.
+   */
+  function upsert(card: Card) {
+    for (const list of listsStore.lists ?? []) {
+      if ((list.id !== card.listId || card.archivedAt) && list.cards.some((c) => c.id === card.id))
+        list.cards = list.cards.filter((c) => c.id !== card.id)
+    }
+    if (card.archivedAt) return
+    const target = listsStore.lists?.find((l) => l.id === card.listId)
+    if (!target) return
+    const cards = target.cards.filter((c) => c.id !== card.id)
+    const at = cards.findIndex((c) => c.position > card.position)
+    cards.splice(at < 0 ? cards.length : at, 0, card)
+    target.cards = cards
+  }
+
+  /** Reloads one card after someone else changed it; a card that's gone leaves the board. */
+  async function refresh(cardId: string) {
+    const id = boardId()
+    try {
+      const detail = await cardsApi.get(id, cardId)
+      if (listsStore.boardId === id) upsert(detail.card)
+    } catch (e) {
+      if (!(e instanceof ApiError && e.status === 404) || listsStore.boardId !== id) return
+      for (const list of listsStore.lists ?? [])
+        if (list.cards.some((c) => c.id === cardId))
+          list.cards = list.cards.filter((c) => c.id !== cardId)
+    }
+  }
+
+  /** Reloads the board labels without the loading state. */
+  async function refreshLabels() {
+    const id = boardId()
+    const loaded = await labelsApi.all(id)
+    if (listsStore.boardId === id) labels.value = loaded
+  }
+
   async function loadLabels(id: string) {
     labels.value = null
     const loaded = await labelsApi.all(id)
@@ -233,6 +277,10 @@ export const useCardsStore = defineStore('cards', () => {
     labels,
     find,
     patch,
+    busy,
+    upsert,
+    refresh,
+    refreshLabels,
     loadLabels,
     create,
     update,

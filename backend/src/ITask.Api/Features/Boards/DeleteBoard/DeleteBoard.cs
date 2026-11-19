@@ -2,6 +2,7 @@ using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Files;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Realtime;
 using ITask.Api.Common.Security;
 using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Storage;
@@ -24,7 +25,8 @@ public static class DeleteBoard
                 .RequireNonDemo();
 
         private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> Handle(
-            Guid boardId, AppDbContext db, IBoardAccess access, IBlobStorage storage, CancellationToken ct)
+            Guid boardId, AppDbContext db, IBoardAccess access, ICurrentUser user, IBlobStorage storage,
+            IBoardEvents events, TimeProvider clock, CancellationToken ct)
         {
             var role = await access.GetRoleAsync(boardId, ct);
             if (role is null)
@@ -45,6 +47,12 @@ public static class DeleteBoard
 
             await db.Boards.Where(b => b.Id == boardId).ExecuteDeleteAsync(ct);
             await storage.DeletePrefixAsync(AttachmentRules.BoardPrefix(boardId), ct);
+
+            // Not an activity entry (the board's feed is gone with it), so it is published here.
+            await events.PublishAsync(
+                [new BoardEvent(LiveTypes.BoardDeleted, boardId, null, null, null, null, user.Id, clock.GetUtcNow())],
+                null,
+                ct);
             return TypedResults.NoContent();
         }
     }
