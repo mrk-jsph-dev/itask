@@ -28,6 +28,11 @@ export const authApi = {
   register: (input: RegisterInput, token?: string | null) =>
     api.post<void>('/auth/register', input, turnstile(token)),
   signOut: () => api.post<void>('/auth/logout'),
+  /** Always succeeds, so it doesn't reveal which emails have accounts. */
+  forgotPassword: (email: string, token?: string | null) =>
+    api.post<void>('/auth/forgotPassword', { email }, turnstile(token)),
+  resetPassword: (email: string, resetCode: string, newPassword: string) =>
+    api.post<void>('/auth/resetPassword', { email, resetCode, newPassword }),
   demoStatus: () => api.get<{ enabled: boolean }>('/auth/demo'),
   demoSignIn: (role: DemoRole) => api.post<void>(`/auth/demo/${role}`),
 }
