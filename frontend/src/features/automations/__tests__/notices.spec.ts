@@ -60,7 +60,7 @@ describe('automation notices', () => {
     const store = useAutomationsStore()
     store.boardId = 'b1'
     const scope = effectScope()
-    scope.run(() => useAutomationNotices(() => 'b1', vi.fn()))
+    scope.run(() => useAutomationNotices(() => 'b1', vi.fn<() => void>()))
     store.startRecording()
 
     await http('/boards/b1/cards/c7/labels', { method: 'PUT' })
