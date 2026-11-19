@@ -190,7 +190,8 @@ public sealed class DemoAttachmentTests(DemoApiFactory factory) : IClassFixture<
     {
         var client = factory.CreateHttpsClient();
         (await client.PostAsync(new Uri("/api/auth/demo/editor", UriKind.Relative), null)).EnsureSuccessStatusCode();
-        var boardId = (await client.GetFromJsonAsync<List<ITask.Api.Features.Boards.GetMyBoards.GetMyBoards.Item>>("/api/boards"))![0].Id;
+        var boards = await client.GetFromJsonAsync<List<ITask.Api.Features.Boards.GetMyBoards.GetMyBoards.Item>>("/api/boards");
+        var boardId = boards!.Single(b => b.Name == "Website relaunch").Id;
         var todo = (await client.GetListsAsync(boardId))[0].Id;
         var card = await client.CreateCardAsync(boardId, todo, "Demo card");
 
