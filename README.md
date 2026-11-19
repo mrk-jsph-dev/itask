@@ -134,7 +134,7 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 ## First-time Azure setup (owner only)
 
 1. **Bootstrap** (creates `rg-itask`, identities, the GitHub OIDC trust, role
-   assignments, a $5 budget and the budget kill switch). Re-run it after changes to
+   assignments, a $2 budget and the budget kill switch). Re-run it after changes to
    `infra/bootstrap/`:
    ```sh
    az login
@@ -180,7 +180,7 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
   when the tab is hidden or idle for 10 minutes; the API can still scale to zero. For
   more replicas, set `Realtime__AzureSignalR=true` and `Azure__SignalR__ConnectionString`
   (Azure SignalR Service Free: 20 connections, 20,000 messages a day).
-- **Budget kill switch:** when the $5 budget is spent, the action group runs the
+- **Budget kill switch:** when the $2 budget is spent, the action group runs the
   `logic-itask-killswitch` Logic App, which stops the API. Start it again with
   `az containerapp start -g rg-itask -n ca-itask-api`.
 - **Manual SQL queries:** the SQL admin is the API identity. To query yourself, create

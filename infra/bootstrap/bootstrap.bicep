@@ -26,7 +26,7 @@ param githubEnvironment string = 'production'
 param alertEmail string
 
 @description('Monthly subscription budget in your billing currency.')
-param monthlyBudget int = 5
+param monthlyBudget int = 2
 
 @description('Name of the API Container App that the kill switch stops.')
 param apiAppName string = 'ca-itask-api'
