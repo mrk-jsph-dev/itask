@@ -3,10 +3,22 @@
 # signs in to Azure via OIDC (azure/login). After a successful deploy, the release job tags
 # the commit vX.Y.Z (version from backend/Directory.Build.props) and publishes a GitHub
 # release with that version's CHANGELOG.md section; it does nothing if the release exists.
+#
+# Unchanged parts are skipped by content, not by git diff: the API image is tagged with the
+# git tree hash of backend/ (no build when that tag is already on GHCR), and the site holds
+# build-id.txt, a hash of the frontend/ tree and its build settings (no build or upload when the
+# live one matches). infra=app-only swaps the API image without Bicep: it does NOT copy changed
+# GitHub secrets to the container app, so use full (the default) after changing secrets or infra/.
 name: ci-cd
 
 on:
   workflow_dispatch:
+    inputs:
+      infra:
+        description: "full = Bicep (infra + secrets); app-only = new API image only, skips Bicep"
+        type: choice
+        options: [full, app-only]
+        default: full
 
 permissions:
   contents: read
@@ -30,18 +42,26 @@ jobs:
     timeout-minutes: 30
     environment:
       name: production
-      url: ${{ steps.infra.outputs.siteUrl }}
+      url: ${{ steps.infra.outputs.siteUrl || steps.app.outputs.siteUrl }}
     permissions:
       contents: read
       packages: write # push the API image to GHCR
       id-token: write # OIDC token for Azure, only in this job
     env:
-      IMAGE: ghcr.io/${{ github.repository_owner }}/itask-api:${{ github.sha }}
+      REGISTRY_IMAGE: ghcr.io/${{ github.repository_owner }}/itask-api
       RESOURCE_GROUP: rg-itask
+      API_APP: ca-itask-api
+      INFRA_MODE: ${{ inputs.infra || 'full' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Content ids
+        id: ids
+        run: |
+          echo "image=${REGISTRY_IMAGE}:$(git rev-parse HEAD:backend)" >> "$GITHUB_OUTPUT"
+          echo "frontendTree=$(git rev-parse HEAD:frontend)" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -49,11 +69,26 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+
+      - name: Is this API image already built?
+        id: image
+        env:
+          IMAGE: ${{ steps.ids.outputs.image }}
+        run: |
+          if docker buildx imagetools inspect "$IMAGE" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "backend/ unchanged: reusing $IMAGE"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.image.outputs.exists != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: backend
           push: true
-          tags: ${{ env.IMAGE }}
+          tags: ${{ steps.ids.outputs.image }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           provenance: true
           sbom: true
 
@@ -67,8 +102,9 @@ jobs:
 
       - name: Deploy infrastructure (Bicep)
         id: infra
+        if: env.INFRA_MODE == 'full'
         env:
-          ITASK_API_IMAGE: ${{ env.IMAGE }}
+          ITASK_API_IMAGE: ${{ steps.ids.outputs.image }}
           # production environment secrets, stored as Container Apps secrets by the Bicep deploy
           ITASK_DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
           ITASK_TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
@@ -89,28 +125,77 @@ jobs:
             --template-file infra/main.bicep \
             --parameters infra/main.bicepparam \
             --query properties.outputs -o json)
-          echo "apiUrl=$(jq -r .apiUrl.value <<<"$out")" >> "$GITHUB_OUTPUT"
-          echo "siteName=$(jq -r .siteName.value <<<"$out")" >> "$GITHUB_OUTPUT"
-          echo "siteUrl=$(jq -r .siteUrl.value <<<"$out")" >> "$GITHUB_OUTPUT"
+          {
+            echo "apiUrl=$(jq -r .apiUrl.value <<<"$out")"
+            echo "siteName=$(jq -r .siteName.value <<<"$out")"
+            echo "siteUrl=$(jq -r .siteUrl.value <<<"$out")"
+          } >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - name: Update the API image only (app-only)
+        id: app
+        if: env.INFRA_MODE == 'app-only'
+        env:
+          IMAGE: ${{ steps.ids.outputs.image }}
+        run: |
+          current=$(az containerapp show -g "$RESOURCE_GROUP" -n "$API_APP" --only-show-errors \
+            --query "properties.template.containers[0].image" -o tsv)
+          if [ "$current" = "$IMAGE" ]; then
+            echo "API already runs $IMAGE"
+          else
+            az containerapp update -g "$RESOURCE_GROUP" -n "$API_APP" --image "$IMAGE" --only-show-errors -o none
+          fi
+          fqdn=$(az containerapp show -g "$RESOURCE_GROUP" -n "$API_APP" --only-show-errors \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          site=$(az staticwebapp list -g "$RESOURCE_GROUP" --only-show-errors --query "[0].name" -o tsv)
+          host=$(az staticwebapp show -g "$RESOURCE_GROUP" -n "$site" --only-show-errors --query defaultHostname -o tsv)
+          {
+            echo "apiUrl=https://${fqdn}"
+            echo "siteName=${site}"
+            echo "siteUrl=https://${host}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Is this site build already live?
+        id: site
+        env:
+          API_URL: ${{ steps.infra.outputs.apiUrl || steps.app.outputs.apiUrl }}
+          SITE_URL: ${{ steps.infra.outputs.siteUrl || steps.app.outputs.siteUrl }}
+          FRONTEND_TREE: ${{ steps.ids.outputs.frontendTree }}
+          SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+        run: |
+          # Everything the build depends on: frontend/ content, the API URL and the Turnstile site key.
+          id=$(printf '%s\n%s\n%s\n' "$FRONTEND_TREE" "$API_URL" "$SITE_KEY" | sha256sum | cut -c1-32)
+          live=$(curl -fsS --max-time 20 "${SITE_URL}/build-id.txt?run=${GITHUB_RUN_ID}" 2>/dev/null || true)
+          echo "buildId=$id" >> "$GITHUB_OUTPUT"
+          if [ "$live" = "$id" ]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "frontend/ and its settings unchanged: keeping the live site"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.site.outputs.deploy == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Build frontend
+        if: steps.site.outputs.deploy == 'true'
         working-directory: frontend
         env:
-          VITE_API_BASE_URL: ${{ steps.infra.outputs.apiUrl }}
+          VITE_API_BASE_URL: ${{ steps.infra.outputs.apiUrl || steps.app.outputs.apiUrl }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }} # public site key
+          BUILD_ID: ${{ steps.site.outputs.buildId }}
         run: |
           npm ci
           npx vite build
+          echo "$BUILD_ID" > dist/build-id.txt
 
       - name: Deploy frontend (token fetched now, never stored)
+        if: steps.site.outputs.deploy == 'true'
         env:
-          SITE_NAME: ${{ steps.infra.outputs.siteName }}
+          SITE_NAME: ${{ steps.infra.outputs.siteName || steps.app.outputs.siteName }}
         run: |
           token=$(az staticwebapp secrets list -n "$SITE_NAME" -g "$RESOURCE_GROUP" --query properties.apiKey -o tsv)
           echo "::add-mask::$token"

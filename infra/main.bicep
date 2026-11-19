@@ -11,7 +11,7 @@ param staticWebAppLocation string = 'eastasia'
 @maxLength(10)
 param appName string = 'itask'
 
-@description('Full API image reference, e.g. ghcr.io/mrk-jsph-dev/itask-api:<git-sha>.')
+@description('Full API image reference, e.g. ghcr.io/mrk-jsph-dev/itask-api:<git tree hash of backend/>.')
 param apiImage string
 
 @description('Maximum API replicas. Live updates (SignalR) and presence are in-process, so keep 1 unless Azure SignalR is switched on.')
