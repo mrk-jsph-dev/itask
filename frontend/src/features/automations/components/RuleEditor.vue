@@ -4,6 +4,7 @@ import { computed, reactive, ref, useId } from 'vue'
 import type { ActionSpec, AutomationInput, ConditionSpec } from '../api'
 import {
   actionOptions,
+  clone,
   conditionOptions,
   describe,
   isHourly,
@@ -24,7 +25,7 @@ const emit = defineEmits<{ save: [input: AutomationInput]; cancel: [] }>()
 const MAX_ACTIONS = 3
 const MAX_CONDITIONS = 5
 
-const draft = reactive<AutomationInput>(structuredClone(props.initial))
+const draft = reactive<AutomationInput>(clone(props.initial))
 draft.trigger ??= { type: 'card.completed' }
 const id = useId()
 const local = ref<string | null>(null)
@@ -104,7 +105,7 @@ function save() {
     return
   }
   emit('save', {
-    ...structuredClone(draft),
+    ...clone(draft),
     name: draft.name.trim(),
     trigger: isDoorway.value ? null : draft.trigger,
   })

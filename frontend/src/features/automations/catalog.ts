@@ -441,6 +441,11 @@ export function presetsFor(refs: BoardRefs, existing: Pick<Automation, 'name'>[]
     )
 }
 
+/** A deep copy of plain automation data; also works on Vue reactive proxies, which structuredClone rejects. */
+export function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
 /** A new, empty rule for the editor. */
 export function blankRule(): AutomationInput {
   return rule('', { type: 'card.completed' }, [{ type: 'complete' }])
