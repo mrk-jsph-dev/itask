@@ -66,6 +66,12 @@ param microsoftClientId string = ''
 @secure()
 param microsoftClientSecret string = ''
 
+@description('Foundry (Azure OpenAI) endpoint, e.g. https://<name>.openai.azure.com/. AI is on only when this and aiDeployment are set.')
+param aiEndpoint string = ''
+
+@description('Name of the OpenAI model deployment in Foundry.')
+param aiDeployment string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var tags = { app: appName }
 
@@ -136,6 +142,8 @@ module api 'modules/containerapp.bicep' = {
     githubClientSecret: githubClientSecret
     microsoftClientId: microsoftClientId
     microsoftClientSecret: microsoftClientSecret
+    aiEndpoint: aiEndpoint
+    aiDeployment: aiDeployment
     tags: tags
   }
 }

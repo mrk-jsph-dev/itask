@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, toRef, watch } from 'vue'
+import { computed, nextTick, ref, toRef, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
+import AiDigestSheet from '@/features/ai/components/AiDigestSheet.vue'
+import AiQuickAddDialog from '@/features/ai/components/AiQuickAddDialog.vue'
+import type { QuickAddCard } from '@/features/ai/draft'
+import { useAiStore } from '@/features/ai/store'
 import { useAuthStore } from '@/features/auth/store'
+import { useMenu } from '@/shared/ui/menu'
 import { OFFLINE_HINT, online } from '@/shared/pwa/network'
 import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import { ApiError } from '@/shared/api/http'
 import { toast } from '@/shared/ui/toast'
 import type { BoardList, Card, CardPatch, ListInput } from '../api'
+import { fromDateInput } from '../cardOptions'
 import BoardCalendarView from '../components/BoardCalendarView.vue'
 import BoardListView from '../components/BoardListView.vue'
 import BoardPresence from '../components/BoardPresence.vue'
@@ -88,6 +94,44 @@ const canWrite = computed(
 )
 /** Offline the board is read-only, like it is for viewers. */
 const editable = computed(() => canWrite.value && online.value)
+
+const ai = useAiStore()
+watch(
+  () => auth.user?.id,
+  (id) => void ai.ensureLoaded(id),
+  { immediate: true },
+)
+const aiMenu = useTemplateRef('aiMenu')
+const aiTrigger = useTemplateRef('aiTrigger')
+const aiPicker = useMenu(aiMenu, aiTrigger)
+const aiOpen = ref<'quick-add' | 'digest' | null>(null)
+const quickAddSaving = ref(false)
+
+function openAi(which: 'quick-add' | 'digest') {
+  aiPicker.close()
+  aiOpen.value = which
+}
+
+/** Creates the accepted quick-add draft, then sets its due date, priority and labels. */
+async function addQuickCard(draft: QuickAddCard) {
+  quickAddSaving.value = true
+  try {
+    const card = await cards.create(draft.listId, draft.title)
+    if (draft.dueDate || draft.priority !== 'None') {
+      await cards.update(card.id, {
+        ...(draft.dueDate ? { dueAt: fromDateInput(draft.dueDate, 'end') } : {}),
+        ...(draft.priority !== 'None' ? { priority: draft.priority } : {}),
+      })
+    }
+    if (draft.labelIds.length) await cards.setLabels(card.id, draft.labelIds)
+    aiOpen.value = null
+    toast(`✨ Added “${draft.title}”.`)
+  } catch (e) {
+    toast(errorText(e, "Couldn't add the task."), 'error')
+  } finally {
+    quickAddSaving.value = false
+  }
+}
 
 const ordered = computed<BoardList[]>({
   get: () => lists.lists ?? [],
@@ -304,9 +348,7 @@ function onArchivedToggle(event: Event) {
           class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-lg disabled:cursor-not-allowed disabled:opacity-50"
           :aria-pressed="store.current.isStarred"
           :aria-label="store.current.isStarred ? 'Unstar board' : 'Star board'"
-          :title="
-            online ? (store.current.isStarred ? 'Unstar board' : 'Star board') : OFFLINE_HINT
-          "
+          :title="online ? (store.current.isStarred ? 'Unstar board' : 'Star board') : OFFLINE_HINT"
           :disabled="!online"
           @click="store.toggleStar(store.current.id, store.current.isStarred)"
         >
@@ -361,6 +403,51 @@ function onArchivedToggle(event: Event) {
           </svg>
           <span class="hidden sm:inline">{{ store.isOwner ? 'Settings' : 'Members' }}</span>
         </button>
+        <div v-if="ai.enabled && canWrite && ordered.length" class="relative">
+          <button
+            ref="aiTrigger"
+            type="button"
+            class="press flex h-[42px] items-center gap-1.5 rounded-full border border-[#DCE6FE] bg-[#F5F8FF] px-3.5 text-sm font-semibold text-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+            aria-haspopup="menu"
+            :aria-expanded="aiPicker.open.value"
+            aria-label="AI helpers"
+            :title="online ? 'AI helpers' : OFFLINE_HINT"
+            :disabled="!online"
+            @click="aiPicker.toggle"
+          >
+            <span aria-hidden="true">✨</span><span class="hidden sm:inline">AI</span>
+          </button>
+          <div
+            v-if="aiPicker.open.value"
+            ref="aiMenu"
+            role="menu"
+            aria-label="AI helpers"
+            class="pop absolute top-12 right-0 z-30 flex w-60 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+            @keydown="aiPicker.onKeydown"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              class="flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-left hover:bg-hover focus:bg-hover disabled:opacity-50"
+              :disabled="ai.remaining === 0"
+              @click="openAi('quick-add')"
+            >
+              ✍️ Quick add a task
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              class="flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-left hover:bg-hover focus:bg-hover disabled:opacity-50"
+              :disabled="ai.remaining === 0"
+              @click="openAi('digest')"
+            >
+              📰 Daily digest
+            </button>
+            <p class="border-t border-line-soft px-3 pt-2 pb-1.5 text-xs text-muted">
+              {{ ai.remaining }} of {{ ai.limit }} AI requests left today
+            </p>
+          </div>
+        </div>
         <button
           v-if="canWrite && ordered.length"
           type="button"
@@ -534,6 +621,21 @@ function onArchivedToggle(event: Event) {
       :editable="editable"
       :can-comment="!store.current.archivedAt && online"
       @close="closeCard"
+    />
+    <AiQuickAddDialog
+      v-if="aiOpen === 'quick-add'"
+      :board-id="boardId"
+      :lists="ordered"
+      :labels="cards.labels ?? []"
+      :saving="quickAddSaving"
+      @accept="addQuickCard"
+      @close="aiOpen = null"
+    />
+    <AiDigestSheet
+      v-if="aiOpen === 'digest'"
+      :board-id="boardId"
+      :board-name="store.current.name"
+      @close="aiOpen = null"
     />
   </section>
 

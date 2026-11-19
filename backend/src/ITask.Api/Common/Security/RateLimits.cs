@@ -7,13 +7,15 @@ namespace ITask.Api.Common.Security;
 /// <summary>
 /// Fixed-window limits partitioned per user id when signed in, otherwise per client IP.
 /// The <see cref="Auth"/> policy applies a tighter limit to sign-in and registration,
-/// <see cref="Search"/> to search-as-you-type.
+/// <see cref="Search"/> to search-as-you-type, <see cref="Ai"/> to AI calls (on top of the daily cap).
 /// </summary>
 public static class RateLimits
 {
     public const string Auth = "auth";
 
     public const string Search = "search";
+
+    public const string Ai = "ai";
 
     public static IServiceCollection AddITaskRateLimits(this IServiceCollection services, IConfiguration config)
     {
@@ -23,6 +25,7 @@ public static class RateLimits
             var perMinute = config.GetValue("RateLimits:PerMinute", 120);
             var authPerMinute = config.GetValue("RateLimits:AuthPerMinute", 10);
             var searchPerMinute = config.GetValue("RateLimits:SearchPerMinute", 60);
+            var aiPerMinute = config.GetValue("RateLimits:AiPerMinute", 10);
 
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
@@ -44,6 +47,13 @@ public static class RateLimits
                 RateLimitPartition.GetFixedWindowLimiter(PartitionKey(context), _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = searchPerMinute,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
+
+            options.AddPolicy(Ai, context =>
+                RateLimitPartition.GetFixedWindowLimiter(PartitionKey(context), _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = aiPerMinute,
                     Window = TimeSpan.FromMinutes(1),
                 }));
         });

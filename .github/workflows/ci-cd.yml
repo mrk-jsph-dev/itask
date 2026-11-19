@@ -77,6 +77,8 @@ jobs:
           ITASK_GITHUB_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }} # optional, not a secret
           ITASK_MICROSOFT_CLIENT_ID: ${{ vars.MICROSOFT_CLIENT_ID }} # optional, not a secret
           ITASK_SQL_ADMIN_GROUP_ID: ${{ vars.SQL_ADMIN_GROUP_ID }} # optional, not a secret
+          ITASK_AI_ENDPOINT: ${{ vars.AI_ENDPOINT }} # optional; Foundry endpoint, AI is off when empty
+          ITASK_AI_DEPLOYMENT: ${{ vars.AI_DEPLOYMENT }} # optional; model deployment name in Foundry
         run: |
           out=$(az deployment group create \
             --resource-group "$RESOURCE_GROUP" \

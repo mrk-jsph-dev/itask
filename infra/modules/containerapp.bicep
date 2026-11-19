@@ -36,6 +36,8 @@ param microsoftClientId string
 param githubClientSecret string
 @secure()
 param microsoftClientSecret string
+param aiEndpoint string
+param aiDeployment string
 param tags object
 
 // App secrets are Container Apps secrets (free), passed in on every deploy. Empty ones are left out.
@@ -54,6 +56,13 @@ var optionalSettings = filter([
   { name: 'Auth__GitHub__ClientId', value: githubClientId }
   { name: 'Auth__Microsoft__ClientId', value: microsoftClientId }
 ], s => !empty(s.value))
+
+// AI runs on the API's managed identity (role granted in bootstrap); off unless both are set.
+var aiSettings = empty(aiEndpoint) || empty(aiDeployment) ? [] : [
+  { name: 'Ai__Enabled', value: 'true' }
+  { name: 'Ai__Endpoint', value: aiEndpoint }
+  { name: 'Ai__Deployment', value: aiDeployment }
+]
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
   name: logAnalyticsName
@@ -127,7 +136,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Auth__CookieSameSite', value: crossSiteCookies ? 'None' : 'Lax' }
             // No email sender yet, so sign-up can't wait for a confirmation link.
             { name: 'Auth__RequireConfirmedEmail', value: 'false' }
-          ], optionalSettings, map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
+          ], optionalSettings, aiSettings, map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
           probes: [
             {
               type: 'Liveness'

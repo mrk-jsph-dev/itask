@@ -2,6 +2,10 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 
+import AiGoalBoard from '@/features/ai/components/AiGoalBoard.vue'
+import type { GoalBoardContent } from '@/features/ai/draft'
+import { useAiStore } from '@/features/ai/store'
+import { useAuthStore } from '@/features/auth/store'
 import type { BoardTemplate } from '../api'
 import BoardDetailsFields from './BoardDetailsFields.vue'
 import TemplateGallery from './TemplateGallery.vue'
@@ -11,6 +15,10 @@ import { errorText, useBoardsStore } from '../store'
 const emit = defineEmits<{ close: [] }>()
 
 const store = useBoardsStore()
+const ai = useAiStore()
+const auth = useAuthStore()
+/** "goal" swaps the template form for the AI board-from-goal draft. */
+const mode = ref<'template' | 'goal'>('template')
 const router = useRouter()
 const panel = useTemplateRef('panel')
 
@@ -29,6 +37,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 onMounted(async () => {
+  void ai.ensureLoaded(auth.user?.id)
   returnFocus = document.activeElement as HTMLElement | null
   document.addEventListener('keydown', onKeydown)
   await nextTick()
@@ -44,6 +53,20 @@ function onPick(picked: BoardTemplate | null) {
   template.value = picked
   emoji.value = picked?.emoji ?? '📋'
   color.value = picked?.color ?? boardColors[0]
+}
+
+async function createFromGoal(content: GoalBoardContent) {
+  saving.value = true
+  error.value = null
+  try {
+    const created = await store.createFromContent({ ...content, color: color.value })
+    emit('close')
+    await router.push({ name: 'board', params: { boardId: created.id } })
+  } catch (e) {
+    error.value = errorText(e)
+  } finally {
+    saving.value = false
+  }
 }
 
 async function submit() {
@@ -82,8 +105,49 @@ async function submit() {
         aria-labelledby="new-board-title"
         class="fade-up my-auto flex max-h-full w-full max-w-[600px] flex-col gap-[18px] overflow-y-auto rounded-[24px] bg-panel p-7"
       >
-        <h2 id="new-board-title" class="text-xl font-bold">New board</h2>
-        <form class="flex flex-col gap-4" @submit.prevent="submit">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 id="new-board-title" class="text-xl font-bold">New board</h2>
+          <div
+            v-if="ai.enabled"
+            role="tablist"
+            aria-label="Start from"
+            class="ml-auto flex rounded-[12px] bg-hover p-1"
+          >
+            <button
+              v-for="tab in [
+                { value: 'template', label: 'Template' },
+                { value: 'goal', label: '✨ From a goal' },
+              ] as const"
+              :key="tab.value"
+              type="button"
+              role="tab"
+              :aria-selected="mode === tab.value"
+              class="h-8 rounded-[10px] px-3 text-sm"
+              :class="
+                mode === tab.value
+                  ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+                  : 'font-medium text-muted'
+              "
+              @click="mode = tab.value"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+        <template v-if="mode === 'goal'">
+          <AiGoalBoard :saving="saving" @accept="createFromGoal" />
+          <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+          <div class="flex justify-end">
+            <button
+              type="button"
+              class="ghost h-11 rounded-full border border-line px-[18px] font-semibold"
+              @click="emit('close')"
+            >
+              Cancel
+            </button>
+          </div>
+        </template>
+        <form v-else class="flex flex-col gap-4" @submit.prevent="submit">
           <TemplateGallery v-model="templateId" @pick="onPick" />
           <p v-if="template" class="-mt-1 text-[13px] text-muted">
             <span class="font-semibold text-ink">Lists:</span> {{ template.lists.join(' · ') }}

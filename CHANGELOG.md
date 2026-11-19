@@ -2,6 +2,20 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.2.0
+
+Installable app and AI helpers.
+
+- **Installable app (PWA):** install from the browser, offline read-only boards from the
+  last visit, and an update prompt when a new version is out.
+- **AI helpers (OpenAI in Microsoft Foundry):** ✨ Quick add (a sentence becomes a task
+  draft with due date, priority, labels and list), Break down (checklist steps), Summarize
+  (a card's description, comments and activity in one paragraph, can be posted as a
+  comment), Daily digest per board (due, stuck, done) and "From a goal" in New board
+  (lists and starter cards). Every result is an editable draft with Accept or Discard;
+  nothing is saved without the user. Editors and owners only, not for demo accounts,
+  20 requests per user per day. Off until `AI_ENDPOINT` and `AI_DEPLOYMENT` are set.
+
 ## 1.1.0
 
 Views, notifications, recurring cards, templates, live updates and external sign-in.

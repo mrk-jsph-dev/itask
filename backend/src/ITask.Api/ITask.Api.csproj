@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.GitHub" />
+    <PackageReference Include="Azure.AI.OpenAI" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
@@ -31,6 +32,7 @@
     <EmbeddedResource Include="Infrastructure/Templates/*.json" />
     <Content Remove="Infrastructure/Demo/*.json" />
     <EmbeddedResource Include="Infrastructure/Demo/*.json" />
+    <EmbeddedResource Include="Infrastructure/Ai/Prompts/*.md" />
   </ItemGroup>
 
   <ItemGroup>

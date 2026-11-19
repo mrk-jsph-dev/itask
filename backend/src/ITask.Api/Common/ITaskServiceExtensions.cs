@@ -1,5 +1,6 @@
 using FluentValidation;
 using ITask.Api.Common.Activity;
+using ITask.Api.Common.Ai;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
@@ -88,8 +89,8 @@ public static class ITaskServiceExtensions
         services.AddNotifications();
         services.AddRealtime(config);
 
-        services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
-        services.AddSingleton<IAiService, DisabledAiService>();
+        services.AddAi(config);
+        services.AddScoped<AiGateway>();
         services.AddSingleton<ITemplateCatalog, TemplateCatalog>();
 
         services.AddBlobStorage(config);
