@@ -29,6 +29,8 @@
   <ItemGroup>
     <Content Remove="Infrastructure/Templates/*.json" />
     <EmbeddedResource Include="Infrastructure/Templates/*.json" />
+    <Content Remove="Infrastructure/Demo/*.json" />
+    <EmbeddedResource Include="Infrastructure/Demo/*.json" />
   </ItemGroup>
 
   <ItemGroup>

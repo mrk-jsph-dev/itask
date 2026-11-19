@@ -1,0 +1,422 @@
+{
+  "people": [
+    { "key": "priya", "name": "Priya Shah", "color": "#7C3AED" },
+    { "key": "marco", "name": "Marco Rossi", "color": "#EA580C" },
+    { "key": "lena", "name": "Lena Fischer", "color": "#0891B2" },
+    { "key": "sam", "name": "Sam Okafor", "color": "#16A34A" },
+    { "key": "yuki", "name": "Yuki Tanaka", "color": "#DB2777" },
+    { "key": "diego", "name": "Diego Alvarez", "color": "#CA8A04" }
+  ],
+  "boards": [
+    {
+      "name": "Website relaunch",
+      "emoji": "🚀",
+      "color": "#0F766E",
+      "keyPrefix": "WEB",
+      "description": "New marketing site: faster, clearer, and on brand. Launch target is the end of the month.",
+      "createdDaysAgo": 34,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "priya": "Editor", "marco": "Editor" },
+      "starredBy": ["owner", "editor", "viewer"],
+      "lists": [
+        { "name": "To do", "emoji": "📝" },
+        { "name": "In progress", "emoji": "🚧", "wipLimit": 4 },
+        { "name": "Review", "emoji": "👀" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [
+        { "name": "Design", "color": "#7C3AED", "emoji": "🎨" },
+        { "name": "Content", "color": "#0EA5E9", "emoji": "✍️" },
+        { "name": "Bug", "color": "#DC2626", "emoji": "🐞" },
+        { "name": "SEO", "color": "#16A34A", "emoji": "🔎" },
+        { "name": "Dev", "color": "#475569", "emoji": "🛠️" }
+      ],
+      "cards": [
+        {
+          "list": 0, "title": "Collect feedback on the current site", "priority": "Medium", "labels": ["Content"],
+          "assignees": ["editor"], "due": 2, "createdBy": "owner", "createdDaysAgo": 9,
+          "description": "Short survey to 20 customers plus a look at the support inbox.\n\n- What do people look for first?\n- Where do they get lost?",
+          "checklist": [["Draft five questions", true], ["Send to the customer list", false], ["Summarise answers", false]],
+          "comments": [{ "by": "priya", "hoursAgo": 20, "body": "I can add a question about the pricing page, it's the top complaint in support. @Demo Editor ok with you?" }]
+        },
+        { "list": 0, "title": "Pick a font pairing", "priority": "Low", "labels": ["Design"], "assignees": ["priya"], "due": 6, "createdBy": "priya", "createdDaysAgo": 7 },
+        {
+          "list": 0, "title": "Write meta descriptions for the top 20 pages", "priority": "Medium", "labels": ["SEO", "Content"],
+          "assignees": ["owner"], "due": 4, "createdBy": "marco", "createdDaysAgo": 5,
+          "description": "Keep them under 155 characters. The list of pages is in the analytics export."
+        },
+        { "list": 0, "title": "Cookie banner that doesn't annoy people", "emoji": "🍪", "priority": "Low", "labels": ["Design", "Dev"], "due": 12, "createdBy": "owner", "createdDaysAgo": 3 },
+        {
+          "list": 1, "title": "Design the new home page", "priority": "High", "labels": ["Design"], "assignees": ["priya", "owner"],
+          "start": -6, "due": 1, "cover": "#7C3AED", "createdBy": "owner", "createdDaysAgo": 14,
+          "description": "Hero, three feature tiles and a sign-up call to action.\n\n**Goal:** a visitor understands what we do in five seconds.",
+          "checklist": [["Wireframe", true], ["High-fidelity mock-up", true], ["Mobile layout", false], ["Review with the team", false]],
+          "comments": [
+            { "by": "priya", "hoursAgo": 50, "body": "First mock-up is up. I went with the blue gradient, happy to try a flat version too." },
+            { "by": "owner", "hoursAgo": 46, "body": "Love it. Can we make the sign-up button bigger on mobile?" },
+            { "by": "priya", "hoursAgo": 6, "body": "Done, @Demo Owner. Mobile layout next." }
+          ]
+        },
+        {
+          "list": 1, "title": "Fix broken links in the footer", "priority": "Urgent", "labels": ["Bug"], "assignees": ["marco"],
+          "due": -1, "createdBy": "viewer", "createdDaysAgo": 4,
+          "description": "Privacy and Careers both 404.",
+          "comments": [{ "by": "marco", "hoursAgo": 26, "body": "Found it, the CMS slugs changed. Fix is in review." }]
+        },
+        { "list": 1, "title": "Migrate blog posts to the new CMS", "priority": "Medium", "labels": ["Dev", "Content"], "assignees": ["editor", "marco"], "start": -3, "due": 8, "createdBy": "editor", "createdDaysAgo": 10,
+          "checklist": [["Export from WordPress", true], ["Map categories to tags", true], ["Fix image paths", false], ["Redirect old URLs", false]] },
+        {
+          "list": 2, "title": "Rewrite the About page", "priority": "Medium", "labels": ["Content"], "assignees": ["editor"],
+          "due": 0, "createdBy": "owner", "createdDaysAgo": 12,
+          "description": "Shorter, warmer, with the team photo from the offsite.",
+          "comments": [{ "by": "owner", "hoursAgo": 3, "body": "Reads much better. Two small edits in the doc, then ship it." }]
+        },
+        { "list": 2, "title": "Image compression pipeline", "emoji": "🗜️", "priority": "High", "labels": ["Dev"], "assignees": ["marco"], "due": 3, "createdBy": "marco", "createdDaysAgo": 8 },
+        { "list": 3, "title": "Set up analytics", "priority": "None", "labels": ["Dev"], "assignees": ["marco"], "createdBy": "owner", "createdDaysAgo": 30, "completedDaysAgo": 20 },
+        { "list": 3, "title": "Choose the colour palette", "priority": "Medium", "labels": ["Design"], "assignees": ["priya"], "createdBy": "priya", "createdDaysAgo": 28, "completedDaysAgo": 18 },
+        { "list": 3, "title": "Sitemap and page inventory", "priority": "Low", "labels": ["SEO"], "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 32, "completedDaysAgo": 25 }
+      ]
+    },
+    {
+      "name": "Mobile app 2.0",
+      "emoji": "📱",
+      "color": "#1D5BF5",
+      "keyPrefix": "APP",
+      "description": "iOS and Android release with offline mode and the new onboarding.",
+      "createdDaysAgo": 60,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "sam": "Editor", "yuki": "Editor", "lena": "Editor" },
+      "starredBy": ["owner", "editor"],
+      "lists": [
+        { "name": "Backlog", "emoji": "🗂️" },
+        { "name": "Sprint 14", "emoji": "🏃" },
+        { "name": "In progress", "emoji": "⚙️", "wipLimit": 3 },
+        { "name": "Code review", "emoji": "🔍", "wipLimit": 2 },
+        { "name": "QA", "emoji": "🧪" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [
+        { "name": "iOS", "color": "#111827", "emoji": "🍎" },
+        { "name": "Android", "color": "#16A34A", "emoji": "🤖" },
+        { "name": "Backend", "color": "#475569", "emoji": "🗄️" },
+        { "name": "UX", "color": "#DB2777", "emoji": "✨" },
+        { "name": "Crash", "color": "#DC2626", "emoji": "💥" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Dark mode", "emoji": "🌙", "priority": "Low", "labels": ["UX", "iOS", "Android"], "createdBy": "yuki", "createdDaysAgo": 40 },
+        { "list": 0, "title": "Widgets for the home screen", "priority": "Low", "labels": ["iOS"], "createdBy": "lena", "createdDaysAgo": 35 },
+        { "list": 0, "title": "Rate limit the sync endpoint", "priority": "Medium", "labels": ["Backend"], "createdBy": "sam", "createdDaysAgo": 15 },
+        {
+          "list": 1, "title": "New onboarding flow", "priority": "High", "labels": ["UX"], "assignees": ["yuki", "owner"], "due": 5, "createdBy": "owner", "createdDaysAgo": 12,
+          "description": "Three screens instead of seven. Skip sign-up until the user creates their first task.",
+          "checklist": [["Flow diagram", true], ["Copy", true], ["Prototype in Figma", false], ["Usability test with 5 people", false]],
+          "comments": [{ "by": "yuki", "hoursAgo": 30, "body": "Prototype link coming tomorrow. @Demo Owner can you book the usability sessions?" }]
+        },
+        { "list": 1, "title": "Push notification settings screen", "priority": "Medium", "labels": ["iOS", "Android"], "assignees": ["lena"], "due": 7, "createdBy": "lena", "createdDaysAgo": 9 },
+        {
+          "list": 2, "title": "Offline mode: queue writes", "priority": "Urgent", "labels": ["Backend", "iOS", "Android"], "assignees": ["sam", "editor"],
+          "start": -4, "due": 2, "cover": "#1D5BF5", "createdBy": "owner", "createdDaysAgo": 20,
+          "description": "Store changes locally and replay them in order when the connection is back.\n\nConflicts: last write wins, show a toast.",
+          "checklist": [["Local queue", true], ["Replay on reconnect", true], ["Conflict toast", false], ["Tests on flaky network", false]],
+          "comments": [
+            { "by": "sam", "hoursAgo": 70, "body": "Queue and replay work on iOS. Android needs a WorkManager job." },
+            { "by": "editor", "hoursAgo": 22, "body": "Android version is up, @Sam Okafor can you review?" }
+          ]
+        },
+        { "list": 2, "title": "Crash when rotating on the card screen", "priority": "High", "labels": ["Android", "Crash"], "assignees": ["lena"], "due": -2, "createdBy": "viewer", "createdDaysAgo": 6,
+          "description": "Happens on Pixel 7 with Android 15. Stack trace in the crash reporter." },
+        { "list": 3, "title": "Image caching", "priority": "Medium", "labels": ["iOS"], "assignees": ["yuki"], "due": 1, "createdBy": "yuki", "createdDaysAgo": 11 },
+        { "list": 4, "title": "Login with Apple", "priority": "High", "labels": ["iOS", "Backend"], "assignees": ["sam"], "due": 0, "createdBy": "sam", "createdDaysAgo": 18,
+          "comments": [{ "by": "owner", "hoursAgo": 5, "body": "Tested on my phone, works. One QA pass on iPad and we're good." }] },
+        { "list": 5, "title": "Upgrade to the new navigation library", "priority": "Medium", "labels": ["iOS", "Android"], "assignees": ["lena"], "createdBy": "lena", "createdDaysAgo": 45, "completedDaysAgo": 30 },
+        { "list": 5, "title": "API v2 endpoints for tasks", "priority": "High", "labels": ["Backend"], "assignees": ["sam"], "createdBy": "sam", "createdDaysAgo": 50, "completedDaysAgo": 26 },
+        { "list": 5, "title": "App icon refresh", "priority": "Low", "labels": ["UX"], "assignees": ["yuki"], "createdBy": "yuki", "createdDaysAgo": 40, "completedDaysAgo": 15 }
+      ]
+    },
+    {
+      "name": "Spring launch campaign",
+      "emoji": "📣",
+      "color": "#DB2777",
+      "keyPrefix": "MKT",
+      "description": "Everything for the spring launch: posts, emails, ads and the launch event.",
+      "createdDaysAgo": 25,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "diego": "Editor", "priya": "Viewer" },
+      "starredBy": ["owner"],
+      "lists": [
+        { "name": "Ideas", "emoji": "💡" },
+        { "name": "Drafting", "emoji": "✏️" },
+        { "name": "Scheduled", "emoji": "🗓️" },
+        { "name": "Live", "emoji": "📡" },
+        { "name": "Wrapped", "emoji": "🎬", "done": true }
+      ],
+      "labels": [
+        { "name": "Social", "color": "#0EA5E9", "emoji": "📱" },
+        { "name": "Email", "color": "#CA8A04", "emoji": "✉️" },
+        { "name": "Ads", "color": "#EA580C", "emoji": "💸" },
+        { "name": "Event", "color": "#7C3AED", "emoji": "🎤" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Customer story video", "emoji": "🎥", "priority": "Medium", "labels": ["Social"], "createdBy": "diego", "createdDaysAgo": 6 },
+        { "list": 0, "title": "Partner giveaway", "priority": "Low", "labels": ["Social"], "createdBy": "editor", "createdDaysAgo": 4 },
+        {
+          "list": 1, "title": "Launch announcement email", "priority": "High", "labels": ["Email"], "assignees": ["editor"], "due": 3, "createdBy": "owner", "createdDaysAgo": 10,
+          "description": "Subject line ideas:\n\n1. Meet the new iTask\n2. Your boards, now everywhere\n3. Spring cleaning for your to-do list",
+          "checklist": [["Subject line", true], ["Body copy", false], ["Hero image", false], ["Test send", false]],
+          "comments": [{ "by": "diego", "hoursAgo": 12, "body": "Option 2 tested best last time we did an A/B test." }]
+        },
+        { "list": 1, "title": "Landing page copy", "priority": "High", "labels": ["Ads"], "assignees": ["owner"], "due": 5, "createdBy": "owner", "createdDaysAgo": 8 },
+        { "list": 2, "title": "Teaser posts (week 1)", "priority": "Medium", "labels": ["Social"], "assignees": ["diego"], "due": 1, "createdBy": "diego", "createdDaysAgo": 7,
+          "checklist": [["LinkedIn", true], ["Instagram", true], ["X", true], ["Threads", false]] },
+        { "list": 2, "title": "Launch webinar", "emoji": "🎤", "priority": "High", "labels": ["Event"], "assignees": ["owner", "diego"], "start": 9, "due": 9, "createdBy": "owner", "createdDaysAgo": 15,
+          "description": "45 minutes, live demo plus Q&A. Registration page is live." },
+        { "list": 2, "title": "Search ads: brand keywords", "priority": "Medium", "labels": ["Ads"], "assignees": ["diego"], "due": 10, "createdBy": "diego", "createdDaysAgo": 5 },
+        { "list": 3, "title": "Waitlist referral programme", "priority": "Medium", "labels": ["Email", "Social"], "assignees": ["editor"], "createdBy": "editor", "createdDaysAgo": 18,
+          "comments": [{ "by": "editor", "hoursAgo": 28, "body": "312 sign-ups in the first two days 🎉" }] },
+        { "list": 4, "title": "Brand photo shoot", "priority": "Medium", "labels": ["Social"], "assignees": ["diego"], "createdBy": "diego", "createdDaysAgo": 22, "completedDaysAgo": 12 },
+        { "list": 4, "title": "Press kit", "priority": "Low", "labels": ["Event"], "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 20, "completedDaysAgo": 9 }
+      ]
+    },
+    {
+      "name": "Hiring: Product designer",
+      "emoji": "🧑‍💼",
+      "color": "#7C3AED",
+      "keyPrefix": "HIRE",
+      "description": "Senior product designer, remote (Europe). Hiring manager: Demo Editor.",
+      "createdDaysAgo": 21,
+      "members": { "editor": "Owner", "owner": "Editor", "viewer": "Viewer", "lena": "Editor" },
+      "starredBy": ["editor"],
+      "lists": [
+        { "name": "Applied", "emoji": "📥" },
+        { "name": "Screen", "emoji": "📞" },
+        { "name": "Interviews", "emoji": "🗣️" },
+        { "name": "Offer", "emoji": "✉️" },
+        { "name": "Hired", "emoji": "🎉", "done": true }
+      ],
+      "labels": [
+        { "name": "Referral", "color": "#16A34A", "emoji": "🤝" },
+        { "name": "Portfolio strong", "color": "#7C3AED", "emoji": "⭐" },
+        { "name": "Needs follow-up", "color": "#EA580C", "emoji": "⏳" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Alex Moreau", "priority": "None", "labels": ["Portfolio strong"], "createdBy": "lena", "createdDaysAgo": 3 },
+        { "list": 0, "title": "Jordan Lee", "priority": "None", "createdBy": "lena", "createdDaysAgo": 2 },
+        { "list": 0, "title": "Fatima Benali", "priority": "None", "labels": ["Referral"], "createdBy": "owner", "createdDaysAgo": 1 },
+        { "list": 1, "title": "Noah Williams", "priority": "Medium", "labels": ["Needs follow-up"], "assignees": ["lena"], "due": 1, "createdBy": "lena", "createdDaysAgo": 8,
+          "comments": [{ "by": "lena", "hoursAgo": 40, "body": "Left a voicemail, trying again tomorrow." }] },
+        { "list": 1, "title": "Mei Chen", "priority": "Medium", "labels": ["Portfolio strong"], "assignees": ["lena"], "due": 2, "createdBy": "lena", "createdDaysAgo": 7 },
+        {
+          "list": 2, "title": "Sofia Lindqvist", "priority": "High", "labels": ["Portfolio strong", "Referral"], "assignees": ["editor", "owner"], "due": 3, "createdBy": "editor", "createdDaysAgo": 14,
+          "description": "Ex-fintech, strong systems thinking. Design challenge: the card detail screen.",
+          "checklist": [["Portfolio review", true], ["Design challenge", true], ["Team interview", false], ["References", false]],
+          "comments": [
+            { "by": "owner", "hoursAgo": 30, "body": "Her design challenge was the best we've seen. Strong yes from me." },
+            { "by": "editor", "hoursAgo": 18, "body": "Agreed. @Lena Fischer can you schedule the team interview this week?" }
+          ]
+        },
+        { "list": 2, "title": "Omar Haddad", "priority": "Medium", "assignees": ["editor"], "due": 4, "createdBy": "editor", "createdDaysAgo": 12 },
+        { "list": 3, "title": "Hannah Becker", "priority": "Urgent", "labels": ["Referral"], "assignees": ["editor"], "due": 1, "createdBy": "editor", "createdDaysAgo": 19,
+          "description": "Offer sent. She asked for a decision by Friday.",
+          "comments": [{ "by": "editor", "hoursAgo": 8, "body": "Call with her at 4pm to answer questions on equity." }] },
+        { "list": 4, "title": "Ravi Patel", "priority": "None", "labels": ["Portfolio strong"], "createdBy": "editor", "createdDaysAgo": 20, "completedDaysAgo": 2 }
+      ]
+    },
+    {
+      "name": "Support & bug triage",
+      "emoji": "🐞",
+      "color": "#DC2626",
+      "keyPrefix": "BUG",
+      "description": "Customer-reported issues. Triage daily, urgent ones go straight to Fixing.",
+      "createdDaysAgo": 90,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "sam": "Editor", "marco": "Editor" },
+      "starredBy": [],
+      "lists": [
+        { "name": "New", "emoji": "🆕" },
+        { "name": "Triaged", "emoji": "🏷️" },
+        { "name": "Fixing", "emoji": "🔧", "wipLimit": 3 },
+        { "name": "Ready to ship", "emoji": "📦" },
+        { "name": "Released", "emoji": "🚢", "done": true }
+      ],
+      "labels": [
+        { "name": "P1", "color": "#DC2626", "emoji": "🔥" },
+        { "name": "Billing", "color": "#CA8A04", "emoji": "💳" },
+        { "name": "Sync", "color": "#0891B2", "emoji": "🔄" },
+        { "name": "UI", "color": "#7C3AED", "emoji": "🖼️" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Export to CSV drops emoji", "priority": "Low", "labels": ["UI"], "createdBy": "viewer", "createdDaysAgo": 1 },
+        { "list": 0, "title": "Invoice shows the wrong VAT rate for Ireland", "priority": "High", "labels": ["Billing"], "createdBy": "marco", "createdDaysAgo": 1 },
+        { "list": 1, "title": "Calendar shows tasks a day early in Sydney", "priority": "Medium", "labels": ["UI"], "assignees": ["sam"], "due": 5, "createdBy": "sam", "createdDaysAgo": 4,
+          "description": "Time zone offset applied twice. Reproduce with a profile in Australia/Sydney." },
+        { "list": 1, "title": "Search misses cards with accents", "priority": "Medium", "assignees": ["marco"], "due": 9, "createdBy": "viewer", "createdDaysAgo": 6 },
+        {
+          "list": 2, "title": "Duplicate cards after reconnect", "priority": "Urgent", "labels": ["P1", "Sync"], "assignees": ["sam", "owner"], "due": 0, "cover": "#DC2626", "createdBy": "marco", "createdDaysAgo": 3,
+          "description": "Three customers so far. Happens when the laptop wakes from sleep with the board open.",
+          "checklist": [["Reproduce", true], ["Find the race", true], ["Fix and add a test", false]],
+          "comments": [
+            { "by": "sam", "hoursAgo": 40, "body": "Reproduced. The resync and the queued move both create the card." },
+            { "by": "owner", "hoursAgo": 10, "body": "Let's hotfix this today. @Sam Okafor ping me for review." }
+          ]
+        },
+        { "list": 2, "title": "Card attachments time out on slow networks", "priority": "High", "labels": ["Sync"], "assignees": ["marco"], "due": 2, "createdBy": "editor", "createdDaysAgo": 5 },
+        { "list": 3, "title": "Typo in the password reset email", "priority": "Low", "labels": ["UI"], "assignees": ["editor"], "createdBy": "viewer", "createdDaysAgo": 7 },
+        { "list": 4, "title": "Double charge on plan upgrade", "priority": "Urgent", "labels": ["P1", "Billing"], "assignees": ["marco"], "createdBy": "owner", "createdDaysAgo": 15, "completedDaysAgo": 13 },
+        { "list": 4, "title": "Board names cut off on iPad", "priority": "Low", "labels": ["UI"], "assignees": ["sam"], "createdBy": "viewer", "createdDaysAgo": 20, "completedDaysAgo": 10 }
+      ]
+    },
+    {
+      "name": "Team offsite in Lisbon",
+      "emoji": "🎉",
+      "color": "#EA580C",
+      "keyPrefix": "TRIP",
+      "description": "Three days in Lisbon: one day of planning, one of workshops, one of fun.",
+      "createdDaysAgo": 30,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "yuki": "Editor", "diego": "Editor", "priya": "Editor" },
+      "starredBy": ["viewer"],
+      "lists": [
+        { "name": "To book", "emoji": "🧾" },
+        { "name": "Booked", "emoji": "🎟️" },
+        { "name": "Agenda", "emoji": "🗓️" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [
+        { "name": "Travel", "color": "#0EA5E9", "emoji": "✈️" },
+        { "name": "Venue", "color": "#7C3AED", "emoji": "🏛️" },
+        { "name": "Food", "color": "#EA580C", "emoji": "🍽️" },
+        { "name": "Fun", "color": "#16A34A", "emoji": "🎈" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Team dinner on day 2", "priority": "Medium", "labels": ["Food"], "assignees": ["diego"], "due": 6, "createdBy": "diego", "createdDaysAgo": 10,
+          "comments": [{ "by": "yuki", "hoursAgo": 15, "body": "Two vegetarians and one gluten-free, please!" }] },
+        { "list": 0, "title": "Sunset boat tour", "emoji": "⛵", "priority": "Low", "labels": ["Fun"], "assignees": ["yuki"], "due": 11, "createdBy": "yuki", "createdDaysAgo": 6 },
+        { "list": 0, "title": "Airport transfers", "priority": "Medium", "labels": ["Travel"], "assignees": ["owner"], "due": 4, "createdBy": "owner", "createdDaysAgo": 8 },
+        { "list": 1, "title": "Flights for the team", "priority": "High", "labels": ["Travel"], "assignees": ["priya"], "createdBy": "owner", "createdDaysAgo": 25,
+          "checklist": [["Priya", true], ["Yuki", true], ["Diego", true], ["Demo Owner", true], ["Demo Editor", false]] },
+        { "list": 1, "title": "Workshop space in Alfama", "priority": "High", "labels": ["Venue"], "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 24,
+          "description": "Booked for 3 days. Projector, whiteboards and coffee included." },
+        { "list": 2, "title": "Day 1: Roadmap planning", "priority": "High", "labels": ["Venue"], "assignees": ["owner", "editor"], "start": 14, "due": 14, "createdBy": "owner", "createdDaysAgo": 12,
+          "checklist": [["Pre-read sent", false], ["Agenda shared", true], ["Retro of last quarter", false]] },
+        { "list": 2, "title": "Day 2: Customer workshops", "priority": "Medium", "labels": ["Venue"], "assignees": ["editor"], "start": 15, "due": 15, "createdBy": "editor", "createdDaysAgo": 12 },
+        { "list": 2, "title": "Day 3: Surf lesson", "emoji": "🏄", "priority": "Low", "labels": ["Fun"], "assignees": ["yuki"], "start": 16, "due": 16, "createdBy": "yuki", "createdDaysAgo": 9 },
+        { "list": 3, "title": "Pick the dates", "priority": "Medium", "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 29, "completedDaysAgo": 27 },
+        { "list": 3, "title": "Budget approval", "priority": "High", "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 28, "completedDaysAgo": 22 }
+      ]
+    },
+    {
+      "name": "Blog & content calendar",
+      "emoji": "✍️",
+      "color": "#0891B2",
+      "keyPrefix": "BLOG",
+      "description": "Two posts a week. Pitch ideas freely, the editor picks.",
+      "createdDaysAgo": 45,
+      "members": { "owner": "Owner", "viewer": "Editor", "editor": "Viewer", "lena": "Editor" },
+      "starredBy": ["viewer"],
+      "lists": [
+        { "name": "Ideas", "emoji": "💡" },
+        { "name": "Writing", "emoji": "⌨️" },
+        { "name": "Editing", "emoji": "🖍️" },
+        { "name": "Scheduled", "emoji": "🗓️" },
+        { "name": "Published", "emoji": "📰", "done": true }
+      ],
+      "labels": [
+        { "name": "How-to", "color": "#16A34A", "emoji": "🧭" },
+        { "name": "Product news", "color": "#1D5BF5", "emoji": "📢" },
+        { "name": "Opinion", "color": "#DB2777", "emoji": "💭" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Why we stopped doing daily standups", "priority": "None", "labels": ["Opinion"], "createdBy": "lena", "createdDaysAgo": 5 },
+        { "list": 0, "title": "10 keyboard shortcuts you didn't know", "emoji": "⌨️", "priority": "None", "labels": ["How-to"], "createdBy": "viewer", "createdDaysAgo": 3 },
+        { "list": 1, "title": "How to run a weekly review in 15 minutes", "priority": "Medium", "labels": ["How-to"], "assignees": ["viewer"], "due": 3, "createdBy": "viewer", "createdDaysAgo": 6,
+          "checklist": [["Outline", true], ["First draft", false], ["Screenshots", false]],
+          "comments": [{ "by": "lena", "hoursAgo": 9, "body": "Great outline. @Demo Viewer maybe add a template people can copy?" }] },
+        { "list": 2, "title": "Introducing recurring tasks", "priority": "High", "labels": ["Product news"], "assignees": ["lena"], "due": 1, "createdBy": "owner", "createdDaysAgo": 9 },
+        { "list": 3, "title": "Calendar view deep dive", "priority": "Medium", "labels": ["Product news", "How-to"], "assignees": ["lena"], "due": 7, "createdBy": "lena", "createdDaysAgo": 12 },
+        { "list": 4, "title": "Our remote work handbook", "priority": "None", "labels": ["Opinion"], "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 40, "completedDaysAgo": 33 },
+        { "list": 4, "title": "Getting started with boards", "priority": "None", "labels": ["How-to"], "assignees": ["lena"], "createdBy": "lena", "createdDaysAgo": 38, "completedDaysAgo": 26 }
+      ]
+    },
+    {
+      "name": "Home renovation",
+      "emoji": "🏡",
+      "color": "#16A34A",
+      "keyPrefix": "HOME",
+      "description": "Kitchen first, then the bathroom. Budget lives in the spreadsheet.",
+      "createdDaysAgo": 50,
+      "members": { "owner": "Owner", "editor": "Editor" },
+      "starredBy": ["owner"],
+      "lists": [
+        { "name": "Plan", "emoji": "📐" },
+        { "name": "Buy", "emoji": "🛒" },
+        { "name": "Doing", "emoji": "🔨" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [
+        { "name": "Kitchen", "color": "#EA580C", "emoji": "🍳" },
+        { "name": "Bathroom", "color": "#0891B2", "emoji": "🛁" },
+        { "name": "Garden", "color": "#16A34A", "emoji": "🌿" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Get three quotes for the bathroom tiles", "priority": "Medium", "labels": ["Bathroom"], "assignees": ["editor"], "due": 10, "createdBy": "owner", "createdDaysAgo": 7 },
+        { "list": 0, "title": "Plan the herb garden", "emoji": "🌱", "priority": "Low", "labels": ["Garden"], "createdBy": "editor", "createdDaysAgo": 4 },
+        { "list": 1, "title": "Kitchen tap and sink", "priority": "High", "labels": ["Kitchen"], "assignees": ["owner"], "due": 2, "createdBy": "owner", "createdDaysAgo": 11,
+          "checklist": [["Measure the cabinet", true], ["Pick a finish", true], ["Order", false]] },
+        { "list": 1, "title": "Paint for the hallway", "priority": "Low", "assignees": ["editor"], "due": -3, "createdBy": "editor", "createdDaysAgo": 9 },
+        { "list": 2, "title": "Install the kitchen shelves", "priority": "Medium", "labels": ["Kitchen"], "assignees": ["owner", "editor"], "start": -1, "due": 1, "createdBy": "owner", "createdDaysAgo": 14,
+          "comments": [{ "by": "editor", "hoursAgo": 14, "body": "Borrowed the drill from next door, we can do it Saturday." }] },
+        { "list": 3, "title": "Remove the old cabinets", "priority": "High", "labels": ["Kitchen"], "assignees": ["owner", "editor"], "createdBy": "owner", "createdDaysAgo": 40, "completedDaysAgo": 30 },
+        { "list": 3, "title": "Choose the worktop", "priority": "Medium", "labels": ["Kitchen"], "assignees": ["editor"], "createdBy": "editor", "createdDaysAgo": 35, "completedDaysAgo": 21 }
+      ]
+    },
+    {
+      "name": "Weekly ops & rituals",
+      "emoji": "🔁",
+      "color": "#475569",
+      "keyPrefix": "OPS",
+      "description": "Recurring team chores. Complete a card and the next one appears.",
+      "createdDaysAgo": 70,
+      "members": { "owner": "Owner", "editor": "Editor", "viewer": "Viewer", "sam": "Editor" },
+      "starredBy": [],
+      "lists": [
+        { "name": "This week", "emoji": "📌" },
+        { "name": "Doing", "emoji": "⏳" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [
+        { "name": "Team", "color": "#1D5BF5", "emoji": "👥" },
+        { "name": "Finance", "color": "#CA8A04", "emoji": "💰" },
+        { "name": "Office", "color": "#16A34A", "emoji": "🏢" }
+      ],
+      "cards": [
+        { "list": 0, "title": "Team sync notes", "priority": "Medium", "labels": ["Team"], "assignees": ["owner"], "due": 1, "createdBy": "owner", "createdDaysAgo": 6,
+          "repeat": { "kind": "Weekly", "weekdays": [1] },
+          "checklist": [["Wins of the week", false], ["Blockers", false], ["Next week's focus", false]] },
+        { "list": 0, "title": "Water the office plants", "emoji": "🪴", "priority": "Low", "labels": ["Office"], "assignees": ["sam"], "due": 2, "createdBy": "sam", "createdDaysAgo": 2,
+          "repeat": { "kind": "Weekly", "weekdays": [1, 4] } },
+        { "list": 0, "title": "Send invoices", "priority": "High", "labels": ["Finance"], "assignees": ["editor"], "due": 5, "createdBy": "owner", "createdDaysAgo": 26,
+          "repeat": { "kind": "Monthly", "dayOfMonth": 1 } },
+        { "list": 1, "title": "Expense reports", "priority": "Medium", "labels": ["Finance"], "assignees": ["owner"], "due": 0, "createdBy": "owner", "createdDaysAgo": 12,
+          "repeat": { "kind": "Monthly", "dayOfMonth": 15 } },
+        { "list": 2, "title": "Team sync notes (last week)", "priority": "Medium", "labels": ["Team"], "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 13, "completedDaysAgo": 6 },
+        { "list": 2, "title": "Order coffee beans", "emoji": "☕", "priority": "Low", "labels": ["Office"], "assignees": ["sam"], "createdBy": "sam", "createdDaysAgo": 10, "completedDaysAgo": 8 }
+      ]
+    },
+    {
+      "name": "Holiday campaign 2025",
+      "emoji": "🎄",
+      "color": "#B91C1C",
+      "keyPrefix": "HOL",
+      "description": "Last year's holiday campaign, kept for reference.",
+      "createdDaysAgo": 160,
+      "archivedDaysAgo": 100,
+      "members": { "owner": "Owner", "editor": "Editor", "diego": "Editor" },
+      "starredBy": [],
+      "lists": [
+        { "name": "To do", "emoji": "📝" },
+        { "name": "Done", "emoji": "✅", "done": true }
+      ],
+      "labels": [{ "name": "Email", "color": "#CA8A04", "emoji": "✉️" }],
+      "cards": [
+        { "list": 1, "title": "Gift guide email", "priority": "High", "labels": ["Email"], "assignees": ["diego"], "createdBy": "diego", "createdDaysAgo": 150, "completedDaysAgo": 120 },
+        { "list": 1, "title": "Holiday discount codes", "priority": "Medium", "assignees": ["owner"], "createdBy": "owner", "createdDaysAgo": 148, "completedDaysAgo": 118 },
+        { "list": 1, "title": "Year in review post", "priority": "Low", "assignees": ["editor"], "createdBy": "editor", "createdDaysAgo": 140, "completedDaysAgo": 105 }
+      ]
+    }
+  ]
+}
