@@ -7,8 +7,6 @@ import AppLogo from '@/shared/ui/AppLogo.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { useAuthStore } from '@/features/auth/store'
 import { useBoardsStore } from '@/features/boards/store'
-import { badgeText } from '@/features/notifications/format'
-import { useNotificationsStore } from '@/features/notifications/store'
 import { boardRouteNames, sidebarBoards } from './sidebar'
 
 /** `compact`: the icon rail; labels stay for screen readers and tooltips. */
@@ -20,8 +18,6 @@ const emit = defineEmits<{ search: []; navigate: [] }>()
 
 const auth = useAuthStore()
 const boards = useBoardsStore()
-const notifications = useNotificationsStore()
-const unread = computed(() => badgeText(notifications.unreadCount))
 const route = useRoute()
 const router = useRouter()
 
@@ -41,7 +37,6 @@ const icons = {
   home: 'M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z',
   search: 'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-3.5-3.5',
   activity: 'M13 2L3 14h9l-1 8 10-12h-9z',
-  bell: 'M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',
   admin: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
   profile: 'M12 4a4 4 0 100 8 4 4 0 000-8zM4 21a8 8 0 0116 0',
   signOut: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
@@ -151,34 +146,6 @@ async function signOut() {
           <path :d="icons.activity" />
         </svg>
         <span :class="label">Activity</span>
-      </RouterLink>
-      <RouterLink
-        to="/notifications"
-        :class="[pill, 'relative']"
-        :active-class="active"
-        :title="compact ? 'Notifications' : undefined"
-        @click="emit('navigate')"
-      >
-        <svg
-          class="h-[18px] w-[18px] shrink-0"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path :d="icons.bell" />
-        </svg>
-        <span :class="label">Notifications</span>
-        <span
-          v-if="unread"
-          class="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-white"
-          :class="compact ? 'absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 text-[10px]' : 'ml-auto'"
-          ><span aria-hidden="true">{{ unread }}</span
-          ><span class="sr-only">, {{ notifications.unreadCount }} unread</span></span
-        >
       </RouterLink>
       <RouterLink
         v-if="auth.user?.isPlatformAdmin"

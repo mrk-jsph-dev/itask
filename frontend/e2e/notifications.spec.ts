@@ -193,11 +193,12 @@ test('the digest is turned on from the profile', async ({ page }) => {
   ])
 })
 
-test('the notifications page groups by day and the sidebar shows the count', async ({ page }) => {
+test('the notifications page groups by day and the bell shows the count', async ({ page }) => {
   await mockApi(page)
   await page.goto('/notifications')
 
   await expect(page.getByRole('heading', { name: 'Notifications', level: 1 })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Today' })).toContainText('mentioned you on')
-  await expect(page.getByRole('link', { name: /Notifications/ })).toContainText('1')
+  await expect(page.getByRole('button', { name: 'Notifications, 1 unread' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Notifications/ })).toHaveCount(0)
 })
