@@ -301,7 +301,7 @@ public sealed class AiTests(AiApiFactory factory) : IClassFixture<AiApiFactory>
             db.UsageCounters.Add(new UsageCounter { Name = DailyCounters.Ai, Date = today, Count = count });
             await db.SaveChangesAsync();
         });
-        await SetTotalAsync(200);
+        await SetTotalAsync(AiApiFactory.DailyTotal);
 
         try
         {

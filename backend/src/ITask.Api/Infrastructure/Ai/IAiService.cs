@@ -37,10 +37,10 @@ public sealed class AiOptions
     /// <summary>Deployment name of the OpenAI model in Foundry.</summary>
     public string? Deployment { get; set; }
 
-    public int DailyRequestsPerUser { get; set; } = 20;
+    public int DailyRequestsPerUser { get; set; } = 10;
 
     /// <summary>App-wide AI requests per UTC day, so many accounts can't multiply the bill.</summary>
-    public int DailyRequestsTotal { get; set; } = 200;
+    public int DailyRequestsTotal { get; set; } = 30;
 
     public bool IsConfigured => Enabled && Endpoint is not null && !string.IsNullOrWhiteSpace(Deployment);
 }

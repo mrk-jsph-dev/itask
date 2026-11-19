@@ -10,6 +10,9 @@ public sealed class AiApiFactory : ApiFactory
 {
     public const int DailyCap = 5;
 
+    /// <summary>App-wide cap, high so test classes sharing a factory never reach it by accident.</summary>
+    public const int DailyTotal = 100_000;
+
     public FakeAiService Ai { get; } = new();
 
     protected override Dictionary<string, string?> ExtraConfig => new()
@@ -17,6 +20,7 @@ public sealed class AiApiFactory : ApiFactory
         ["Ai:Enabled"] = "true",
         ["Ai:DailyRequestsPerUser"] = DailyCap.ToString(System.Globalization.CultureInfo.InvariantCulture),
         ["RateLimits:AiPerMinute"] = "1000",
+        ["Ai:DailyRequestsTotal"] = DailyTotal.ToString(System.Globalization.CultureInfo.InvariantCulture),
     };
 
     protected override void ConfigureServices(IServiceCollection services) =>

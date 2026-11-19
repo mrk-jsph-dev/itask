@@ -2,6 +2,12 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.3.2
+
+- **Lower AI caps for a near-$0 bill:** 10 AI requests per user and 30 for the whole app per day
+  (were 20 and 200). This covers ✨ buttons, automation drafting and ✨ automation actions. Raise
+  `Ai__DailyRequestsPerUser` / `Ai__DailyRequestsTotal` when there is a budget.
+
 ## 1.3.1
 
 - **Automation counts:** the Automations sheet reloads when it opens, so run counts are current, and
