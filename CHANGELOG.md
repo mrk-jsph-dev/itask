@@ -2,6 +2,12 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.3.1
+
+- **Automation counts:** the Automations sheet reloads when it opens, so run counts are current, and
+  block-mode doorways show how many moves they blocked ("0 runs, 2 blocked in 30 days").
+- **Card create:** simultaneous creates on one board retry with a short random pause.
+
 ## 1.3.0
 
 Board automations: iTask's own take, with list doorways, explain and undo, and AI only where you ask for it.

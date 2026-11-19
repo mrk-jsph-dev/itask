@@ -73,6 +73,7 @@ const automation = (extra: Record<string, unknown>) => ({
   enabled: true,
   timing: 'instant',
   runs: 0,
+  blocked: 0,
   lastRunAt: null,
   problem: null,
   createdAt: '2026-11-19T00:00:00Z',

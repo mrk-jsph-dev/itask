@@ -47,8 +47,10 @@ export interface Automation {
   enabled: boolean
   /** `instant` runs inside the change; `hourly` may run late while the app sleeps. */
   timing: 'instant' | 'hourly'
-  /** Runs in the last 30 days. */
+  /** Times it changed a card in the last 30 days. */
   runs: number
+  /** Moves a block-mode doorway refused in the last 30 days. */
+  blocked: number
   lastRunAt: string | null
   /** Why it can't run as it is (it refers to something gone). */
   problem: string | null

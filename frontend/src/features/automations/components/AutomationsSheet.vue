@@ -42,7 +42,8 @@ const error = ref<string | null>(null)
 const hidden = ref(new Set<string>())
 
 onMounted(() => {
-  if (store.boardId !== props.boardId || store.items === null) void store.load(props.boardId)
+  // Always reload: run counts change with every card change on the board.
+  void store.load(props.boardId).catch(() => undefined)
   automationsApi
     .summary(props.boardId)
     .then((s) => (summary.value = s))
@@ -160,6 +161,13 @@ function remove(a: Automation) {
       toast(message(e), 'error')
     })
   }, 5000)
+}
+
+/** "3 runs, 2 blocked in 30 days"; block doorways mostly block, so both are shown. */
+function activity(a: Automation) {
+  const parts = [`${a.runs} run${a.runs === 1 ? '' : 's'}`]
+  if (a.blocked || a.mode === 'Block') parts.push(`${a.blocked} blocked`)
+  return `${parts.join(', ')} in 30 days`
 }
 
 const cost = (a: Automation) =>
@@ -318,9 +326,7 @@ const cost = (a: Automation) =>
                 class="rounded-full bg-violet-50 px-2 py-0.5 font-semibold text-violet-800"
                 >✨ uses AI quota</span
               >
-              <span class="text-muted"
-                >{{ a.runs }} run{{ a.runs === 1 ? '' : 's' }} in 30 days</span
-              >
+              <span class="text-muted" data-testid="automation-runs">{{ activity(a) }}</span>
               <template v-if="canManage">
                 <button
                   type="button"
