@@ -31,6 +31,9 @@ public static class ITaskServiceExtensions
         var services = builder.Services;
         var config = builder.Configuration;
 
+        // Don't advertise the web server in responses.
+        builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
         services.AddProblemDetails();
         services.AddOpenApi();
         services.AddHttpContextAccessor();
