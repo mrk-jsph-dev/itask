@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { renderMarkdown } from '../markdown'
+import { markdownExcerpt, renderMarkdown } from '../markdown'
 
 describe('renderMarkdown', () => {
   it('renders common markdown', () => {
@@ -25,5 +25,17 @@ describe('renderMarkdown', () => {
     expect(renderMarkdown('[site](https://example.com)')).toContain(
       'target="_blank" rel="noopener noreferrer"',
     )
+  })
+})
+
+describe('markdownExcerpt', () => {
+  it('strips formatting and collapses whitespace', () => {
+    expect(markdownExcerpt('# Plan\n\n**Ship** the [docs](https://x.dev)\n\n- one\n- two')).toBe(
+      'Plan Ship the docs one two',
+    )
+  })
+
+  it('cuts long text with an ellipsis', () => {
+    expect(markdownExcerpt('word '.repeat(50), 20)).toBe('word word word word…')
   })
 })

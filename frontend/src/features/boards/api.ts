@@ -275,7 +275,16 @@ export interface CardMove extends ListNeighbours {
 
 const cards = (boardId: string) => `${board(boardId)}/cards`
 
+/** Cards matching a filter, from `GET /boards/{id}/cards`. */
+export interface CardQueryResult {
+  items: Card[]
+  /** More cards matched than the API returns at once. */
+  truncated: boolean
+}
+
 export const cardsApi = {
+  query: (boardId: string, params: URLSearchParams) =>
+    api.get<CardQueryResult>(`${cards(boardId)}?${params.toString()}`),
   create: (boardId: string, listId: string, title: string) =>
     api.post<Card>(`${lists(boardId)}/${listId}/cards`, { title }),
   get: (boardId: string, cardId: string) => api.get<CardDetail>(`${cards(boardId)}/${cardId}`),

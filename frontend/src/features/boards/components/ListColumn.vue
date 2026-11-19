@@ -18,6 +18,8 @@ const props = defineProps<{
   allLists: Pick<BoardList, 'id' | 'name' | 'emoji'>[]
   /** Card that just dropped, for a brief glow. */
   settledCardId?: string | null
+  /** False while a filter or sort is on: cards can't be dragged or moved up and down. */
+  reorderable?: boolean
 }>()
 const emit = defineEmits<{
   rename: [input: ListInput, done: (ok: boolean) => void]
@@ -183,7 +185,7 @@ function save(input: ListInput) {
         class="flex min-h-24 flex-col gap-2 rounded-[18px] border-[1.5px] border-dashed border-line p-2"
         :aria-label="`${list.name} cards`"
         group="cards"
-        :disabled="!editable"
+        :disabled="!editable || reorderable === false"
         draggable="[data-card-id]"
         ghost-class="drag-ghost"
         drag-class="dragging"
@@ -205,8 +207,8 @@ function save(input: ListInput) {
           <CardTile
             :card="card"
             :editable="editable"
-            :can-move-up="i > 0"
-            :can-move-down="i < cards.length - 1"
+            :can-move-up="reorderable !== false && i > 0"
+            :can-move-down="reorderable !== false && i < cards.length - 1"
             :targets="targets"
             @open="emit('openCard', card.id)"
             @move="(delta) => emit('moveCard', card.id, list.id, i + delta)"
