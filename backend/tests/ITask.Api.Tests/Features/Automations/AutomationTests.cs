@@ -60,6 +60,25 @@ public sealed class AutomationTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task The_list_counts_runs_and_blocked_moves()
+    {
+        var s = await SetupAsync();
+        var gate = await s.Owner.CreateAutomationAsync(s.BoardId, Doorway(s.Review, "Enter", "Block", [new { type = "assignee.set" }]));
+        var rule = await s.Owner.CreateAutomationAsync(s.BoardId, Rule(Trigger("card.entered", s.Done), [new { type = "complete" }]));
+        Assert.Equal(HttpStatusCode.Conflict, (await s.Owner.MoveCardAsync(s.BoardId, s.Card, s.Review)).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await s.Owner.MoveCardAsync(s.BoardId, s.Card, s.Review)).StatusCode);
+        (await s.Owner.MoveCardAsync(s.BoardId, s.Card, s.Done)).EnsureSuccessStatusCode();
+
+        var listed = (await s.Owner.GetFromJsonAsync<List<AutomationView>>(AutomationTestKit.Automations(s.BoardId)))!;
+
+        var doorway = listed.Single(a => a.Id == gate.Id);
+        Assert.Equal((0, 2), (doorway.Runs, doorway.Blocked));
+        var done = listed.Single(a => a.Id == rule.Id);
+        Assert.Equal((1, 0), (done.Runs, done.Blocked));
+        Assert.NotNull(done.LastRunAt);
+    }
+
+    [Fact]
     public async Task Viewers_see_only_doorways_and_strangers_get_404()
     {
         var s = await SetupAsync();

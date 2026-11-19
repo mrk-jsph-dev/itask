@@ -10,6 +10,8 @@ namespace ITask.Api.Common.Automations;
 
 /// <summary>An automation as the API returns it.</summary>
 /// <param name="Timing"><c>instant</c> (runs inside the change that triggers it) or <c>hourly</c> (may run late while the app sleeps).</param>
+/// <param name="Runs">Times it changed a card in the last <see cref="RunWindowDays"/> days.</param>
+/// <param name="Blocked">Moves a block-mode doorway refused in the same window.</param>
 /// <param name="Problem">Why the automation can't run as it is (it refers to something gone), or null.</param>
 public sealed record AutomationView(
     Guid Id,
@@ -24,6 +26,7 @@ public sealed record AutomationView(
     bool Enabled,
     string Timing,
     int Runs,
+    int Blocked,
     DateTimeOffset? LastRunAt,
     string? Problem,
     DateTimeOffset CreatedAt,
@@ -32,7 +35,7 @@ public sealed record AutomationView(
     /// <summary>Days of runs counted in <see cref="Runs"/>.</summary>
     public const int RunWindowDays = 30;
 
-    public static AutomationView From(AutomationRule rule, BoardContext board, int runs = 0, DateTimeOffset? lastRunAt = null)
+    public static AutomationView From(AutomationRule rule, BoardContext board, int runs = 0, int blocked = 0, DateTimeOffset? lastRunAt = null)
     {
         ArgumentNullException.ThrowIfNull(rule);
         var spec = AutomationSpec.Of(rule);
@@ -44,7 +47,7 @@ public sealed record AutomationView(
             .FirstOrDefault();
         return new AutomationView(
             rule.Id, rule.Kind, rule.Name, rule.ListId, rule.Direction, rule.Mode, trigger, spec.Conditions, spec.Actions,
-            rule.Enabled, AutomationCatalog.IsHourly(trigger.Type) ? "hourly" : "instant", runs, lastRunAt, problem,
+            rule.Enabled, AutomationCatalog.IsHourly(trigger.Type) ? "hourly" : "instant", runs, blocked, lastRunAt, problem,
             rule.CreatedAt, Convert.ToBase64String(rule.RowVersion));
     }
 }
