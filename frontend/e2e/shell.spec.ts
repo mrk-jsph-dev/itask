@@ -43,6 +43,7 @@ const card = {
   checklistTotal: 3,
   commentCount: 0,
   attachmentCount: 2,
+  recurring: false,
   rowVersion: 'v1',
 }
 
@@ -141,6 +142,7 @@ async function mockApi(page: Page, signedIn = false) {
             createdAt: me.createdAt,
             checklist: [],
             attachments: [],
+            recurrence: null,
           },
         })
       }

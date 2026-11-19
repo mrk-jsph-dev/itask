@@ -40,6 +40,7 @@ internal sealed class DemoResetJob(AppDbContext db, DemoSeeder seeder, IBlobStor
             .ExecuteUpdateAsync(s => s.SetProperty(i => i.AssigneeId, (Guid?)null), ct);
         await db.BoardStars.Where(s => demoUsers.Contains(s.UserId)).ExecuteDeleteAsync(ct);
         await db.BoardMembers.Where(m => demoUsers.Contains(m.UserId)).ExecuteDeleteAsync(ct);
+        await db.BoardTemplates.Where(t => demoUsers.Contains(t.OwnerId)).ExecuteDeleteAsync(ct);
 
         await seeder.SeedAsync(ct);
     }

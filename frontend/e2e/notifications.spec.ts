@@ -45,6 +45,7 @@ const card = {
   commentCount: 1,
   emoji: null,
   attachmentCount: 0,
+  recurring: false,
   rowVersion: 'v1',
 }
 
@@ -142,6 +143,7 @@ async function mockApi(page: Page) {
             createdAt: me.createdAt,
             checklist: [],
             attachments: [],
+            recurrence: null,
           },
         })
       }

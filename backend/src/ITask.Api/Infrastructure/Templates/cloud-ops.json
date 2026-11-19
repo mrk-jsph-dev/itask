@@ -1,0 +1,47 @@
+{
+  "id": "cloud-ops",
+  "name": "Cloud ops",
+  "emoji": "☁️",
+  "description": "Run cloud infrastructure: requests, changes, incidents and routine checks.",
+  "color": "#0369A1",
+  "content": {
+    "lists": [
+      { "name": "Requests", "emoji": "📥" },
+      { "name": "Planned changes", "emoji": "🗓️" },
+      { "name": "In progress", "emoji": "🚧", "wipLimit": 3 },
+      { "name": "Incidents", "emoji": "🚨" },
+      { "name": "Done", "emoji": "✅" }
+    ],
+    "labels": [
+      { "name": "Incident", "color": "#E11D48", "emoji": "🚨" },
+      { "name": "Change", "color": "#1D5BF5", "emoji": "🔧" },
+      { "name": "Cost", "color": "#4D7C0F", "emoji": "💸" },
+      { "name": "Security", "color": "#7C3AED", "emoji": "🔐" }
+    ],
+    "cards": [
+      {
+        "list": "Planned changes",
+        "title": "Monthly cost review",
+        "emoji": "💸",
+        "labels": ["Cost"],
+        "checklist": ["Check the budget alerts", "Look for idle resources", "Review log retention"]
+      },
+      {
+        "list": "Planned changes",
+        "title": "Patch and update base images",
+        "emoji": "🩹",
+        "labels": ["Security", "Change"],
+        "checklist": ["Review dependency updates", "Rebuild images", "Deploy and verify health"]
+      },
+      {
+        "list": "Incidents",
+        "title": "Incident runbook",
+        "emoji": "📕",
+        "labels": ["Incident"],
+        "priority": "Urgent",
+        "description": "Copy this card for each incident.",
+        "checklist": ["Acknowledge", "Mitigate", "Communicate status", "Write the post-incident review"]
+      }
+    ]
+  }
+}

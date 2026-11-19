@@ -8,9 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Cards.CompleteCard;
 
-/// <summary>Marks a card complete or reopens it. Editor or above; both are idempotent.</summary>
+/// <summary>
+/// Marks a card complete or reopens it. Editor or above; both are idempotent. Completing a repeating
+/// card also creates its next copy, retrying when a concurrent create took the board's next number.
+/// </summary>
 public static class CompleteCard
 {
+    private const int MaxAttempts = 3;
+
     internal sealed class Endpoint : IEndpoint
     {
         public void Map(IEndpointRouteBuilder app)
@@ -40,18 +45,43 @@ public static class CompleteCard
                 return denied;
             }
 
-            var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.BoardId == boardId, ct);
-            if (card is null)
+            for (var attempt = 1; ; attempt++)
             {
-                return CardGuard.NotFound();
-            }
+                var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.BoardId == boardId, ct);
+                if (card is null)
+                {
+                    return CardGuard.NotFound();
+                }
 
-            if ((card.CompletedAt is null) != (completedAt is null))
-            {
+                if ((card.CompletedAt is null) == (completedAt is null))
+                {
+                    break;
+                }
+
                 card.CompletedAt = completedAt;
                 await activity.RecordCardAsync(
                     completedAt is null ? ActivityTypes.CardReopened : ActivityTypes.CardCompleted, boardId, cardId, null, ct);
-                await db.SaveChangesAsync(ct);
+
+                // Completing a repeating card creates its next copy at once; the rule moves to the copy.
+                if (completedAt is { } now && card.ArchivedAt is null
+                    && await db.CardRecurrences.FirstOrDefaultAsync(r => r.CardId == cardId, ct) is { } recurrence)
+                {
+                    await Recurrences.SpawnNextAsync(db, activity, recurrence, now, ct);
+                }
+
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                    break;
+                }
+                catch (DbUpdateConcurrencyException) when (attempt < MaxAttempts)
+                {
+                    db.ChangeTracker.Clear();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BoardResults.Conflict("The board is busy. Try again.");
+                }
             }
 
             return TypedResults.Ok((await CardSummaries.FindAsync(db, boardId, cardId, ct))!);

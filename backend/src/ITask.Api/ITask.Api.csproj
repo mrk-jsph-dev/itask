@@ -23,6 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Remove="Infrastructure/Templates/*.json" />
+    <EmbeddedResource Include="Infrastructure/Templates/*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="ITask.Api.Tests" />
   </ItemGroup>
 

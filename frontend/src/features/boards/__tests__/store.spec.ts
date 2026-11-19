@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/shared/api/http'
 import { toasts } from '@/shared/ui/toast'
-import { boardsApi, type BoardDetail, type BoardSummary } from '../api'
+import { boardsApi, templatesApi, type BoardDetail, type BoardSummary } from '../api'
 import { useBoardsStore } from '../store'
 
 const summary = (name: string, changes: Partial<BoardSummary> = {}): BoardSummary => ({
@@ -52,6 +52,26 @@ describe('boards store', () => {
     await store.create({ name: 'Beta', emoji: '🚀', description: null, color: '#0F766E' })
 
     expect(store.boards!.map((b) => b.name)).toEqual(['Alpha', 'Beta', 'Gamma'])
+  })
+
+  it('creates from a template through the templates API', async () => {
+    const fromTemplate = vi.spyOn(templatesApi, 'createBoard').mockResolvedValue({
+      id: 'sprint',
+      name: 'Sprint 1',
+      emoji: '🏃',
+      description: null,
+      color: '#7C3AED',
+      role: 'Owner',
+    })
+    const blank = vi.spyOn(boardsApi, 'create')
+    const store = useBoardsStore()
+    const input = { name: 'Sprint 1', emoji: '🏃', description: null, color: '#7C3AED' }
+
+    const created = await store.create(input, 'sprint')
+
+    expect(fromTemplate).toHaveBeenCalledWith('sprint', input)
+    expect(blank).not.toHaveBeenCalled()
+    expect(created.id).toBe('sprint')
   })
 
   it('stars optimistically and lists the board as starred', async () => {

@@ -92,6 +92,11 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
         ["card.labels_changed"] = new(
             async c => c.Id = await Ctx.CreatedIdAsync(c.Post($"{c.Board}/labels", new { name = "Bug", color = "#DC2626" })),
             c => c.Owner.PutAsJsonAsync($"{c.Card.Url}/labels", new { labelIds = new[] { c.Id } })),
+        ["card.recurrence_set"] = new(
+            null, c => c.Owner.PutAsJsonAsync($"{c.Card.Url}/recurrence", new { kind = "Weekly", weekdays = new[] { 1 }, targetListId = c.Lists[0] })),
+        ["card.recurrence_cleared"] = new(
+            c => c.Owner.PutAsJsonAsync($"{c.Card.Url}/recurrence", new { kind = "Daily", targetListId = c.Lists[0] }),
+            c => c.Owner.DeleteAsync(new Uri($"{c.Card.Url}/recurrence", UriKind.Relative))),
         ["label.created"] = new(null, c => c.Post($"{c.Board}/labels", new { name = "Bug", color = "#DC2626" })),
         ["label.updated"] = new(
             async c => c.Id = await Ctx.CreatedIdAsync(c.Post($"{c.Board}/labels", new { name = "Bug", color = "#DC2626" })),

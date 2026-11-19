@@ -20,6 +20,7 @@ import CardAttachments from './CardAttachments.vue'
 import CardChecklist from './CardChecklist.vue'
 import CardComments from './CardComments.vue'
 import MarkdownField from './MarkdownField.vue'
+import RecurrencePicker from './RecurrencePicker.vue'
 
 /** `canComment`: any member may comment unless the board is archived. */
 const props = defineProps<{ cardId: string; editable: boolean; canComment: boolean }>()
@@ -332,6 +333,16 @@ const dateClass =
             :disabled="!editable"
             :class="dateClass"
             @change="onDate('startAt', $event)"
+          />
+        </dd>
+
+        <dt class="text-muted">Repeat</dt>
+        <dd>
+          <RecurrencePicker
+            :editable="editable && !card.archivedAt"
+            :due-at="card.dueAt"
+            :lists="lists.lists ?? []"
+            :loading="detail.loading"
           />
         </dd>
 

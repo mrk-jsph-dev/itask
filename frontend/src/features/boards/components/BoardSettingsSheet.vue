@@ -8,7 +8,7 @@ import { toast } from '@/shared/ui/toast'
 import { useAuthStore } from '@/features/auth/store'
 import BoardDetailsFields from './BoardDetailsFields.vue'
 import LabelManager from './LabelManager.vue'
-import { boardRoles, type BoardRole } from '../api'
+import { boardRoles, templatesApi, type BoardRole } from '../api'
 import { inviteLink } from '../options'
 import { errorText, useBoardsStore } from '../store'
 
@@ -119,6 +119,28 @@ async function revoke(inviteId: string) {
 }
 
 const confirmDelete = ref(false)
+
+const templateName = ref(`${board.value.name} template`)
+const templateCards = ref(true)
+const savingTemplate = ref(false)
+const templateError = ref<string | null>(null)
+
+async function saveTemplate() {
+  savingTemplate.value = true
+  templateError.value = null
+  try {
+    const saved = await templatesApi.save(board.value.id, {
+      name: templateName.value.trim(),
+      description: null,
+      includeCards: templateCards.value,
+    })
+    toast(`Saved “${saved.name}”. Pick it under New board.`)
+  } catch (e) {
+    templateError.value = errorText(e, "Couldn't save the template.")
+  } finally {
+    savingTemplate.value = false
+  }
+}
 
 async function archiveOrRestore() {
   try {
@@ -324,6 +346,39 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
           </button>
         </li>
       </ul>
+    </form>
+
+    <form
+      v-if="store.isOwner"
+      :class="sectionClass"
+      aria-labelledby="settings-template"
+      @submit.prevent="saveTemplate"
+    >
+      <h3 id="settings-template" class="text-base font-semibold">Save as template</h3>
+      <p class="-mt-2 text-xs text-muted">
+        Keeps the lists, labels and cards (titles, descriptions, checklists). Members, comments,
+        files, dates and assignees stay out. Only you see your templates.
+      </p>
+      <label class="flex flex-col gap-1.5 text-[13px] font-semibold">
+        Template name
+        <input v-model="templateName" type="text" maxlength="120" required :class="inputClass" />
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input
+          v-model="templateCards"
+          type="checkbox"
+          class="h-4 w-4 accent-[var(--color-accent)]"
+        />
+        Include cards
+      </label>
+      <p v-if="templateError" role="alert" class="text-sm text-red-600">{{ templateError }}</p>
+      <button
+        type="submit"
+        :disabled="savingTemplate || !templateName.trim()"
+        class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-white disabled:opacity-60"
+      >
+        {{ savingTemplate ? 'Saving…' : 'Save as template' }}
+      </button>
     </form>
 
     <section :class="sectionClass" aria-labelledby="settings-danger">

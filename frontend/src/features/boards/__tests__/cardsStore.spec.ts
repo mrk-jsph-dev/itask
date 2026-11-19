@@ -27,6 +27,7 @@ const card = (title: string, listId: string): Card => ({
   checklistTotal: 0,
   commentCount: 0,
   attachmentCount: 0,
+  recurring: false,
   rowVersion: `rv-${title}`,
 })
 
@@ -141,6 +142,25 @@ describe('cards store', () => {
     await cards.create('done', 'E')
 
     expect(titles(lists).done).toEqual(['D', 'E'])
+  })
+
+  it('reloads the board after completing a repeating card so its next copy shows', async () => {
+    const { lists, cards } = await loaded()
+    const repeating = { ...lists.lists![0]!.cards[0]!, recurring: true }
+    vi.spyOn(cardsApi, 'complete').mockResolvedValue({
+      ...repeating,
+      recurring: false,
+      completedAt: '2030-03-04T10:00:00Z',
+    })
+    const reload = vi
+      .spyOn(listsApi, 'all')
+      .mockResolvedValue([list('todo', ['A', 'B', 'C', 'A2']), list('done', ['D'])])
+
+    await cards.toggleComplete(repeating)
+
+    expect(reload).toHaveBeenCalled()
+    expect(titles(lists).todo).toEqual(['A', 'B', 'C', 'A2'])
+    expect(lastToast()?.text).toContain('Next one')
   })
 
   it('renames and removes labels on cards too', async () => {

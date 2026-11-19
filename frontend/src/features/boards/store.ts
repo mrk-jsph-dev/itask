@@ -5,6 +5,7 @@ import { ApiError } from '@/shared/api/http'
 import { toast } from '@/shared/ui/toast'
 import {
   boardsApi,
+  templatesApi,
   type BoardDetail,
   type BoardInput,
   type BoardRole,
@@ -48,8 +49,11 @@ export const useBoardsStore = defineStore('boards', () => {
     navBoards.value = await boardsApi.mine()
   }
 
-  async function create(input: BoardInput) {
-    const created = await boardsApi.create(input)
+  /** Creates a blank board, or one from a template when `templateId` is given. */
+  async function create(input: BoardInput, templateId: string | null = null) {
+    const created = await (templateId
+      ? templatesApi.createBoard(templateId, input)
+      : boardsApi.create(input))
     const summary: BoardSummary = { ...created, isStarred: false, memberCount: 1, archivedAt: null }
     if (boards.value && !showArchived.value) {
       boards.value = [...boards.value, summary].sort(byName)

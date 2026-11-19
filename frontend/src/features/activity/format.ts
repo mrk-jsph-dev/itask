@@ -79,6 +79,30 @@ function setChange(
   return mixed
 }
 
+const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/** "a daily repeat", "a weekly repeat (Mon, Wed)", "a monthly repeat (day 31)". */
+function repeatText(data: Record<string, unknown>): string {
+  const days = Array.isArray(data.weekdays)
+    ? [...(data.weekdays as unknown[])]
+        .filter((d): d is number => typeof d === 'number')
+        .sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7))
+        .map((d) => weekdayNames[d])
+    : []
+  switch (data.kind) {
+    case 'Weekly':
+      return days.length ? `a weekly repeat (${days.join(', ')})` : 'a weekly repeat'
+    case 'Monthly':
+      return typeof data.dayOfMonth === 'number'
+        ? `a monthly repeat (day ${data.dayOfMonth})`
+        : 'a monthly repeat'
+    case 'Daily':
+      return 'a daily repeat'
+    default:
+      return 'a repeat'
+  }
+}
+
 const labelNoun = (count: number) => (count === 1 ? 'label' : 'labels')
 
 function cardUpdate(data: Record<string, unknown>): string {
@@ -107,7 +131,12 @@ function sentence(type: string, data: Record<string, unknown>): [string, string 
 
   switch (type) {
     case 'board.created':
-      return ['created the board', null]
+      return [
+        data.template
+          ? `created the board from the ${str(data.template)} template`
+          : 'created the board',
+        null,
+      ]
     case 'board.updated':
       return data.from
         ? [`renamed the board from ${quoted(data.from)} to`, str(data.name)]
@@ -143,7 +172,12 @@ function sentence(type: string, data: Record<string, unknown>): [string, string 
       return ['restored the list', list]
 
     case 'card.created':
+      if (data.recurringFrom) return [`added the next repeat in ${list ?? 'its list'}:`, card]
       return [list ? `created in ${list}` : 'created', card]
+    case 'card.recurrence_set':
+      return [`set ${repeatText(data)} on`, card]
+    case 'card.recurrence_cleared':
+      return ['stopped the repeat on', card]
     case 'card.updated':
       return [cardUpdate(data), card]
     case 'card.moved':

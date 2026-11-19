@@ -11,6 +11,7 @@ using ITask.Api.Infrastructure.Email;
 using ITask.Api.Infrastructure.Maintenance;
 using ITask.Api.Infrastructure.Notifications;
 using ITask.Api.Infrastructure.Storage;
+using ITask.Api.Infrastructure.Templates;
 using ITask.Api.Infrastructure.Turnstile;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -78,6 +79,7 @@ public static class ITaskServiceExtensions
 
         services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
         services.AddSingleton<IAiService, DisabledAiService>();
+        services.AddSingleton<ITemplateCatalog, TemplateCatalog>();
 
         services.AddBlobStorage(config);
 

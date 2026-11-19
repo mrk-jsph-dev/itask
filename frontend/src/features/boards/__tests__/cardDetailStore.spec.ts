@@ -35,6 +35,7 @@ const tile: Card = {
   commentCount: 3,
   emoji: null,
   attachmentCount: 0,
+  recurring: false,
   rowVersion: 'rv',
 }
 
@@ -82,6 +83,7 @@ async function opened() {
     createdAt: '2026-11-18T00:00:00Z',
     checklist: [item('a', true), item('b')],
     attachments: [],
+    recurrence: null,
   })
   // Newest first from the API.
   vi.spyOn(commentsApi, 'page').mockResolvedValue({
@@ -107,6 +109,25 @@ describe('card detail store', () => {
     expect(detail.checklist.map((i) => i.id)).toEqual(['a', 'b'])
     expect(detail.comments.map((c) => c.id)).toEqual(['2', '3'])
     expect(detail.progress).toBe(50)
+  })
+
+  it('sets and clears the repeat rule and flags the tile', async () => {
+    const { detail, card } = await opened()
+    const input = { kind: 'Weekly' as const, weekdays: [1], dayOfMonth: null, targetListId: 'l1' }
+    const set = vi
+      .spyOn(cardsApi, 'setRecurrence')
+      .mockResolvedValue({ ...input, nextRunAt: '2030-03-11T00:00:00Z' })
+    const clear = vi.spyOn(cardsApi, 'clearRecurrence').mockResolvedValue(undefined)
+
+    await detail.setRecurrence(input)
+    expect(set).toHaveBeenCalledWith('b1', 'c1', input)
+    expect(detail.recurrence?.nextRunAt).toBe('2030-03-11T00:00:00Z')
+    expect(card().recurring).toBe(true)
+
+    await detail.clearRecurrence()
+    expect(clear).toHaveBeenCalledWith('b1', 'c1')
+    expect(detail.recurrence).toBeNull()
+    expect(card().recurring).toBe(false)
   })
 
   it('toggles optimistically and keeps the tile in step', async () => {

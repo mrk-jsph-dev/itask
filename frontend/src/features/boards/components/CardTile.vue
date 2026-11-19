@@ -188,7 +188,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
     </ul>
 
     <div
-      v-if="priority || card.checklistTotal || card.attachmentCount"
+      v-if="priority || card.recurring || card.checklistTotal || card.attachmentCount"
       class="flex items-center gap-2.5 text-[13px] text-[#374151]"
     >
       <span
@@ -201,6 +201,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         </svg>
         {{ card.priority }}
       </span>
+      <span v-if="card.recurring" role="img" aria-label="Repeats" title="Repeats">🔁</span>
       <span
         v-if="card.checklistTotal"
         class="ml-auto flex items-center gap-1"

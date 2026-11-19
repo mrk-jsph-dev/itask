@@ -13,6 +13,7 @@ const line = (type: string, data: Record<string, unknown> = {}) => {
 describe('describeActivity', () => {
   it.each([
     ['board.created', {}, 'created the board'],
+    ['board.created', { template: 'Sprint' }, 'created the board from the Sprint template'],
     [
       'board.updated',
       { name: 'New', from: 'Old', fields: ['name'] },
@@ -40,6 +41,23 @@ describe('describeActivity', () => {
     ['list.archived', { list: 'QA' }, 'archived the list QA'],
     ['list.restored', { list: 'QA' }, 'restored the list QA'],
     ['card.created', { card, list: 'To do' }, 'created in To do Fix login'],
+    [
+      'card.created',
+      { card, list: 'To do', recurringFrom: 'ITK-6' },
+      'added the next repeat in To do: Fix login',
+    ],
+    [
+      'card.recurrence_set',
+      { card, kind: 'Weekly', weekdays: [0, 3, 1] },
+      'set a weekly repeat (Mon, Wed, Sun) on Fix login',
+    ],
+    ['card.recurrence_set', { card, kind: 'Daily' }, 'set a daily repeat on Fix login'],
+    [
+      'card.recurrence_set',
+      { card, kind: 'Monthly', dayOfMonth: 31 },
+      'set a monthly repeat (day 31) on Fix login',
+    ],
+    ['card.recurrence_cleared', { card }, 'stopped the repeat on Fix login'],
     [
       'card.updated',
       { card, fields: ['title'], from: 'Login bug' },

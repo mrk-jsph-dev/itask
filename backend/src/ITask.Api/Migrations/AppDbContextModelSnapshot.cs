@@ -384,6 +384,47 @@ namespace ITask.Api.Migrations
                     b.ToTable("BoardStars");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.BoardTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("BoardTemplates");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.Card", b =>
                 {
                     b.Property<Guid>("Id")
@@ -495,6 +536,55 @@ namespace ITask.Api.Migrations
                     b.HasIndex("LabelId");
 
                     b.ToTable("CardLabels");
+                });
+
+            modelBuilder.Entity("ITask.Api.Domain.CardRecurrence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTimeOffset>("NextRunAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("TargetListId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("Weekdays")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("NextRunAt");
+
+                    b.ToTable("CardRecurrences");
                 });
 
             modelBuilder.Entity("ITask.Api.Domain.ChecklistItem", b =>
@@ -955,6 +1045,15 @@ namespace ITask.Api.Migrations
                     b.Navigation("Board");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.BoardTemplate", b =>
+                {
+                    b.HasOne("ITask.Api.Domain.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.Card", b =>
                 {
                     b.HasOne("ITask.Api.Domain.Board", "Board")
@@ -1016,6 +1115,23 @@ namespace ITask.Api.Migrations
                     b.Navigation("Card");
 
                     b.Navigation("Label");
+                });
+
+            modelBuilder.Entity("ITask.Api.Domain.CardRecurrence", b =>
+                {
+                    b.HasOne("ITask.Api.Domain.Card", "Card")
+                        .WithOne()
+                        .HasForeignKey("ITask.Api.Domain.CardRecurrence", "CardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ITask.Api.Domain.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Card");
                 });
 
             modelBuilder.Entity("ITask.Api.Domain.ChecklistItem", b =>

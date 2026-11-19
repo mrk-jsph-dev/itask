@@ -170,8 +170,9 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 - **Maintenance:** the API runs daily jobs (03:00 UTC slot): demo reset, activity older
   than 180 days, notifications past retention, uploads that were never confirmed. Hourly
   jobs send due-soon/overdue reminders and the email digests (08:00 in each user's time
-  zone). With the API scaled to zero, a missed slot runs on the next start, so reminders
-  and digests can arrive late. Jobs take a database lock, so only one replica runs each.
+  zone), and create the next copy of repeating cards. With the API scaled to zero, a missed
+  slot runs on the next start, so reminders, digests and repeats can arrive late (a long
+  pause makes one copy, not one per missed date). Jobs take a database lock, so only one replica runs each.
 - **Budget kill switch:** when the $5 budget is spent, the action group runs the
   `logic-itask-killswitch` Logic App, which stops the API. Start it again with
   `az containerapp start -g rg-itask -n ca-itask-api`.

@@ -80,6 +80,7 @@ async function mockApi(page: Page) {
     checklistTotal: 0,
     commentCount: 0,
     attachmentCount: 0,
+    recurring: false,
     rowVersion: `v${version++}`,
   }))
   const queries: URLSearchParams[] = []
@@ -138,6 +139,7 @@ async function mockApi(page: Page) {
             createdAt: me.createdAt,
             checklist: [],
             attachments: [],
+            recurrence: null,
           },
         })
       }

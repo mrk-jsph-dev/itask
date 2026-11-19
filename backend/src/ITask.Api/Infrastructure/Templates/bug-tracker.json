@@ -1,0 +1,31 @@
+{
+  "id": "bug-tracker",
+  "name": "Bug tracker",
+  "emoji": "🐞",
+  "description": "Triage, fix and verify bugs, with severity labels.",
+  "color": "#E11D48",
+  "content": {
+    "lists": [
+      { "name": "New", "emoji": "📥" },
+      { "name": "Triaged", "emoji": "🔎" },
+      { "name": "Fixing", "emoji": "🛠️", "wipLimit": 4 },
+      { "name": "Ready to verify", "emoji": "🧪" },
+      { "name": "Closed", "emoji": "✅" }
+    ],
+    "labels": [
+      { "name": "Critical", "color": "#E11D48", "emoji": "🔥" },
+      { "name": "Major", "color": "#C2410C" },
+      { "name": "Minor", "color": "#0369A1" },
+      { "name": "Can't reproduce", "color": "#374151" }
+    ],
+    "cards": [
+      {
+        "list": "New",
+        "title": "Bug report template",
+        "emoji": "📝",
+        "description": "**Steps to reproduce**\n1. \n\n**Expected**\n\n**Actual**\n\n**Version / browser**",
+        "checklist": ["Reproduce", "Set severity", "Assign an owner"]
+      }
+    ]
+  }
+}

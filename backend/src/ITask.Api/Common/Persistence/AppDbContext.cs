@@ -39,6 +39,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<JobRun> JobRuns => Set<JobRun>();
 
+    public DbSet<CardRecurrence> CardRecurrences => Set<CardRecurrence>();
+
+    public DbSet<BoardTemplate> BoardTemplates => Set<BoardTemplate>();
+
     public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
@@ -257,6 +261,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             prefs.HasKey(p => p.UserId);
             prefs.Property(p => p.Digest).HasConversion<string>().HasMaxLength(16);
             prefs.HasOne<AppUser>().WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<CardRecurrence>(recurrence =>
+        {
+            recurrence.Property(r => r.Kind).HasConversion<string>().HasMaxLength(16);
+            recurrence.Property(r => r.TimeZone).HasMaxLength(CardRecurrence.TimeZoneMaxLength);
+            recurrence.HasOne(r => r.Card).WithOne().HasForeignKey<CardRecurrence>(r => r.CardId);
+            recurrence.HasIndex(r => r.CardId).IsUnique();
+            recurrence.HasIndex(r => r.NextRunAt);
+            recurrence.HasOne<AppUser>().WithMany().HasForeignKey(r => r.CreatedById).OnDelete(DeleteBehavior.NoAction);
+
+            // The scheduler compares NextRunAt in the database; SQLite only can as UTC ticks.
+            if (Database.IsSqlite())
+            {
+                recurrence.Property(r => r.NextRunAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
+        });
+
+        builder.Entity<BoardTemplate>(template =>
+        {
+            template.Property(t => t.Name).HasMaxLength(BoardTemplate.NameMaxLength);
+            template.Property(t => t.Emoji).HasMaxLength(16);
+            template.Property(t => t.Description).HasMaxLength(500);
+            template.Property(t => t.Color).HasMaxLength(7);
+            template.HasOne<AppUser>().WithMany().HasForeignKey(t => t.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            template.HasIndex(t => t.OwnerId);
         });
 
         builder.Entity<JobRun>(run =>

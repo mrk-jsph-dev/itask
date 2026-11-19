@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ITask.Api.Features.Cards.GetCard;
 
 /// <summary>
-/// One card with its description, checklist and files, including archived cards. Any member may
+/// One card with its description, checklist, files and repeat rule, including archived cards. Any member may
 /// read. Comments load separately, paged.
 /// </summary>
 public static class GetCard
@@ -20,7 +20,8 @@ public static class GetCard
         string? CreatedByName,
         DateTimeOffset CreatedAt,
         IReadOnlyList<ChecklistItemView> Checklist,
-        IReadOnlyList<AttachmentView> Attachments);
+        IReadOnlyList<AttachmentView> Attachments,
+        RecurrenceView? Recurrence);
 
     internal sealed class Endpoint : IEndpoint
     {
@@ -66,6 +67,8 @@ public static class GetCard
                 .Select(AttachmentView.Project)
                 .ToListAsync(ct);
 
+            var recurrence = await db.CardRecurrences.AsNoTracking().FirstOrDefaultAsync(r => r.CardId == cardId, ct);
+
             return TypedResults.Ok(new Response(
                 summary,
                 detail.Description,
@@ -73,7 +76,8 @@ public static class GetCard
                 detail.CreatedByName,
                 detail.CreatedAt,
                 checklist,
-                [.. attachments.OrderBy(a => a.CreatedAt)]));
+                [.. attachments.OrderBy(a => a.CreatedAt)],
+                recurrence is null ? null : RecurrenceView.From(recurrence)));
         }
     }
 }

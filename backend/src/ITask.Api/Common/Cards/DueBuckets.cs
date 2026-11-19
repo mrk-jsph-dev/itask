@@ -52,8 +52,9 @@ public static class DueBuckets
         value >= range.From && value < range.To;
 
     /// <summary>Local midnight of <paramref name="date"/> as a UTC instant; skipped (DST) times move forward.</summary>
-    private static DateTimeOffset Local(DateTime date, TimeZoneInfo zone)
+    public static DateTimeOffset Local(DateTime date, TimeZoneInfo zone)
     {
+        ArgumentNullException.ThrowIfNull(zone);
         var unspecified = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
         while (zone.IsInvalidTime(unspecified))
         {

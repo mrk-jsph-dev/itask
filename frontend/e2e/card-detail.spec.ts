@@ -68,6 +68,7 @@ async function mockApi(page: Page, role: 'Editor' | 'Viewer' = 'Editor') {
     commentCount: comments.length,
     emoji: null,
     attachmentCount: attachments.length,
+    recurring: false,
     rowVersion: 'v1',
   })
 
