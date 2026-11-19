@@ -95,6 +95,18 @@ export const useBoardsStore = defineStore('boards', () => {
     if (current.value.role === 'Owner') invites.value = await boardsApi.invites(id)
   }
 
+  /** Reloads the open board and its members without the loading state, e.g. after a live event. */
+  async function refreshCurrent() {
+    const id = current.value?.id
+    if (!id) return
+    const [board, people] = await Promise.all([boardsApi.get(id), boardsApi.members(id)])
+    if (current.value?.id !== id) return
+    current.value = board
+    members.value = people
+    invites.value = board.role === 'Owner' ? await boardsApi.invites(id) : []
+    patchBoard(id, { name: board.name, emoji: board.emoji, color: board.color })
+  }
+
   async function saveDetails(input: BoardInput) {
     const board = current.value!
     const saved = await boardsApi.update(board.id, input, board.rowVersion)
@@ -177,6 +189,7 @@ export const useBoardsStore = defineStore('boards', () => {
     create,
     toggleStar,
     open,
+    refreshCurrent,
     saveDetails,
     archive,
     restore,

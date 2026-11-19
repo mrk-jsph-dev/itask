@@ -12,14 +12,18 @@ public interface IBoardAccess
 {
     Task<BoardRole?> GetRoleAsync(Guid boardId, CancellationToken ct);
 
+    /// <summary>For callers outside an HTTP request, such as hub connections.</summary>
+    Task<BoardRole?> GetRoleAsync(Guid boardId, Guid userId, CancellationToken ct);
+
     Task<bool> HasAtLeastAsync(Guid boardId, BoardRole minimum, CancellationToken ct);
 }
 
 internal sealed class BoardAccess(AppDbContext db, ICurrentUser user) : IBoardAccess
 {
-    public async Task<BoardRole?> GetRoleAsync(Guid boardId, CancellationToken ct)
+    public Task<BoardRole?> GetRoleAsync(Guid boardId, CancellationToken ct) => GetRoleAsync(boardId, user.Id, ct);
+
+    public async Task<BoardRole?> GetRoleAsync(Guid boardId, Guid userId, CancellationToken ct)
     {
-        var userId = user.Id;
         var member = await db.BoardMembers
             .AsNoTracking()
             .Where(m => m.BoardId == boardId && m.UserId == userId)

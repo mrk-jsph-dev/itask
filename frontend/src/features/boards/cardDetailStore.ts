@@ -43,6 +43,11 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
   /** Files being uploaded, by name. */
   const uploading = ref<string[]>([])
 
+  /** Ids hidden while their Undo toast is up, so a live refresh doesn't bring them back. */
+  const pendingDelete = new Set<string>()
+  const shown = <T extends { id: string }>(items: T[]) =>
+    items.filter((i) => !pendingDelete.has(i.id))
+
   const done = computed(() => checklist.value.filter((i) => i.isDone).length)
   const progress = computed(() =>
     checklist.value.length ? Math.round((done.value / checklist.value.length) * 100) : 0,
@@ -105,24 +110,55 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
    * `restore` puts it back when the user undoes or the delete fails.
    */
   function removeWithUndo(
+    id: string,
     text: string,
     hide: () => void,
     restore: () => void,
     commit: () => Promise<unknown>,
   ) {
+    pendingDelete.add(id)
     hide()
     let undone = false
     toastWithUndo(text, () => {
       undone = true
+      pendingDelete.delete(id)
       restore()
     })
     setTimeout(() => {
       if (undone) return
-      commit().catch((e: unknown) => {
-        restore()
-        toast(errorText(e, "Couldn't delete it."), 'error')
-      })
+      commit()
+        .catch((e: unknown) => {
+          restore()
+          toast(errorText(e, "Couldn't delete it."), 'error')
+        })
+        .finally(() => pendingDelete.delete(id))
     }, undoMs)
+  }
+
+  /**
+   * Reloads part of the open card after someone else changed it: `card` = description, repeat
+   * rule, checklist and files; `comments` = the newest page, keeping older pages already shown.
+   */
+  async function refresh(c: string, part: 'card' | 'comments') {
+    const b = boardId.value
+    if (!b || cardId.value !== c || loading.value) return
+    if (part === 'card') {
+      const detail = await cardsApi.get(b, c)
+      if (!isOpen(b, c)) return
+      description.value = detail.description ?? ''
+      recurrence.value = detail.recurrence ?? null
+      checklist.value = shown(detail.checklist)
+      attachments.value = shown(detail.attachments)
+      return
+    }
+    const page = await commentsApi.page(b, c)
+    if (!isOpen(b, c)) return
+    const fresh = shown([...page.items].reverse())
+    const oldest = page.items[page.items.length - 1]
+    const older =
+      page.nextCursor && oldest ? comments.value.filter((x) => x.createdAt < oldest.createdAt) : []
+    comments.value = [...older, ...fresh]
+    if (!older.length) nextCursor.value = page.nextCursor
   }
 
   // ---- checklist ----
@@ -208,6 +244,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     const item = checklist.value[index]
     if (!item) return
     removeWithUndo(
+      itemId,
       `Deleted "${item.text}".`,
       () => {
         checklist.value = checklist.value.filter((i) => i.id !== itemId)
@@ -269,6 +306,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     const attachment = attachments.value[index]
     if (!attachment) return
     removeWithUndo(
+      attachmentId,
       `Deleted ${attachment.fileName}.`,
       () => (attachments.value = attachments.value.filter((a) => a.id !== attachmentId)),
       () => {
@@ -312,6 +350,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     const comment = comments.value[index]
     if (!comment) return
     removeWithUndo(
+      commentId,
       'Comment deleted.',
       () => {
         comments.value = comments.value.filter((x) => x.id !== commentId)
@@ -358,6 +397,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     progress,
     open,
     close,
+    refresh,
     addItem,
     toggleItem,
     updateItem,

@@ -3,6 +3,7 @@ using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Realtime;
 using ITask.Api.Common.Security;
 using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Ai;
@@ -76,6 +77,7 @@ public static class ITaskServiceExtensions
         services.AddScoped<IBoardAccess, BoardAccess>();
         services.AddScoped<IActivityRecorder, ActivityRecorder>();
         services.AddNotifications();
+        services.AddRealtime(config);
 
         services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
         services.AddSingleton<IAiService, DisabledAiService>();
@@ -137,6 +139,7 @@ public static class ITaskServiceExtensions
         }
 
         app.MapEndpoints();
+        app.MapRealtime();
 
         await app.InitializeDatabaseAsync();
 

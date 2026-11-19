@@ -1,3 +1,4 @@
+using ITask.Api.Common.Realtime;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Common.Persistence;
@@ -12,8 +13,9 @@ public static class DatabaseExtensions
     /// <remarks>Configuration is read when the context is built, so test host overrides apply.</remarks>
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration config)
     {
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContext<AppDbContext>((sp, options) =>
         {
+            options.AddInterceptors(sp.GetRequiredService<BoardEventsInterceptor>());
             var provider = config["Database:Provider"] ?? "SqlServer";
             var connectionString = config.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");

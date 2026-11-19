@@ -14,13 +14,25 @@ export class ApiError extends Error {
   }
 }
 
-const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+export const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+
+/** The live hub connection of this tab; the API skips echoing this tab's own changes to it. */
+let liveConnection: string | null = null
+
+export function setLiveConnection(id: string | null) {
+  liveConnection = id
+}
 
 export async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${baseUrl}/api${path}`, {
     ...init,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...init.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(liveConnection ? { 'X-Live-Connection': liveConnection } : {}),
+      ...init.headers,
+    },
   })
 
   if (!response.ok) {

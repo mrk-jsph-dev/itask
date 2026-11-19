@@ -173,6 +173,13 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
   zone), and create the next copy of repeating cards. With the API scaled to zero, a missed
   slot runs on the next start, so reminders, digests and repeats can arrive late (a long
   pause makes one copy, not one per missed date). Jobs take a database lock, so only one replica runs each.
+- **Live updates:** boards stay in sync over SignalR (`/api/hubs/board`, cookie auth,
+  WebSockets through the Container Apps ingress). Groups and presence live in the API
+  process, so the API runs at most 1 replica. An open connection counts as a request and
+  keeps the replica awake, so the site only connects on a board page and disconnects
+  when the tab is hidden or idle for 10 minutes; the API can still scale to zero. For
+  more replicas, set `Realtime__AzureSignalR=true` and `Azure__SignalR__ConnectionString`
+  (Azure SignalR Service Free: 20 connections, 20,000 messages a day).
 - **Budget kill switch:** when the $5 budget is spent, the action group runs the
   `logic-itask-killswitch` Logic App, which stops the API. Start it again with
   `az containerapp start -g rg-itask -n ca-itask-api`.
@@ -198,7 +205,7 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 
 ## Cost guardrails
 
-Free tiers everywhere (Static Web Apps Free, Container Apps consumption capped at 2
-replicas, Azure SQL free offer set to pause instead of bill, Log Analytics with a daily
+Free tiers everywhere (Static Web Apps Free, Container Apps consumption scaling from 0 to
+1 replica, Azure SQL free offer set to pause instead of bill, Log Analytics with a daily
 cap), a subscription budget with email alerts, rate limiting in the API, and per-user
 AI caps. See `SECURITY.md` for the security model.
