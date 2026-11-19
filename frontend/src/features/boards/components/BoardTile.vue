@@ -29,12 +29,14 @@ const meta = computed(
       <span v-if="board.description" class="line-clamp-1 text-[13px] text-muted">{{
         board.description
       }}</span>
-      <span class="mt-auto text-[13px] text-muted">{{ meta }}</span>
-      <span
-        class="block h-1.5 rounded-full"
-        :style="{ backgroundColor: board.color }"
-        aria-hidden="true"
-      />
+      <span class="mt-auto flex items-center gap-2 text-[13px] text-muted">
+        <span
+          class="h-2.5 w-2.5 shrink-0 rounded-full"
+          :style="{ backgroundColor: board.color }"
+          aria-hidden="true"
+        />
+        {{ meta }}
+      </span>
     </RouterLink>
     <button
       v-if="!board.archivedAt"
