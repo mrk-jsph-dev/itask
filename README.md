@@ -72,12 +72,54 @@ Want SQL Server locally for parity with Azure SQL? See `docker-compose.yml`.
 
 ## Roles
 
-- App level: **Platform admin** and **User**. Everyone who registers is a User. Platform
-  admins manage accounts (list, lock, change user type) but not other people's boards.
-  The first admin comes from the `PLATFORM_ADMIN_EMAILS` secret (below); after that,
-  admins promote others on Admin › Users. Admins can't demote themselves, so one always remains.
-- Board level: **Owner**, **Editor**, **Viewer** (viewers can comment).
-- Demo accounts (demo environment only): one per role, on a shared sample board.
+iTask has two separate layers of roles. App roles decide who manages accounts; board roles
+decide what someone can do on one board. Neither grants the other.
+
+### App level: User and Platform admin
+
+Everyone who registers is a **User**. The first **Platform admin** comes from the
+`PLATFORM_ADMIN_EMAILS` secret (see setup below); after that, admins promote others on
+**Admin › Users**.
+
+| Action | User | Platform admin |
+|---|:-:|:-:|
+| Create boards, join boards by invite, use their own boards | ✓ | ✓ |
+| Edit their own profile and password | ✓ | ✓ |
+| Open **Admin › Users**: list every account in iTask (name, email, join date, user type, demo and locked status) | | ✓ |
+| Lock or unlock an account (a locked user is signed out within a minute and can't sign in) | | ✓ |
+| Change an account's user type (User or Platform admin) | | ✓ |
+| Open a board they aren't a member of | | |
+
+Admin limits: admins can't lock themselves or change their own user type, so at least one
+admin always remains. Demo accounts keep their seeded type, and the demo admin can't change
+anyone's type. A new user type reaches that person's session within a minute, without
+signing them out.
+
+### Board level: Owner, Editor and Viewer
+
+Whoever creates a board is its **Owner**; Owners invite others as Owner, Editor or Viewer.
+
+| Action on a board | Viewer | Editor | Owner |
+|---|:-:|:-:|:-:|
+| See the board, lists, cards, files and activity | ✓ | ✓ | ✓ |
+| Star the board, see its members | ✓ | ✓ | ✓ |
+| Comment; edit or delete their **own** comments | ✓ | ✓ | ✓ |
+| Create, edit, move, complete and archive cards and lists | | ✓ | ✓ |
+| Subtasks, labels, assignees and dates | | ✓ | ✓ |
+| Upload files; delete their **own** files | | ✓ | ✓ |
+| Delete **anyone's** comments or files | | | ✓ |
+| Invite people, change roles, remove members | | | ✓ |
+| Board settings, archive, restore and delete | | | ✓ |
+
+Board rules: any member can leave a board, but the last Owner can't leave or be removed.
+Nothing can change on an archived board until an Owner restores it. People who aren't
+members get "not found" rather than "forbidden", so a private board's existence stays hidden.
+
+### Demo accounts
+
+Demo environment only: one account per role (Platform admin, Owner, Editor, Viewer) on a
+shared sample board, reset nightly. Demo accounts can't change passwords, upload files or
+use admin actions that change other accounts.
 
 ## CI/CD
 
