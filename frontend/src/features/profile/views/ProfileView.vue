@@ -6,6 +6,7 @@ import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { ApiError } from '@/shared/api/http'
 import { useAuthStore } from '@/features/auth/store'
+import DigestPreferences from '@/features/notifications/components/DigestPreferences.vue'
 import { passwordStrength } from '@/features/auth/passwordStrength'
 import { profileApi } from '../api'
 import { avatarColors, timeZones } from '../options'
@@ -175,9 +176,11 @@ async function signOut() {
       </button>
     </form>
 
+    <DigestPreferences class="fade-up" style="--i: 2" />
+
     <form
       class="fade-up flex flex-col gap-4 rounded-[20px] border border-line-soft p-5"
-      style="--i: 2"
+      style="--i: 3"
       aria-labelledby="profile-password"
       @submit.prevent="changePassword"
     >

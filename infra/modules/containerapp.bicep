@@ -24,6 +24,11 @@ param demoPassword string
 param turnstileSecretKey string
 @secure()
 param platformAdminEmails string
+@description('SMTP account (Gmail address) for outgoing email. Empty = emails are only logged.')
+@secure()
+param smtpUsername string
+@secure()
+param smtpPassword string
 param tags object
 
 // App secrets are Container Apps secrets (free), passed in on every deploy. Empty ones are left out.
@@ -31,6 +36,8 @@ var optionalSecrets = filter([
   { name: 'demo-password', value: demoPassword, env: 'Demo__Password' }
   { name: 'turnstile-secret', value: turnstileSecretKey, env: 'Turnstile__SecretKey' }
   { name: 'admin-emails', value: platformAdminEmails, env: 'Admin__Emails' }
+  { name: 'smtp-username', value: smtpUsername, env: 'Email__Smtp__Username' }
+  { name: 'smtp-password', value: smtpPassword, env: 'Email__Smtp__Password' }
 ], s => !empty(s.value))
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
@@ -96,6 +103,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Database__AutoMigrate', value: 'true' }
             { name: 'ConnectionStrings__Default', value: sqlConnectionString }
             { name: 'Cors__AllowedOrigins__0', value: allowedOrigin }
+            { name: 'Email__PublicUrl', value: allowedOrigin }
             { name: 'Storage__Provider', value: 'Azure' }
             { name: 'Storage__BlobEndpoint', value: blobEndpoint }
             { name: 'Storage__Container', value: blobContainer }

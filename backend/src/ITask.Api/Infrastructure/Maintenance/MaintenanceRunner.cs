@@ -4,7 +4,8 @@ using ITask.Api.Domain;
 namespace ITask.Api.Infrastructure.Maintenance;
 
 /// <summary>
-/// Runs each <see cref="IMaintenanceJob"/> once per daily slot (03:00 UTC). A job whose slot passed
+/// Runs each <see cref="IMaintenanceJob"/> once per slot (daily at 03:00 UTC unless the job picks
+/// another, see <see cref="IMaintenanceJob.Slot"/>). A job whose slot passed
 /// while no replica was running runs on the next check, so scale-to-zero only delays it. The
 /// due check and the run share one database lock, so two replicas never run the same job.
 /// </summary>
@@ -15,11 +16,11 @@ public sealed partial class MaintenanceRunner(AppDbContext db, IEnumerable<IMain
     /// <summary>Runs the jobs that are due at <paramref name="now"/> and returns their names.</summary>
     public async Task<IReadOnlyList<string>> RunDueAsync(DateTimeOffset now, CancellationToken ct)
     {
-        var slot = LastSlot(now);
         var ran = new List<string>();
 
         foreach (var job in jobs)
         {
+            var slot = job.Slot(now);
             var done = false;
             try
             {
@@ -69,6 +70,13 @@ public sealed partial class MaintenanceRunner(AppDbContext db, IEnumerable<IMain
     {
         var today = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero) + DailyAt;
         return today <= now ? today : today.AddDays(-1);
+    }
+
+    /// <summary>The start of the UTC hour containing <paramref name="now"/>, for hourly jobs.</summary>
+    public static DateTimeOffset LastHour(DateTimeOffset now)
+    {
+        var utc = now.ToUniversalTime();
+        return new DateTimeOffset(utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, TimeSpan.Zero);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Maintenance job {Job} finished.")]

@@ -29,6 +29,18 @@ export const router = createRouter({
       meta: { public: true, guestOnly: true },
     },
     {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
+      meta: { public: true, guestOnly: true },
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('@/features/auth/views/ResetPasswordView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/',
       component: () => import('./layouts/AppLayout.vue'),
       children: [
@@ -59,6 +71,11 @@ export const router = createRouter({
           path: 'activity',
           name: 'activity',
           component: () => import('@/features/activity/views/ActivityView.vue'),
+        },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('@/features/notifications/views/NotificationsView.vue'),
         },
         {
           path: 'invite/:token',

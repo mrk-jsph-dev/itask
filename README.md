@@ -151,6 +151,11 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
    - `PLATFORM_ADMIN_EMAILS`: emails (`;` separated) made Platform admin at startup and
      when they register. Kept as a secret so the addresses stay out of public run logs.
      Removing an email later does not demote the account; use Admin › Users for that.
+   - `SMTP_USERNAME` / `SMTP_PASSWORD`: a Gmail address and its
+     [app password](https://myaccount.google.com/apppasswords) (needs 2-Step Verification)
+     used to send invites, password resets, email confirmation and digests. Use a dedicated
+     account: recipients see the address. Gmail allows about 500 emails a day. Empty =
+     emails are only logged and nothing is sent.
 3. **GitHub → Settings → Secrets and variables → Actions → Variables** (not secrets,
    none of these are sensitive): `AZURE_CLIENT_ID` (bootstrap output `deployClientId`),
    `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and optionally `TURNSTILE_SITE_KEY` and
@@ -163,9 +168,10 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 
 - **Health:** liveness `/api/health`, readiness `/api/health/ready` (checks the database).
 - **Maintenance:** the API runs daily jobs (03:00 UTC slot): demo reset, activity older
-  than 180 days, uploads that were never confirmed. With the API scaled to zero, a
-  missed slot runs on the next start. Jobs take a database lock, so only one replica
-  runs each.
+  than 180 days, notifications past retention, uploads that were never confirmed. Hourly
+  jobs send due-soon/overdue reminders and the email digests (08:00 in each user's time
+  zone). With the API scaled to zero, a missed slot runs on the next start, so reminders
+  and digests can arrive late. Jobs take a database lock, so only one replica runs each.
 - **Budget kill switch:** when the $5 budget is spent, the action group runs the
   `logic-itask-killswitch` Logic App, which stops the API. Start it again with
   `az containerapp start -g rg-itask -n ca-itask-api`.

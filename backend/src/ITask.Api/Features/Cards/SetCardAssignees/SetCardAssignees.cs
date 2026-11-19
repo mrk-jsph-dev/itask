@@ -3,6 +3,7 @@ using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
+using ITask.Api.Common.Notifications;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Cards.SetCardAssignees;
 
-/// <summary>Replaces a card's assignees. Editor or above. Every assignee must be a member of the board.</summary>
+/// <summary>Replaces a card's assignees. Editor or above. Every assignee must be a member of the board; new ones are notified.</summary>
 public static class SetCardAssignees
 {
     public sealed record Request(IReadOnlyList<Guid> UserIds);
@@ -38,7 +39,7 @@ public static class SetCardAssignees
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<CardSummary>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, INotifier notifier, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -77,6 +78,7 @@ public static class SetCardAssignees
                     added = added.Select(id => names[id]).ToList(),
                     removed = removed.Select(id => names[id]).ToList(),
                 }, ct);
+                await notifier.NotifyCardAsync(NotificationTypes.Assigned, added, boardId, cardId, null, ct);
             }
 
             card.Assignees.RemoveAll(a => !wanted.Contains(a.UserId));

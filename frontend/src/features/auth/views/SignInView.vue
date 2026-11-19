@@ -125,7 +125,14 @@ async function tryDemo(role: DemoRole) {
               />
             </label>
             <label class="flex flex-col gap-1.5 text-[13px] font-semibold">
-              Password
+              <span class="flex items-center justify-between">
+                Password
+                <RouterLink
+                  to="/forgot-password"
+                  class="text-[13px] font-semibold text-accent-strong no-underline"
+                  >Forgot password?</RouterLink
+                >
+              </span>
               <input
                 v-model="password"
                 type="password"

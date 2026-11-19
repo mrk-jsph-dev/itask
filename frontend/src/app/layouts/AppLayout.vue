@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import {
+  markRaw,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  ref,
+  useTemplateRef,
+  watch,
+} from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 import AppLogo from '@/shared/ui/AppLogo.vue'
+import { panelHeaderExtra } from '@/shared/ui/panelHeader'
 import { useAuthStore } from '@/features/auth/store'
 import NewBoardDialog from '@/features/boards/components/NewBoardDialog.vue'
 import { useBoardsStore } from '@/features/boards/store'
+import NotificationBell from '@/features/notifications/components/NotificationBell.vue'
+import { useNotificationsStore } from '@/features/notifications/store'
 import SearchPalette from '@/features/search/components/SearchPalette.vue'
 import AppSidebar from './AppSidebar.vue'
 import { useShellMode } from './sidebar'
 
 const auth = useAuthStore()
 const boards = useBoardsStore()
+const notifications = useNotificationsStore()
 const route = useRoute()
 const mode = useShellMode()
 
@@ -21,6 +34,8 @@ const drawerOpen = ref(false)
 const drawer = useTemplateRef('drawer')
 const menuButton = useTemplateRef('menuButton')
 const searchShortcut = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘K' : 'Ctrl K'
+
+provide(panelHeaderExtra, markRaw(NotificationBell))
 
 function openSearch() {
   drawerOpen.value = false
@@ -58,8 +73,12 @@ watch(
 onMounted(() => {
   document.addEventListener('keydown', onKeydown)
   if (boards.navBoards === null) boards.loadNav().catch(() => (boards.navBoards = []))
+  notifications.startPolling()
 })
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  notifications.stopPolling()
+})
 </script>
 
 <template>
