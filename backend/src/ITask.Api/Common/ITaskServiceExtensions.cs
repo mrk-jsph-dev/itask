@@ -14,6 +14,7 @@ using ITask.Api.Infrastructure.Notifications;
 using ITask.Api.Infrastructure.Storage;
 using ITask.Api.Infrastructure.Templates;
 using ITask.Api.Infrastructure.Turnstile;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 
@@ -64,6 +65,14 @@ public static class ITaskServiceExtensions
             options.SlidingExpiration = true;
             options.ExpireTimeSpan = TimeSpan.FromDays(7);
         });
+
+        services.AddExternalLogins(config);
+        services.AddScoped<ExternalSignInCodes>();
+
+        // Keys live in the database so cookies and OAuth state survive restarts (the API scales to zero).
+        services.AddDataProtection()
+            .SetApplicationName("itask")
+            .PersistKeysToDbContext<AppDbContext>();
 
         // Re-check the security stamp often so a locked account's cookie stops working quickly.
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));

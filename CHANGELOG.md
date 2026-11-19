@@ -2,6 +2,23 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.1.0
+
+Views, notifications, recurring cards, templates, live updates and external sign-in.
+
+- **Views:** List and Calendar (week/month) views next to Board; filter, sort and group
+  kept in the URL (`GET /api/boards/{id}/cards`).
+- **Notifications:** bell with unread count, `/notifications`, due reminders and an
+  optional daily/weekly email digest (SMTP when configured, otherwise logged).
+- **Recurring cards and templates:** repeat rules that create the next copy on complete
+  or on schedule; five built-in board templates and "Save as template".
+- **Live updates:** board changes and presence over SignalR on board pages.
+- **Sign in with GitHub or Microsoft:** "Continue with" buttons on sign-in and register,
+  Connected accounts on the profile (connect, disconnect, set a password). Providers are
+  off until their client id and secret are configured.
+- **Sessions survive restarts:** data-protection keys are stored in the database, so a
+  scale-to-zero restart no longer signs everyone out.
+
 ## 1.0.1
 
 Design alignment with Direction C.

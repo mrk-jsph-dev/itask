@@ -72,6 +72,10 @@ jobs:
           ITASK_PLATFORM_ADMIN_EMAILS: ${{ secrets.PLATFORM_ADMIN_EMAILS }} # optional; a secret so the emails stay out of public logs
           ITASK_SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }} # optional; Gmail address that sends email
           ITASK_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }} # optional; Gmail app password
+          ITASK_GITHUB_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }} # optional; "Continue with GitHub"
+          ITASK_MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }} # optional; "Continue with Microsoft"
+          ITASK_GITHUB_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }} # optional, not a secret
+          ITASK_MICROSOFT_CLIENT_ID: ${{ vars.MICROSOFT_CLIENT_ID }} # optional, not a secret
           ITASK_SQL_ADMIN_GROUP_ID: ${{ vars.SQL_ADMIN_GROUP_ID }} # optional, not a secret
         run: |
           out=$(az deployment group create \

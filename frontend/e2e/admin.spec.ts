@@ -8,6 +8,7 @@ const user = {
   timeZone: 'UTC',
   isPlatformAdmin: false,
   isDemo: false,
+  hasPassword: true,
   createdAt: '2026-11-18T00:00:00Z',
 }
 
@@ -69,6 +70,7 @@ test('platform admins change a user type but not their own', async ({ page }) =>
             email: 'demo-editor@example.com',
             displayName: 'Demo Editor',
             isDemo: true,
+            hasPassword: true,
             isLocked: false,
           },
         ],

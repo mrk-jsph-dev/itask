@@ -44,15 +44,19 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
     }
 
-    public HttpClient CreateHttpsClient() =>
-        CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+    public HttpClient CreateHttpsClient(bool allowAutoRedirect = true) =>
+        CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = allowAutoRedirect,
+        });
 
     public const string Password = "Test-password-123!";
 
     /// <summary>Registers a fresh user and returns a client holding their auth cookie.</summary>
-    public async Task<HttpClient> CreateSignedInClientAsync(string? email = null)
+    public async Task<HttpClient> CreateSignedInClientAsync(string? email = null, bool allowAutoRedirect = true)
     {
-        var client = CreateHttpsClient();
+        var client = CreateHttpsClient(allowAutoRedirect);
         email ??= $"user-{Guid.NewGuid():N}@example.com";
         const string password = Password;
 

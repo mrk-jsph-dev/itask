@@ -29,6 +29,7 @@ const me = {
   timeZone: 'UTC',
   isPlatformAdmin: false,
   isDemo: false,
+  hasPassword: true,
   createdAt: '2026-11-18T00:00:00Z',
 }
 

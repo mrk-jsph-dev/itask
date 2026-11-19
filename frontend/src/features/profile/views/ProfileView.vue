@@ -8,6 +8,7 @@ import { ApiError } from '@/shared/api/http'
 import { useAuthStore } from '@/features/auth/store'
 import DigestPreferences from '@/features/notifications/components/DigestPreferences.vue'
 import { passwordStrength } from '@/features/auth/passwordStrength'
+import ConnectedAccounts from '../components/ConnectedAccounts.vue'
 import { profileApi } from '../api'
 import { avatarColors, timeZones } from '../options'
 
@@ -68,10 +69,16 @@ async function changePassword() {
   changing.value = true
   passwordMessage.value = null
   try {
-    await profileApi.changePassword(currentPassword.value, newPassword.value)
+    if (user.value.hasPassword) {
+      await profileApi.changePassword(currentPassword.value, newPassword.value)
+    } else {
+      await profileApi.setPassword(newPassword.value)
+      auth.patchUser({ hasPassword: true })
+    }
+    const text = currentPassword.value ? 'Password changed.' : 'Password set.'
     currentPassword.value = ''
     newPassword.value = ''
-    passwordMessage.value = { ok: true, text: 'Password changed.' }
+    passwordMessage.value = { ok: true, text }
   } catch (e) {
     passwordMessage.value = { ok: false, text: messages(e) }
   } finally {
@@ -178,9 +185,16 @@ async function signOut() {
 
     <DigestPreferences class="fade-up" style="--i: 2" />
 
+    <ConnectedAccounts
+      v-if="!user.isDemo"
+      class="fade-up"
+      style="--i: 3"
+      :has-password="user.hasPassword"
+    />
+
     <form
       class="fade-up flex flex-col gap-4 rounded-[20px] border border-line-soft p-5"
-      style="--i: 3"
+      style="--i: 4"
       aria-labelledby="profile-password"
       @submit.prevent="changePassword"
     >
@@ -189,7 +203,10 @@ async function signOut() {
         Demo accounts can't change their password.
       </p>
       <template v-else>
-        <label class="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <p v-if="!user.hasPassword" class="text-sm text-muted">
+          You sign in with a connected account. Set a password to sign in with your email too.
+        </p>
+        <label v-if="user.hasPassword" class="flex flex-col gap-1.5 text-[13px] font-semibold">
           Current password
           <input
             v-model="currentPassword"
@@ -224,7 +241,10 @@ async function signOut() {
           :disabled="changing || strength.score < 4"
           class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {{ changing ? 'Changing…' : 'Change password' }}
+          <template v-if="user.hasPassword">{{
+            changing ? 'Changing…' : 'Change password'
+          }}</template>
+          <template v-else>{{ changing ? 'Saving…' : 'Set password' }}</template>
         </button>
       </template>
     </form>

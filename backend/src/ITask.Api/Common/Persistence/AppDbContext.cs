@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using ITask.Api.Domain;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +8,10 @@ using Microsoft.EntityFrameworkCore;
 namespace ITask.Api.Common.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
+    : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     public DbSet<Board> Boards => Set<Board>();
 
     public DbSet<BoardMember> BoardMembers => Set<BoardMember>();

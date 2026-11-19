@@ -29,6 +29,13 @@ param platformAdminEmails string
 param smtpUsername string
 @secure()
 param smtpPassword string
+@description('OAuth app client ids for sign-in with GitHub / Microsoft. Empty = provider off.')
+param githubClientId string
+param microsoftClientId string
+@secure()
+param githubClientSecret string
+@secure()
+param microsoftClientSecret string
 param tags object
 
 // App secrets are Container Apps secrets (free), passed in on every deploy. Empty ones are left out.
@@ -38,6 +45,14 @@ var optionalSecrets = filter([
   { name: 'admin-emails', value: platformAdminEmails, env: 'Admin__Emails' }
   { name: 'smtp-username', value: smtpUsername, env: 'Email__Smtp__Username' }
   { name: 'smtp-password', value: smtpPassword, env: 'Email__Smtp__Password' }
+  { name: 'github-client-secret', value: githubClientSecret, env: 'Auth__GitHub__ClientSecret' }
+  { name: 'microsoft-client-secret', value: microsoftClientSecret, env: 'Auth__Microsoft__ClientSecret' }
+], s => !empty(s.value))
+
+// Client ids are public; like the secrets, empty ones are left out.
+var optionalSettings = filter([
+  { name: 'Auth__GitHub__ClientId', value: githubClientId }
+  { name: 'Auth__Microsoft__ClientId', value: microsoftClientId }
 ], s => !empty(s.value))
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
@@ -112,7 +127,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Auth__CookieSameSite', value: crossSiteCookies ? 'None' : 'Lax' }
             // No email sender yet, so sign-up can't wait for a confirmation link.
             { name: 'Auth__RequireConfirmedEmail', value: 'false' }
-          ], map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
+          ], optionalSettings, map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
           probes: [
             {
               type: 'Liveness'
