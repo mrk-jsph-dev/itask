@@ -71,6 +71,35 @@ export interface CreatedInvite {
 
 const board = (id: string) => `/boards/${id}`
 
+/** A board template in the gallery. Built-in ids are slugs, saved ones GUIDs. */
+export interface BoardTemplate {
+  id: string
+  source: 'builtIn' | 'saved'
+  name: string
+  emoji: string | null
+  description: string | null
+  color: string
+  lists: string[]
+  labelCount: number
+  cardCount: number
+}
+
+export interface TemplateGallery {
+  builtIn: BoardTemplate[]
+  mine: BoardTemplate[]
+}
+
+export const templatesApi = {
+  all: () => api.get<TemplateGallery>('/templates'),
+  createBoard: (templateId: string, input: BoardInput) =>
+    api.post<CreatedBoard>(`/templates/${encodeURIComponent(templateId)}/boards`, input),
+  save: (
+    boardId: string,
+    input: { name: string; description: string | null; includeCards: boolean },
+  ) => api.post<BoardTemplate>(`${board(boardId)}/templates`, input),
+  remove: (templateId: string) => api.del(`/templates/${templateId}`),
+}
+
 /** An open card on Home's ⏰ Due soon list. */
 export interface DueSoonItem {
   id: string
@@ -196,6 +225,8 @@ export interface Card {
   commentCount: number
   /** Confirmed uploads only. */
   attachmentCount: number
+  /** The card carries a repeat rule. */
+  recurring: boolean
   rowVersion: string
 }
 
@@ -255,6 +286,22 @@ export interface CardDetail {
   createdAt: string
   checklist: ChecklistItem[]
   attachments: Attachment[]
+  recurrence: Recurrence | null
+}
+
+export type RecurrenceKind = 'Daily' | 'Weekly' | 'Monthly'
+
+/** What `PUT .../recurrence` takes. Weekdays are 0 (Sunday) to 6. */
+export interface RecurrenceInput {
+  kind: RecurrenceKind
+  weekdays: number[]
+  dayOfMonth: number | null
+  targetListId: string
+}
+
+/** A card's repeat rule. `nextRunAt` is when the next copy appears. */
+export interface Recurrence extends RecurrenceInput {
+  nextRunAt: string
 }
 
 /** Fields to change; absent ones stay, `null` clears. */
@@ -306,6 +353,10 @@ export const cardsApi = {
     api.put<Card>(`${cards(boardId)}/${cardId}/labels`, { labelIds }),
   setAssignees: (boardId: string, cardId: string, userIds: string[]) =>
     api.put<Card>(`${cards(boardId)}/${cardId}/assignees`, { userIds }),
+  setRecurrence: (boardId: string, cardId: string, input: RecurrenceInput) =>
+    api.put<Recurrence>(`${cards(boardId)}/${cardId}/recurrence`, input),
+  clearRecurrence: (boardId: string, cardId: string) =>
+    api.del(`${cards(boardId)}/${cardId}/recurrence`),
 }
 
 const card = (boardId: string, cardId: string) => `${cards(boardId)}/${cardId}`

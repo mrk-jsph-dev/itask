@@ -11,6 +11,8 @@ import {
   type ChecklistItem,
   type ChecklistPatch,
   type Comment,
+  type Recurrence,
+  type RecurrenceInput,
 } from './api'
 import { useCardsStore } from './cardsStore'
 import { moveItem, neighbours } from './ordering'
@@ -31,6 +33,8 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
   const cardId = ref<string | null>(null)
   const loading = ref(false)
   const description = ref('')
+  /** The card's repeat rule, or null when it doesn't repeat. */
+  const recurrence = ref<Recurrence | null>(null)
   const checklist = ref<ChecklistItem[]>([])
   const attachments = ref<Attachment[]>([])
   /** Oldest first, as the thread shows them. */
@@ -72,6 +76,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     cardId.value = c
     loading.value = true
     description.value = ''
+    recurrence.value = null
     checklist.value = []
     attachments.value = []
     comments.value = []
@@ -80,6 +85,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
       const [detail, page] = await Promise.all([cardsApi.get(b, c), commentsApi.page(b, c)])
       if (!isOpen(b, c)) return
       description.value = detail.description ?? ''
+      recurrence.value = detail.recurrence ?? null
       checklist.value = detail.checklist
       attachments.value = detail.attachments
       comments.value = [...page.items].reverse()
@@ -322,10 +328,27 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     )
   }
 
+  async function setRecurrence(input: RecurrenceInput) {
+    const [b, c] = ids()
+    const saved = await cardsApi.setRecurrence(b, c, input)
+    if (isOpen(b, c)) recurrence.value = saved
+    cards.patch(c, { recurring: true })
+  }
+
+  async function clearRecurrence() {
+    const [b, c] = ids()
+    await cardsApi.clearRecurrence(b, c)
+    if (isOpen(b, c)) recurrence.value = null
+    cards.patch(c, { recurring: false })
+  }
+
   return {
     cardId,
     loading,
     description,
+    recurrence,
+    setRecurrence,
+    clearRecurrence,
     checklist,
     attachments,
     comments,

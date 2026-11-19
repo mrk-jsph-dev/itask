@@ -2,7 +2,9 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 
+import type { BoardTemplate } from '../api'
 import BoardDetailsFields from './BoardDetailsFields.vue'
+import TemplateGallery from './TemplateGallery.vue'
 import { boardColors } from '../options'
 import { errorText, useBoardsStore } from '../store'
 
@@ -16,6 +18,8 @@ const name = ref('')
 const emoji = ref<string | null>('📋')
 const description = ref<string | null>('')
 const color = ref<string>(boardColors[0])
+const templateId = ref<string | null>(null)
+const template = ref<BoardTemplate | null>(null)
 const saving = ref(false)
 const error = ref<string | null>(null)
 let returnFocus: HTMLElement | null = null
@@ -35,16 +39,26 @@ onBeforeUnmount(() => {
   returnFocus?.focus()
 })
 
+/** A template brings its own emoji and colour; the user can still change both. */
+function onPick(picked: BoardTemplate | null) {
+  template.value = picked
+  emoji.value = picked?.emoji ?? '📋'
+  color.value = picked?.color ?? boardColors[0]
+}
+
 async function submit() {
   saving.value = true
   error.value = null
   try {
-    const created = await store.create({
-      name: name.value.trim(),
-      emoji: emoji.value,
-      description: description.value?.trim() || null,
-      color: color.value,
-    })
+    const created = await store.create(
+      {
+        name: name.value.trim(),
+        emoji: emoji.value,
+        description: description.value?.trim() || null,
+        color: color.value,
+      },
+      templateId.value,
+    )
     emit('close')
     await router.push({ name: 'board', params: { boardId: created.id } })
   } catch (e) {
@@ -66,10 +80,14 @@ async function submit() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-board-title"
-        class="fade-up my-auto flex max-h-full w-full max-w-[440px] flex-col gap-[18px] overflow-y-auto rounded-[24px] bg-panel p-7"
+        class="fade-up my-auto flex max-h-full w-full max-w-[600px] flex-col gap-[18px] overflow-y-auto rounded-[24px] bg-panel p-7"
       >
         <h2 id="new-board-title" class="text-xl font-bold">New board</h2>
         <form class="flex flex-col gap-4" @submit.prevent="submit">
+          <TemplateGallery v-model="templateId" @pick="onPick" />
+          <p v-if="template" class="-mt-1 text-[13px] text-muted">
+            <span class="font-semibold text-ink">Lists:</span> {{ template.lists.join(' · ') }}
+          </p>
           <BoardDetailsFields
             v-model:name="name"
             v-model:emoji="emoji"

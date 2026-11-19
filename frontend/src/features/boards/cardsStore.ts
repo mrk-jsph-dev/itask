@@ -102,13 +102,19 @@ export const useCardsStore = defineStore('cards', () => {
     put(await cardsApi.setAssignees(boardId(), cardId, userIds))
   }
 
+  /** Completing a repeating card makes the server add its next copy, so the board reloads. */
   async function toggleComplete(card: Card) {
+    const spawns = card.recurring && !card.completedAt
     try {
       put(
         await (card.completedAt
           ? cardsApi.reopen(boardId(), card.id)
           : cardsApi.complete(boardId(), card.id)),
       )
+      if (spawns) {
+        await reloadLists()
+        toast('🔁 Next one is on the board.')
+      }
     } catch (e) {
       toast(errorText(e, "Couldn't update the card."), 'error')
     }

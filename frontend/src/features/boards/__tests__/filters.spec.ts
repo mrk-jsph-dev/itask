@@ -35,6 +35,7 @@ const card = (title: string, extra: Partial<Card> = {}): Card => ({
   checklistTotal: 0,
   commentCount: 0,
   attachmentCount: 0,
+  recurring: false,
   rowVersion: 'rv',
   ...extra,
 })

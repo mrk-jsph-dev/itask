@@ -84,6 +84,7 @@ async function mockApi(page: Page, role = 'Editor') {
       checklistTotal: 0,
       commentCount: 0,
       attachmentCount: 0,
+      recurring: false,
       emoji: null,
       rowVersion: `v${version++}`,
       ...extra,
@@ -177,6 +178,7 @@ async function mockApi(page: Page, role = 'Editor') {
               createdAt: me.createdAt,
               checklist: [],
               attachments: [],
+              recurrence: null,
             },
           })
         if (one[2] === 'archive') card.archivedAt = '2026-11-18T12:00:00Z'
