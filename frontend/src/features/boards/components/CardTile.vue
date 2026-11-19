@@ -81,6 +81,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
       <button
         type="button"
         class="card-open min-w-0 flex-1 text-left after:absolute after:inset-0 after:content-['']"
+        :class="editable ? 'cursor-grab' : 'cursor-pointer'"
         @click="emit('open')"
       >
         <span
