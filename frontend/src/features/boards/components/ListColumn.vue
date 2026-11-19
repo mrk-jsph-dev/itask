@@ -193,6 +193,7 @@ function save(input: ListInput) {
         :prevent-on-filter="false"
         :animation="200"
         :force-fallback="true"
+        :fallback-on-body="true"
         @start="emit('dragStart')"
         @end="onCardDrop"
       >

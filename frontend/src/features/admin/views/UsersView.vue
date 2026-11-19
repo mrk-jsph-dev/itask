@@ -97,13 +97,35 @@ onMounted(loadMore)
       >
         <UserAvatar :name="user.displayName" :email="user.email" :size="32" />
         <div class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate text-sm font-semibold">{{ user.displayName || user.email }}</span>
+          <span class="flex min-w-0 items-center gap-2">
+            <span class="truncate text-sm font-semibold">{{ user.displayName || user.email }}</span>
+            <span
+              v-if="user.id === auth.user?.id"
+              class="shrink-0 rounded-full bg-[#eef3ff] px-2 py-0.5 text-[11px] font-semibold text-accent-strong"
+              >You</span
+            >
+            <span
+              v-if="user.isDemo"
+              class="shrink-0 rounded-full bg-hover px-2 py-0.5 text-[11px] font-semibold text-muted"
+              >Demo</span
+            >
+            <span
+              v-if="user.isLocked"
+              class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+              >Locked</span
+            >
+          </span>
           <span class="truncate text-xs text-muted"
             >{{ user.email }} · joined {{ joined(user.createdAt) }}</span
           >
         </div>
         <select
-          class="h-9 rounded-full border border-line bg-panel px-3 text-xs font-semibold disabled:bg-hover disabled:text-muted"
+          class="h-9 w-[150px] rounded-full border px-3.5 text-xs font-semibold focus:border-accent focus:shadow-[0_0_0_3px_rgb(29_91_245/0.15)] focus:outline-none disabled:opacity-70"
+          :class="
+            user.isPlatformAdmin
+              ? 'border-[#c9d7fb] bg-[#eef3ff] text-accent-strong'
+              : 'border-line bg-panel text-ink'
+          "
           :value="user.isPlatformAdmin ? 'PlatformAdmin' : 'User'"
           :disabled="!!typeLocked(user)"
           :title="typeLocked(user) ?? undefined"
@@ -114,25 +136,35 @@ onMounted(loadMore)
             {{ option.label }}
           </option>
         </select>
-        <span
-          v-if="user.isDemo"
-          class="rounded-full bg-hover px-2.5 py-0.5 text-xs font-semibold text-muted"
-          >Demo</span
-        >
-        <span
-          v-if="user.isLocked"
-          class="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700"
-          >Locked</span
-        >
         <button
           v-if="user.id !== auth.user?.id"
           type="button"
-          class="ghost h-9 rounded-full border border-line px-4 text-xs font-semibold"
+          class="lock-button flex h-9 w-[104px] items-center justify-center gap-1.5 rounded-full border text-xs font-semibold"
+          :class="
+            user.isLocked
+              ? 'border-transparent bg-accent text-white hover:bg-accent-strong'
+              : 'border-line bg-panel text-ink hover:border-red-200 hover:bg-red-50 hover:text-red-700'
+          "
           :aria-label="`${user.isLocked ? 'Unlock' : 'Lock'} ${user.email}`"
           @click="toggleLock(user)"
         >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="11" width="14" height="10" rx="2.5" />
+            <path :d="user.isLocked ? 'M8 11V8a4 4 0 017.6-1.7' : 'M8 11V8a4 4 0 018 0v3'" />
+          </svg>
           {{ user.isLocked ? 'Unlock' : 'Lock' }}
         </button>
+        <span v-else class="hidden w-[104px] sm:block" aria-hidden="true" />
       </li>
     </ul>
 
@@ -147,3 +179,16 @@ onMounted(loadMore)
     </button>
   </section>
 </template>
+
+<style scoped>
+.lock-button {
+  transition:
+    background-color var(--d-fast) var(--ease-out),
+    border-color var(--d-fast) var(--ease-out),
+    color var(--d-fast) var(--ease-out),
+    transform var(--d-fast) var(--ease-out);
+}
+.lock-button:active {
+  transform: scale(0.96);
+}
+</style>

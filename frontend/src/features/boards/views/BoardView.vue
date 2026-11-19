@@ -461,6 +461,7 @@ function onArchivedToggle(event: Event) {
           drag-class="dragging"
           :animation="200"
           :force-fallback="true"
+          :fallback-on-body="true"
           @end="onDrop"
         >
           <div
