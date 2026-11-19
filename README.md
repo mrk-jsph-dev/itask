@@ -130,6 +130,12 @@ use admin actions that change other accounts.
 
 The deploy job signs in to Azure with **OIDC** (no stored cloud secret), pushes the
 API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Static Web Apps.
+Unchanged parts are skipped: the API image is tagged with the git tree hash of `backend/`
+and isn't rebuilt when that tag is already on GHCR, and the site isn't rebuilt or uploaded when
+its live `build-id.txt` (a hash of `frontend/`, the API URL and the Turnstile site key) already
+matches. **Run workflow** has an `infra` choice: `full` (default) runs Bicep, which also copies
+the `production` secrets to the container app; `app-only` only swaps the API image and is for
+code-only changes (it does not apply changed secrets or `infra/`).
 After a successful deploy, the **release** job tags the commit `vX.Y.Z` (the `<Version>` in
 `backend/Directory.Build.props`) and publishes a GitHub release whose notes are that
 version's section of `CHANGELOG.md` plus the merged pull requests. Deploying the same
