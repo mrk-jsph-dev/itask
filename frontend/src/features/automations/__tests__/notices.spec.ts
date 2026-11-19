@@ -29,7 +29,7 @@ describe('automation notices', () => {
     })
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(response)
     const undo = vi.spyOn(automationsApi, 'undo').mockResolvedValue(undefined)
-    const changed = vi.fn()
+    const changed = vi.fn<() => void>()
     const scope = effectScope()
     scope.run(() => useAutomationNotices(() => 'b1', changed))
 
