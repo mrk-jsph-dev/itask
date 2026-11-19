@@ -50,6 +50,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
+    public DbSet<AiUsage> AiUsage => Set<AiUsage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -301,6 +303,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             {
                 run.Property(r => r.LastRunAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
             }
+        });
+
+        builder.Entity<AiUsage>(usage =>
+        {
+            usage.HasKey(u => new { u.UserId, u.Date });
+            usage.HasOne<AppUser>().WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);

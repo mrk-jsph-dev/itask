@@ -30,6 +30,16 @@ export interface BoardInput {
   keyPrefix?: string
 }
 
+export interface BoardContentInput {
+  name: string
+  emoji: string | null
+  color?: string
+  content: {
+    lists: { name: string }[]
+    cards: { list: string; title: string; checklist: string[] }[]
+  }
+}
+
 export interface CreatedBoard {
   id: string
   name: string
@@ -93,6 +103,9 @@ export const templatesApi = {
   all: () => api.get<TemplateGallery>('/templates'),
   createBoard: (templateId: string, input: BoardInput) =>
     api.post<CreatedBoard>(`/templates/${encodeURIComponent(templateId)}/boards`, input),
+  /** A board from lists and card skeletons, e.g. an accepted AI draft. */
+  createFromContent: (input: BoardContentInput) =>
+    api.post<CreatedBoard>('/boards/from-content', input),
   save: (
     boardId: string,
     input: { name: string; description: string | null; includeCards: boolean },

@@ -6,10 +6,12 @@ import { toast } from '@/shared/ui/toast'
 import {
   boardsApi,
   templatesApi,
+  type BoardContentInput,
   type BoardDetail,
   type BoardInput,
   type BoardRole,
   type BoardSummary,
+  type CreatedBoard,
   type Invite,
   type Member,
 } from './api'
@@ -51,9 +53,16 @@ export const useBoardsStore = defineStore('boards', () => {
 
   /** Creates a blank board, or one from a template when `templateId` is given. */
   async function create(input: BoardInput, templateId: string | null = null) {
-    const created = await (templateId
-      ? templatesApi.createBoard(templateId, input)
-      : boardsApi.create(input))
+    return add(
+      await (templateId ? templatesApi.createBoard(templateId, input) : boardsApi.create(input)),
+    )
+  }
+
+  async function createFromContent(input: BoardContentInput) {
+    return add(await templatesApi.createFromContent(input))
+  }
+
+  function add(created: CreatedBoard) {
     const summary: BoardSummary = { ...created, isStarred: false, memberCount: 1, archivedAt: null }
     if (boards.value && !showArchived.value) {
       boards.value = [...boards.value, summary].sort(byName)
@@ -187,6 +196,7 @@ export const useBoardsStore = defineStore('boards', () => {
     isOwner,
     load,
     create,
+    createFromContent,
     toggleStar,
     open,
     refreshCurrent,

@@ -17,3 +17,5 @@ param microsoftClientSecret = readEnvironmentVariable('ITASK_MICROSOFT_CLIENT_SE
 // OAuth client ids are not secrets (they come from GitHub environment variables).
 param githubClientId = readEnvironmentVariable('ITASK_GITHUB_CLIENT_ID', '')
 param microsoftClientId = readEnvironmentVariable('ITASK_MICROSOFT_CLIENT_ID', '')
+param aiEndpoint = readEnvironmentVariable('ITASK_AI_ENDPOINT', '')
+param aiDeployment = readEnvironmentVariable('ITASK_AI_DEPLOYMENT', '')

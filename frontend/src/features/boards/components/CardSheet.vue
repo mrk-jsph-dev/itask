@@ -2,6 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 
 import CardActivity from '@/features/activity/components/CardActivity.vue'
+import AiBreakdown from '@/features/ai/components/AiBreakdown.vue'
+import AiSummary from '@/features/ai/components/AiSummary.vue'
+import { useAiStore } from '@/features/ai/store'
 import { useAuthStore } from '@/features/auth/store'
 import SideSheet from '@/shared/ui/SideSheet.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
@@ -31,6 +34,38 @@ const lists = useListsStore()
 const cards = useCardsStore()
 const detail = useCardDetailStore()
 const auth = useAuthStore()
+const ai = useAiStore()
+void ai.ensureLoaded(auth.user?.id)
+const breakdown = useTemplateRef('breakdown')
+const summary = useTemplateRef('summary')
+/** Which AI draft is being saved. */
+const aiSaving = ref<'breakdown' | 'summary' | null>(null)
+
+async function addSteps(items: string[]) {
+  aiSaving.value = 'breakdown'
+  try {
+    for (const text of items) await detail.addItem(text)
+    breakdown.value?.discard()
+    toast(`Added ${items.length} ${items.length === 1 ? 'step' : 'steps'}.`)
+  } catch (e) {
+    toast(errorText(e, "Couldn't add the steps."), 'error')
+  } finally {
+    aiSaving.value = null
+  }
+}
+
+async function postSummary(text: string) {
+  aiSaving.value = 'summary'
+  try {
+    await detail.addComment(text)
+    summary.value?.discard()
+    toast('Summary posted.')
+  } catch (e) {
+    toast(errorText(e, "Couldn't post the summary."), 'error')
+  } finally {
+    aiSaving.value = null
+  }
+}
 
 /** Live summary from the board, so tile and sheet stay in step. */
 const spot = computed(() => cards.find(props.cardId))
@@ -287,8 +322,7 @@ const dateClass =
       >
         <dt class="text-muted">Status</dt>
         <dd class="inline-flex items-center gap-1.5 font-semibold">
-          <span aria-hidden="true">{{ spot.list.emoji }}</span
-          >{{ spot.list.name }}
+          <span aria-hidden="true">{{ spot.list.emoji }}</span>{{ spot.list.name }}
           <span v-if="card.completedAt" class="font-normal text-emerald-700">· Done</span>
         </dd>
 
@@ -519,6 +553,28 @@ const dateClass =
         <SkeletonBlock height="64px" />
       </div>
       <template v-else>
+        <div
+          v-if="ai.enabled && editable"
+          class="flex flex-wrap items-start gap-2"
+          role="group"
+          aria-label="AI helpers"
+        >
+          <AiBreakdown
+            ref="breakdown"
+            :board-id="lists.boardId!"
+            :card-id="cardId"
+            :saving="aiSaving === 'breakdown'"
+            @accept="addSteps"
+          />
+          <AiSummary
+            ref="summary"
+            :board-id="lists.boardId!"
+            :card-id="cardId"
+            :can-post="canComment"
+            :saving="aiSaving === 'summary'"
+            @post="postSummary"
+          />
+        </div>
         <CardChecklist :editable="editable" />
         <CardAttachments :editable="editable" :is-demo="!!auth.user?.isDemo" />
         <section

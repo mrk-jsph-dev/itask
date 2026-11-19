@@ -60,6 +60,28 @@ namespace ITask.Api.Migrations
                     b.ToTable("Activity", (string)null);
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.AiUsage", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<long>("InputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OutputTokens")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Requests")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "Date");
+
+                    b.ToTable("AiUsage");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.AppUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -979,6 +1001,15 @@ namespace ITask.Api.Migrations
                     b.Navigation("Actor");
 
                     b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("ITask.Api.Domain.AiUsage", b =>
+                {
+                    b.HasOne("ITask.Api.Domain.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ITask.Api.Domain.Attachment", b =>
