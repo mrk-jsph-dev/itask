@@ -3,21 +3,17 @@ using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Security;
-using ITask.Api.Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Invites.AcceptInvite;
 
 /// <summary>
-/// Joins the board an invite points to. Unknown or revoked tokens are 404, used or expired
-/// ones 410, and an email invite opened by another account 403. An existing member keeps
-/// their role; the invite is still used up.
+/// Joins the board an invite link points to. Unknown or revoked tokens are 404; the rest follows
+/// <see cref="InviteAcceptance"/>.
 /// </summary>
 public static class AcceptInvite
 {
-    public sealed record Response(Guid BoardId);
-
     internal sealed class Endpoint : IEndpoint
     {
         public void Map(IEndpointRouteBuilder app) =>
@@ -25,7 +21,7 @@ public static class AcceptInvite
                 .WithTags("Invites")
                 .RequireAuthorization();
 
-        private static async Task<Results<Ok<Response>, NotFound, ProblemHttpResult>> Handle(
+        private static async Task<Results<Ok<InviteAcceptance.Response>, NotFound, ProblemHttpResult>> Handle(
             string token, AppDbContext db, ICurrentUser currentUser, IActivityRecorder activity, TimeProvider clock, CancellationToken ct)
         {
             var hash = InviteTokens.Hash(token);
@@ -35,46 +31,7 @@ public static class AcceptInvite
                 return TypedResults.NotFound();
             }
 
-            var now = clock.GetUtcNow();
-            if (invite.AcceptedAt is not null || invite.ExpiresAt <= now)
-            {
-                return Gone();
-            }
-
-            var user = await db.Users.FirstAsync(u => u.Id == currentUser.Id, ct);
-            if (invite.Email is not null && !string.Equals(invite.Email, user.Email, StringComparison.OrdinalIgnoreCase))
-            {
-                return TypedResults.Problem(
-                    title: "This invite was sent to a different email address.",
-                    statusCode: StatusCodes.Status403Forbidden);
-            }
-
-            var isMember = await db.BoardMembers.AnyAsync(m => m.BoardId == invite.BoardId && m.UserId == user.Id, ct);
-            if (!isMember)
-            {
-                db.BoardMembers.Add(new BoardMember { BoardId = invite.BoardId, UserId = user.Id, Role = invite.Role, JoinedAt = now });
-                activity.Record(ActivityTypes.MemberJoined, invite.BoardId, null, new
-                {
-                    member = new { id = user.Id, name = user.DisplayName },
-                    role = invite.Role.ToString(),
-                });
-            }
-
-            invite.AcceptedAt = now;
-            try
-            {
-                await db.SaveChangesAsync(ct);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return Gone();
-            }
-
-            return TypedResults.Ok(new Response(invite.BoardId));
+            return await InviteAcceptance.AcceptAsync(invite, db, currentUser.Id, activity, clock.GetUtcNow(), ct);
         }
-
-        private static ProblemHttpResult Gone() => TypedResults.Problem(
-            title: "This invite has expired or was already used.",
-            statusCode: StatusCodes.Status410Gone);
     }
 }

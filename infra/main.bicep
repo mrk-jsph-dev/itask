@@ -46,6 +46,14 @@ param turnstileSecretKey string = ''
 @secure()
 param platformAdminEmails string = ''
 
+@description('Gmail address that sends iTask email (SMTP with an app password). Empty = emails are only logged.')
+@secure()
+param smtpUsername string = ''
+
+@description('Gmail app password for smtpUsername.')
+@secure()
+param smtpPassword string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var tags = { app: appName }
 
@@ -110,6 +118,8 @@ module api 'modules/containerapp.bicep' = {
     demoPassword: demoPassword
     turnstileSecretKey: turnstileSecretKey
     platformAdminEmails: platformAdminEmails
+    smtpUsername: smtpUsername
+    smtpPassword: smtpPassword
     tags: tags
   }
 }

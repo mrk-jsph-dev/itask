@@ -9,6 +9,7 @@ using ITask.Api.Infrastructure.Ai;
 using ITask.Api.Infrastructure.Demo;
 using ITask.Api.Infrastructure.Email;
 using ITask.Api.Infrastructure.Maintenance;
+using ITask.Api.Infrastructure.Notifications;
 using ITask.Api.Infrastructure.Storage;
 using ITask.Api.Infrastructure.Turnstile;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -65,7 +66,7 @@ public static class ITaskServiceExtensions
         // Re-check the security stamp often so a locked account's cookie stops working quickly.
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
 
-        services.AddSingleton<IEmailSender<AppUser>, LoggingEmailSender>();
+        services.AddEmail(config);
 
         services.Configure<TurnstileOptions>(config.GetSection(TurnstileOptions.Section));
         services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>(client => client.Timeout = TimeSpan.FromSeconds(10));
@@ -73,6 +74,7 @@ public static class ITaskServiceExtensions
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IBoardAccess, BoardAccess>();
         services.AddScoped<IActivityRecorder, ActivityRecorder>();
+        services.AddNotifications();
 
         services.Configure<AiOptions>(config.GetSection(AiOptions.Section));
         services.AddSingleton<IAiService, DisabledAiService>();

@@ -39,6 +39,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<JobRun> JobRuns => Set<JobRun>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -226,6 +230,33 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             {
                 entry.Property(a => a.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
             }
+        });
+
+        builder.Entity<Notification>(notification =>
+        {
+            notification.Property(n => n.Type).HasMaxLength(Notification.TypeMaxLength);
+            notification.Property(n => n.Key).HasMaxLength(Notification.KeyMaxLength);
+            notification.HasOne(n => n.User).WithMany().HasForeignKey(n => n.UserId).OnDelete(DeleteBehavior.NoAction);
+            notification.HasOne(n => n.Board).WithMany().HasForeignKey(n => n.BoardId);
+            notification.HasOne(n => n.Actor).WithMany().HasForeignKey(n => n.ActorId).OnDelete(DeleteBehavior.NoAction);
+            notification.HasIndex(n => new { n.UserId, n.CreatedAt });
+            notification.HasIndex(n => new { n.UserId, n.ReadAt });
+            notification.HasIndex(n => n.ActorId);
+
+            // Scheduled reminders carry a key so a rerun can't create them twice.
+            notification.HasIndex(n => new { n.UserId, n.Key }).IsUnique().HasFilter("[Key] IS NOT NULL");
+
+            if (Database.IsSqlite())
+            {
+                notification.Property(n => n.CreatedAt).HasConversion(v => v.UtcTicks, v => new DateTimeOffset(v, TimeSpan.Zero));
+            }
+        });
+
+        builder.Entity<NotificationPreference>(prefs =>
+        {
+            prefs.HasKey(p => p.UserId);
+            prefs.Property(p => p.Digest).HasConversion<string>().HasMaxLength(16);
+            prefs.HasOne<AppUser>().WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<JobRun>(run =>

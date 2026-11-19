@@ -3,6 +3,7 @@ using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
+using ITask.Api.Common.Notifications;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ITask.Api.Features.Comments.EditComment;
 
-/// <summary>Replaces a comment's body. Author only; mentions are re-read from the new body.</summary>
+/// <summary>Replaces a comment's body. Author only; mentions are re-read from the new body and only new ones are notified.</summary>
 public static class EditComment
 {
     public sealed record Request(string Body);
@@ -38,6 +39,7 @@ public static class EditComment
             IBoardAccess access,
             ICurrentUser user,
             IActivityRecorder activity,
+            INotifier notifier,
             TimeProvider time,
             CancellationToken ct)
         {
@@ -63,8 +65,16 @@ public static class EditComment
 
             comment.Body = request.Body.Trim();
             comment.EditedAt = time.GetUtcNow();
+            var mentionedBefore = comment.Mentions.Select(m => m.UserId).ToList();
             await CommentMentions.SyncAsync(db, boardId, comment, ct);
             await activity.RecordCardAsync(ActivityTypes.CommentEdited, boardId, cardId, new { commentId }, ct);
+            await notifier.NotifyCardAsync(
+                NotificationTypes.Mentioned,
+                comment.Mentions.Select(m => m.UserId).Except(mentionedBefore),
+                boardId,
+                cardId,
+                new { commentId },
+                ct);
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok(await CommentMentions.ViewAsync(db, comment.Id, ct));

@@ -24,7 +24,7 @@ public sealed class InviteTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var response = await joiner.PostAsync(Url($"/api/invites/{invite.Token}/accept"), null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(boardId, (await response.Content.ReadFromJsonAsync<AcceptInvite.Response>())!.BoardId);
+        Assert.Equal(boardId, (await response.Content.ReadFromJsonAsync<ITask.Api.Common.Auth.InviteAcceptance.Response>())!.BoardId);
         var board = await joiner.GetFromJsonAsync<ITask.Api.Features.Boards.GetBoard.GetBoard.Response>($"/api/boards/{boardId}");
         Assert.Equal(BoardRole.Editor, board!.Role);
     }
