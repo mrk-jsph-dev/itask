@@ -36,7 +36,9 @@ param microsoftClientId string
 param githubClientSecret string
 @secure()
 param microsoftClientSecret string
+@secure()
 param aiEndpoint string
+@secure()
 param aiDeployment string
 param tags object
 
@@ -58,11 +60,13 @@ var optionalSettings = filter([
 ], s => !empty(s.value))
 
 // AI runs on the API's managed identity (role granted in bootstrap); off unless both are set.
-var aiSettings = empty(aiEndpoint) || empty(aiDeployment) ? [] : [
-  { name: 'Ai__Enabled', value: 'true' }
-  { name: 'Ai__Endpoint', value: aiEndpoint }
-  { name: 'Ai__Deployment', value: aiDeployment }
-]
+// Endpoint and deployment are Container Apps secrets so the resource name stays out of public logs.
+var aiOn = !empty(aiEndpoint) && !empty(aiDeployment)
+var aiSecrets = aiOn ? [
+  { name: 'ai-endpoint', value: aiEndpoint, env: 'Ai__Endpoint' }
+  { name: 'ai-deployment', value: aiDeployment, env: 'Ai__Deployment' }
+] : []
+var aiSettings = aiOn ? [{ name: 'Ai__Enabled', value: 'true' }] : []
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' existing = {
   name: logAnalyticsName
@@ -111,7 +115,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
       }
       secrets: concat(
         [{ name: 'appinsights-connection', value: appInsightsConnectionString }],
-        map(optionalSecrets, s => { name: s.name, value: s.value })
+        map(concat(optionalSecrets, aiSecrets), s => { name: s.name, value: s.value })
       )
     }
     template: {
@@ -136,7 +140,7 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'Auth__CookieSameSite', value: crossSiteCookies ? 'None' : 'Lax' }
             // No email sender yet, so sign-up can't wait for a confirmation link.
             { name: 'Auth__RequireConfirmedEmail', value: 'false' }
-          ], optionalSettings, aiSettings, map(optionalSecrets, s => { name: s.env, secretRef: s.name }))
+          ], optionalSettings, aiSettings, map(concat(optionalSecrets, aiSecrets), s => { name: s.env, secretRef: s.name }))
           probes: [
             {
               type: 'Liveness'

@@ -7,6 +7,7 @@ param adminIdentityName string
 param adminIdentityClientId string
 
 @description('Optional Entra group (object id) to use as SQL admin instead of the API identity. It must contain the API identity.')
+@secure()
 param adminGroupId string = ''
 param adminGroupName string = 'itask-sql-admins'
 param tags object

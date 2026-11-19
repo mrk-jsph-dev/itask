@@ -156,10 +156,14 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
      used to send invites, password resets, email confirmation and digests. Use a dedicated
      account: recipients see the address. Gmail allows about 500 emails a day. Empty =
      emails are only logged and nothing is sent.
-3. **GitHub → Settings → Secrets and variables → Actions → Variables** (not secrets,
-   none of these are sensitive): `AZURE_CLIENT_ID` (bootstrap output `deployClientId`),
-   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and optionally `TURNSTILE_SITE_KEY` and
-   `SQL_ADMIN_GROUP_ID` (see below).
+   - `AZURE_CLIENT_ID` (bootstrap output `deployClientId`), `AZURE_TENANT_ID`,
+     `AZURE_SUBSCRIPTION_ID`: required, used by the OIDC sign-in. Secrets so the ids stay
+     out of public run logs.
+   - `SQL_ADMIN_GROUP_ID`: optional Entra group used as SQL admin (see below).
+   - `AI_ENDPOINT` / `AI_DEPLOYMENT`: optional, see step 6.
+3. **GitHub → Settings → Secrets and variables → Actions → Variables:** only values that
+   are public by design: optionally `TURNSTILE_SITE_KEY` (shipped in the site) and the
+   OAuth client ids from step 5.
 4. **Actions → ci-cd → Run workflow** on `main`, approve the deploy. After the first
    run, make the `itask-api` package on GHCR **public** so Azure can pull it without
    credentials (it contains no secrets), then run the workflow again.
@@ -185,8 +189,9 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
    OpenAI) resource in `rg-itask` and deploy a small OpenAI chat model (for example
    `gpt-4.1-mini`) with a low tokens-per-minute quota. The API identity already has
    "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
-   endpoint (`https://<name>.openai.azure.com/`) as the variable `AI_ENDPOINT` and the
-   deployment name as `AI_DEPLOYMENT`, then run ci-cd again. Nothing bills until a user
+   endpoint (`https://<name>.openai.azure.com/`) as the `production` secret `AI_ENDPOINT`
+   and the deployment name as the `production` secret `AI_DEPLOYMENT` (secrets keep the
+   resource name out of the public workflow logs), then run ci-cd again. Nothing bills until a user
    presses a ✨ button; each user gets 20 AI requests a day (`Ai__DailyRequestsPerUser`).
    Locally: `dotnet user-secrets set Ai:Enabled true` plus `Ai:Endpoint` and `Ai:Deployment`,
    signed in with `az login`.
@@ -212,7 +217,7 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
   `az containerapp start -g rg-itask -n ca-itask-api`.
 - **Manual SQL queries:** the SQL admin is the API identity. To query yourself, create
   an Entra group (for example `itask-sql-admins`), add yourself and `id-itask-api`,
-  set its object id as the `SQL_ADMIN_GROUP_ID` variable and redeploy. Then connect
+  set its object id as the `SQL_ADMIN_GROUP_ID` `production` secret and redeploy. Then connect
   with Entra authentication (Azure Data Studio, `sqlcmd -G`) after allowing your IP
   in the SQL server firewall.
 - **Custom domain (optional):** without one, the site and API are different sites, so
