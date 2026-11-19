@@ -1,0 +1,25 @@
+{
+  "id": "personal",
+  "name": "Personal",
+  "emoji": "🏡",
+  "description": "Plan your own week: today, this week, later and done.",
+  "color": "#0F766E",
+  "content": {
+    "lists": [
+      { "name": "Today", "emoji": "☀️" },
+      { "name": "This week", "emoji": "📅" },
+      { "name": "Later", "emoji": "🌙" },
+      { "name": "Done", "emoji": "✅" }
+    ],
+    "labels": [
+      { "name": "Home", "color": "#0F766E", "emoji": "🏠" },
+      { "name": "Errand", "color": "#C2410C", "emoji": "🛒" },
+      { "name": "Health", "color": "#4D7C0F", "emoji": "💪" },
+      { "name": "Money", "color": "#374151", "emoji": "💰" }
+    ],
+    "cards": [
+      { "list": "This week", "title": "Weekly review", "emoji": "🧭", "checklist": ["Clear the inbox", "Plan next week", "Move finished cards to Done"] },
+      { "list": "Today", "title": "Groceries", "emoji": "🛒", "labels": ["Errand"], "checklist": ["Milk", "Bread", "Fruit"] }
+    ]
+  }
+}

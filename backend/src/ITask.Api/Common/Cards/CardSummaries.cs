@@ -10,7 +10,7 @@ public sealed record LabelChip(Guid Id, string Name, string Color, string? Emoji
 public sealed record AssigneeChip(Guid UserId, string DisplayName, string AvatarColor);
 
 /// <summary>
-/// What a card tile shows. <c>AttachmentCount</c> counts confirmed uploads only (rows exist after ConfirmUpload). <c>RowVersion</c> (base64) goes back with MoveCard.
+/// What a card tile shows. <c>AttachmentCount</c> counts confirmed uploads only (rows exist after ConfirmUpload). <c>Recurring</c> is true while the card carries a repeat rule. <c>RowVersion</c> (base64) goes back with MoveCard.
 /// </summary>
 public sealed record CardSummary(
     Guid Id,
@@ -32,6 +32,7 @@ public sealed record CardSummary(
     int ChecklistTotal,
     int CommentCount,
     int AttachmentCount,
+    bool Recurring,
     string RowVersion);
 
 /// <summary>Loads <see cref="CardSummary"/> rows in one query per call.</summary>
@@ -73,6 +74,7 @@ public static class CardSummaries
                 ChecklistTotal = c.Checklist.Count,
                 CommentCount = c.Comments.Count,
                 AttachmentCount = c.Attachments.Count,
+                Recurring = db.CardRecurrences.Any(r => r.CardId == c.Id),
                 c.RowVersion,
             })
             .ToListAsync(ct);
@@ -97,6 +99,7 @@ public static class CardSummaries
             c.ChecklistTotal,
             c.CommentCount,
             c.AttachmentCount,
+            c.Recurring,
             Convert.ToBase64String(c.RowVersion)))];
     }
 

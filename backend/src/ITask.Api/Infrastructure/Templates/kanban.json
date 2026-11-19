@@ -1,0 +1,31 @@
+{
+  "id": "kanban",
+  "name": "Kanban",
+  "emoji": "📋",
+  "description": "A simple flow from idea to done, with a WIP limit on work in progress.",
+  "color": "#1D5BF5",
+  "content": {
+    "lists": [
+      { "name": "Backlog", "emoji": "🗂️" },
+      { "name": "To do", "emoji": "📝" },
+      { "name": "In progress", "emoji": "🚧", "wipLimit": 3 },
+      { "name": "Review", "emoji": "👀" },
+      { "name": "Done", "emoji": "✅" }
+    ],
+    "labels": [
+      { "name": "Feature", "color": "#1D5BF5", "emoji": "✨" },
+      { "name": "Improvement", "color": "#0F766E" },
+      { "name": "Blocked", "color": "#E11D48", "emoji": "⛔" }
+    ],
+    "cards": [
+      {
+        "list": "To do",
+        "title": "Welcome to your Kanban board",
+        "emoji": "👋",
+        "description": "Move cards left to right as work moves on. Keep **In progress** small: the column shows a WIP limit of 3.",
+        "checklist": ["Rename or add lists", "Invite your team", "Archive this card"]
+      },
+      { "list": "Backlog", "title": "Collect ideas here", "labels": ["Feature"] }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "sprint",
+  "name": "Sprint",
+  "emoji": "🏃",
+  "description": "Two-week sprints: plan from the backlog, build, review, ship.",
+  "color": "#7C3AED",
+  "content": {
+    "lists": [
+      { "name": "Product backlog", "emoji": "🗂️" },
+      { "name": "Sprint backlog", "emoji": "🎯" },
+      { "name": "In progress", "emoji": "🚧", "wipLimit": 5 },
+      { "name": "Code review", "emoji": "👀" },
+      { "name": "Testing", "emoji": "🧪" },
+      { "name": "Done", "emoji": "✅" }
+    ],
+    "labels": [
+      { "name": "Story", "color": "#1D5BF5", "emoji": "📖" },
+      { "name": "Bug", "color": "#E11D48", "emoji": "🐞" },
+      { "name": "Tech debt", "color": "#C2410C", "emoji": "🧹" },
+      { "name": "Spike", "color": "#7C3AED", "emoji": "🔬" }
+    ],
+    "cards": [
+      {
+        "list": "Sprint backlog",
+        "title": "Sprint planning",
+        "emoji": "🗓️",
+        "priority": "High",
+        "checklist": ["Agree the sprint goal", "Pull stories from the product backlog", "Estimate and split large stories"]
+      },
+      {
+        "list": "Sprint backlog",
+        "title": "Sprint review and retro",
+        "emoji": "🔁",
+        "checklist": ["Demo what shipped", "What went well", "What to change next sprint"]
+      },
+      { "list": "Product backlog", "title": "Example user story", "labels": ["Story"], "description": "As a user, I want … so that …" }
+    ]
+  }
+}

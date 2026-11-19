@@ -22,10 +22,15 @@ public interface IActivityRecorder
     /// tracked card when there is one so a title changed in the same request is the one shown.
     /// </summary>
     Task RecordCardAsync(string type, Guid boardId, Guid cardId, object? data, CancellationToken ct);
+
+    /// <summary>A recorder that writes entries as <paramref name="actorId"/>, for work done outside a request.</summary>
+    IActivityRecorder ForActor(Guid actorId);
 }
 
 internal sealed class ActivityRecorder(AppDbContext db, ICurrentUser user, TimeProvider clock) : IActivityRecorder
 {
+    private Guid? _actorId;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -51,13 +56,16 @@ internal sealed class ActivityRecorder(AppDbContext db, ICurrentUser user, TimeP
         Add(type, boardId, cardId, node.ToJsonString(Json));
     }
 
+    public IActivityRecorder ForActor(Guid actorId) =>
+        new ActivityRecorder(db, user, clock) { _actorId = actorId };
+
     private void Add(string type, Guid boardId, Guid? cardId, string data) =>
         db.Activity.Add(new ActivityEntry
         {
             Type = type,
             BoardId = boardId,
             CardId = cardId,
-            ActorId = user.Id,
+            ActorId = _actorId ?? user.Id,
             Data = data,
             CreatedAt = clock.GetUtcNow(),
         });
