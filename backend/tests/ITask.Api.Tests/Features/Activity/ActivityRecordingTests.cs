@@ -213,7 +213,7 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
             .Where(f => f.IsLiteral)
             .Select(f => (string)f.GetRawConstantValue()!)
             // These are always recorded next to the change that caused them; AutomationTests cover them.
-            .Where(t => t is not ("board.created" or "automation.disabled" or "doorway.overridden"));
+            .Where(t => t is not ("board.created" or "automation.disabled" or "automation.ai_skipped" or "doorway.overridden"));
 
         Assert.Empty(constants.Except(Cases.Keys));
     }

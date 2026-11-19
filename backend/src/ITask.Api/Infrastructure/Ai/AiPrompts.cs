@@ -18,6 +18,10 @@ public sealed partial class AiPrompts
 
     public const string BoardFromGoal = "board-from-goal";
 
+    public const string Automation = "automation";
+
+    public const string AutomationReview = "automation-review";
+
     private const string Prefix = "ITask.Api.Infrastructure.Ai.Prompts.";
 
     private readonly Dictionary<string, AiPrompt> _prompts;

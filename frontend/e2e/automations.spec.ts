@@ -96,7 +96,7 @@ async function mockApi(page: Page) {
       conditions: [{ type: 'assignee.set' }],
     }),
   ]
-  const calls = { overridden: false, undone: '' }
+  const calls = { overridden: false, undone: '', recordedCard: '' }
 
   await page.route(
     (url) => url.pathname.startsWith('/api/'),
@@ -117,6 +117,36 @@ async function mockApi(page: Page) {
       if (pathname === '/api/boards/b1/lists') {
         return route.fulfill({
           json: lists.map((l) => ({ ...l, cards: card.listId === l.id ? [card] : [] })),
+        })
+      }
+      if (pathname === '/api/boards/b1/automations/summary') {
+        return route.fulfill({
+          json: {
+            days: 7,
+            ran: 3,
+            blocked: 1,
+            sentence: 'Automations made 3 changes; doorways blocked 1 move.',
+            rules: [],
+          },
+        })
+      }
+      if (pathname === '/api/boards/b1/automations/from-recording') {
+        calls.recordedCard = (request.postDataJSON() as { cardId: string }).cardId
+        return route.fulfill({
+          json: {
+            name: 'In progress routine',
+            trigger: { type: 'card.entered', listId: 'l2' },
+            actions: [{ type: 'priority', priority: 'High' }],
+          },
+        })
+      }
+      if (pathname === '/api/boards/b1/automations/preview') {
+        return route.fulfill({
+          json: {
+            count: 3,
+            samples: [{ cardId: 'c1', key: 'RM-1', title: 'Pick fonts' }],
+            basis: 'history',
+          },
         })
       }
       if (pathname === '/api/boards/b1/automations') {
@@ -203,4 +233,35 @@ test('owner adds a preset, a doorway blocks a move, and an automation run is und
   expect(calls.overridden).toBe(true)
   await page.getByRole('button', { name: 'Undo' }).click()
   await expect.poll(() => calls.undone).toBe('run1')
+})
+
+test('show me once turns recorded steps into a rule, replayed before it is added', async ({
+  page,
+}) => {
+  const calls = await mockApi(page)
+  await page.goto('/boards/b1')
+
+  await page.getByRole('button', { name: 'Automations' }).click()
+  const sheet = page.getByRole('dialog', { name: '⚡ Automations' })
+  await expect(sheet.getByTestId('automation-summary')).toContainText(
+    'Automations made 3 changes; doorways blocked 1 move.',
+  )
+  await sheet.getByRole('button', { name: '⏺ Show me once' }).click()
+
+  await expect(page.getByRole('status').filter({ hasText: 'Recording' })).toBeVisible()
+  await page.getByRole('button', { name: 'Pick fonts card menu' }).click()
+  await page.getByRole('menuitem', { name: /Move to list/ }).click()
+  await page.getByRole('menuitem', { name: /In progress/ }).click()
+  await expect(page.getByText('Do the rest of the steps')).toBeVisible()
+  await page.getByRole('button', { name: '⏹ Stop' }).click()
+
+  const editor = page.getByRole('dialog', { name: '⚡ Automations' })
+  await expect(editor.getByLabel('Name')).toHaveValue('In progress routine')
+  expect(calls.recordedCard).toBe('c1')
+  await editor.getByRole('button', { name: '⏪ Replay before adding' }).click()
+  await expect(editor.getByTestId('automation-preview')).toContainText(
+    'Would have run 3 times in the last 30 days',
+  )
+  await editor.getByRole('button', { name: 'Save' }).click()
+  await expect(editor.getByText('When a card enters In progress, set priority High.')).toBeVisible()
 })

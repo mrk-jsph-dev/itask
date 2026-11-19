@@ -4,8 +4,15 @@ import { computed, onMounted, ref } from 'vue'
 import { ApiError } from '@/shared/api/http'
 import SideSheet from '@/shared/ui/SideSheet.vue'
 import { toast, toastWithUndo } from '@/shared/ui/toast'
-import type { Automation, AutomationInput } from '../api'
-import { blankRule, describe, presetsFor, type BoardRefs } from '../catalog'
+import { useAiStore } from '@/features/ai/store'
+import {
+  automationsApi,
+  type AiSuggestion,
+  type Automation,
+  type AutomationInput,
+  type AutomationSummary,
+} from '../api'
+import { blankRule, clone, describe, presetsFor, usesAi, type BoardRefs } from '../catalog'
 import { useAutomationsStore } from '../store'
 import RuleEditor from './RuleEditor.vue'
 
@@ -14,8 +21,17 @@ const props = defineProps<{
   refs: BoardRefs
   /** Owners add, change and remove automations; others only read them. */
   canManage: boolean
+  /** ✨ Describe it, Review my board and AI actions (AI is on and not a demo account). */
+  aiEnabled?: boolean
+  /** A draft to open in the editor at once (from "Show me once"). */
+  draft?: AutomationInput | null
 }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; record: [] }>()
+
+const ai = useAiStore()
+const summary = ref<AutomationSummary | null>(null)
+const describeText = ref('')
+const suggestions = ref<AiSuggestion[] | null>(null)
 
 const store = useAutomationsStore()
 /** The automation being edited: its id, or `new` with the input it starts from. */
@@ -27,7 +43,32 @@ const hidden = ref(new Set<string>())
 
 onMounted(() => {
   if (store.boardId !== props.boardId || store.items === null) void store.load(props.boardId)
+  automationsApi
+    .summary(props.boardId)
+    .then((s) => (summary.value = s))
+    .catch(() => undefined)
+  if (props.draft) editing.value = { id: 'new', input: clone(props.draft) }
 })
+
+async function describeIt() {
+  const text = describeText.value.trim()
+  if (!text) return
+  const result = await ai.run('automation-draft', () => automationsApi.aiDraft(props.boardId, text))
+  if (!result) return
+  describeText.value = ''
+  error.value = null
+  editing.value = { id: 'new', input: result.automation }
+}
+
+async function reviewBoard() {
+  const result = await ai.run('automation-review', () => automationsApi.aiReview(props.boardId))
+  if (result) suggestions.value = result.suggestions
+}
+
+function useSuggestion(s: AiSuggestion) {
+  error.value = null
+  editing.value = { id: 'new', input: clone(s.automation) }
+}
 
 const items = computed(() => (store.items ?? []).filter((a) => !hidden.value.has(a.id)))
 const doorways = computed(() => items.value.filter((a) => a.kind === 'Doorway'))
@@ -128,15 +169,24 @@ const cost = (a: Automation) =>
 <template>
   <SideSheet title="⚡ Automations" @close="emit('close')">
     <p class="text-sm text-muted">
-      Doorways guard a list's entrance or exit. Rules react to changes. They run without AI, inside
-      the change that sets them off, so they cost nothing.
+      Doorways guard a list's entrance or exit. Rules react to changes. They run inside the change
+      that sets them off, so they cost nothing, unless you add a ✨ AI action.
+    </p>
+    <p
+      v-if="summary && (summary.ran || summary.blocked)"
+      class="rounded-[12px] bg-hover px-3 py-2 text-sm"
+      data-testid="automation-summary"
+    >
+      🧾 This week: {{ summary.sentence }}
     </p>
 
     <RuleEditor
       v-if="editing"
       :key="editing.id"
+      :board-id="boardId"
       :initial="editing.input"
       :refs="refs"
+      :ai-enabled="aiEnabled"
       :saving="saving"
       :error="error"
       @save="save"
@@ -158,7 +208,63 @@ const cost = (a: Automation) =>
       >
         ⚡ New rule
       </button>
+      <button
+        type="button"
+        class="ghost h-9 rounded-full border border-line px-4 text-sm font-semibold"
+        @click="emit('record')"
+      >
+        ⏺ Show me once
+      </button>
     </div>
+
+    <section v-if="canManage && aiEnabled && !editing" class="flex flex-col gap-2">
+      <form class="flex gap-2" @submit.prevent="describeIt">
+        <input
+          v-model="describeText"
+          type="text"
+          maxlength="500"
+          class="h-9 min-w-0 flex-1 rounded-[10px] border border-line bg-panel px-3 text-sm"
+          placeholder="✨ Describe it: when a bug is done, move it to Done…"
+          aria-label="Describe an automation"
+        />
+        <button
+          type="submit"
+          class="ghost h-9 rounded-full border border-line px-3 text-sm font-semibold disabled:opacity-60"
+          :disabled="!!ai.busy || !describeText.trim()"
+        >
+          {{ ai.busy === 'automation-draft' ? 'Drafting…' : 'Draft' }}
+        </button>
+      </form>
+      <button
+        type="button"
+        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-violet-700 disabled:opacity-60"
+        :disabled="!!ai.busy"
+        @click="reviewBoard"
+      >
+        {{ ai.busy === 'automation-review' ? 'Reviewing…' : '✨ Review my board' }}
+      </button>
+      <p class="text-xs text-muted">
+        Uses your AI quota ({{ ai.remaining }} left today). Nothing is saved until you add it.
+      </p>
+      <ul v-if="suggestions?.length" class="flex flex-col gap-2" aria-label="Suggestions">
+        <li
+          v-for="(sg, i) in suggestions"
+          :key="i"
+          class="flex flex-col gap-1.5 rounded-[14px] border border-violet-200 bg-violet-50/40 p-3"
+        >
+          <p class="text-sm font-semibold">{{ sg.automation.name }}</p>
+          <p class="text-sm">{{ describe(sg.automation, refs) }}</p>
+          <p class="text-xs text-muted">✨ {{ sg.reason }}</p>
+          <button
+            type="button"
+            class="ghost w-fit rounded-full border border-line px-3 py-1 text-xs font-semibold"
+            @click="useSuggestion(sg)"
+          >
+            Review and add
+          </button>
+        </li>
+      </ul>
+    </section>
 
     <p v-if="store.items === null" class="text-sm text-muted">Loading…</p>
 
@@ -206,6 +312,11 @@ const cost = (a: Automation) =>
                     : 'bg-emerald-50 text-emerald-800'
                 "
                 >{{ cost(a) }}</span
+              >
+              <span
+                v-if="usesAi(a)"
+                class="rounded-full bg-violet-50 px-2 py-0.5 font-semibold text-violet-800"
+                >✨ uses AI quota</span
               >
               <span class="text-muted"
                 >{{ a.runs }} run{{ a.runs === 1 ? '' : 's' }} in 30 days</span

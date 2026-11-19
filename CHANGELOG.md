@@ -2,6 +2,29 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.3.0
+
+Board automations: iTask's own take, with list doorways, explain and undo, and AI only where you ask for it.
+Rules run inside the change that sets them off, so they cost nothing to run.
+
+- **List doorways:** requirements for cards entering or leaving a list (an assignee, a label, a
+  due date, a finished checklist, a priority). A doorway can *block* the move and say what is
+  missing (owners can move anyway, which is recorded), *fill in* what's missing, or *warn* on the
+  column. Shown as 🚪 on the column header.
+- **Rules:** "when … if … then …" with up to three actions (move, complete, reopen, labels,
+  assign, priority, due date, checklist items, comment, notify, archive). Instant triggers run
+  in the same request; date triggers (due soon, overdue, stuck in a list, completed a while ago)
+  run in the hourly job and can run late while the app sleeps. About 12 presets fit to the board.
+- **Explain and undo:** every automated change shows as "(⚡ rule)" in the activity feeds and
+  comes with an Undo toast. Changes made by automations never set off other automations.
+- **Show me once:** record the steps on one card and get a rule draft.
+- **Replay before adding:** see how often a rule would have run in the last 30 days.
+- **Receipt:** a 7-day summary in the Automations sheet and a line in the weekly email digest.
+- **✨ AI (optional):** "Describe it" and "Review my board" draft automations from plain words or
+  from the board's activity counts (no card text is sent). Rules can include one opt-in ✨ action
+  (break down into a checklist, pick labels and priority, or summarize) on instant triggers only,
+  charged to the rule creator's daily AI quota and skipped with a note when it is spent.
+
 ## 1.2.1
 
 Abuse protection before the first public deploy. Nothing here costs money to run.

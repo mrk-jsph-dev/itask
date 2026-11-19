@@ -6,6 +6,7 @@ using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
+using ITask.Api.Infrastructure.Ai;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +47,7 @@ public static class CreateAutomation
 
         private static async Task<Results<Created<AutomationView>, ValidationProblem, ProblemHttpResult>> Handle(
             Guid boardId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity,
-            TimeProvider clock, CancellationToken ct)
+            TimeProvider clock, IAiService ai, CancellationToken ct)
         {
             if (await AutomationGuard.CheckAsync(boardId, BoardRole.Owner, true, db, access, ct) is { } denied)
             {
@@ -60,7 +61,8 @@ public static class CreateAutomation
 
             var (spec, errors) = await AutomationGuard.ValidateAsync(
                 db, boardId, request.Kind, request.ListId, request.Direction, request.Mode,
-                request.Trigger, request.Conditions, request.Actions, ct);
+                request.Trigger, request.Conditions, request.Actions,
+                await AutomationGuard.AiAllowedAsync(db, ai, user, ct), ct);
             if (errors is not null)
             {
                 return TypedResults.ValidationProblem(errors);

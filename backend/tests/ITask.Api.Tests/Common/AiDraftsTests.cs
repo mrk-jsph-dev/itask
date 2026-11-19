@@ -11,7 +11,7 @@ public sealed class AiDraftsTests
         var prompts = new AiPrompts();
 
         Assert.Equal(
-            [AiPrompts.BoardFromGoal, AiPrompts.Breakdown, AiPrompts.Digest, AiPrompts.QuickAdd, AiPrompts.Summary],
+            [AiPrompts.Automation, AiPrompts.AutomationReview, AiPrompts.BoardFromGoal, AiPrompts.Breakdown, AiPrompts.Digest, AiPrompts.QuickAdd, AiPrompts.Summary],
             prompts.All.Select(p => p.Name).Order(StringComparer.Ordinal));
         Assert.All(prompts.All, p =>
         {

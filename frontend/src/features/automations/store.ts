@@ -30,6 +30,8 @@ export const useAutomationsStore = defineStore('automations', () => {
   const boardId = ref<string | null>(null)
   const items = ref<Automation[] | null>(null)
   const refused = ref<DoorwayRefusal | null>(null)
+  /** "Show me once": when it started and the last card the user changed since. */
+  const recording = ref<{ since: string; cardId: string | null } | null>(null)
 
   const doorways = computed(() =>
     (items.value ?? []).filter((a) => a.kind === 'Doorway' && a.enabled && !a.problem),
@@ -79,10 +81,38 @@ export const useAutomationsStore = defineStore('automations', () => {
     items.value = (items.value ?? []).filter((a) => a.id !== id)
   }
 
+  function startRecording() {
+    recording.value = { since: new Date().toISOString(), cardId: null }
+  }
+
+  /** Notes a card the user changed while recording; the last one is the card the rule is drafted from. */
+  function noteCard(cardId: string) {
+    if (recording.value) recording.value = { ...recording.value, cardId }
+  }
+
+  /** Stops recording and drafts a rule from the steps; throws when the steps don't make one. */
+  async function stopRecording() {
+    const current = recording.value
+    recording.value = null
+    if (!current?.cardId) return null
+    const draft = await automationsApi.fromRecording(boardId.value!, current.cardId, current.since)
+    return {
+      kind: 'Rule',
+      name: draft.name,
+      listId: null,
+      direction: null,
+      mode: null,
+      trigger: draft.trigger,
+      conditions: [],
+      actions: draft.actions,
+    } satisfies AutomationInput
+  }
+
   function reset() {
     boardId.value = null
     items.value = null
     refused.value = null
+    recording.value = null
   }
 
   return {
@@ -90,7 +120,11 @@ export const useAutomationsStore = defineStore('automations', () => {
     items,
     doorways,
     refused,
+    recording,
     doorwaysFor,
+    startRecording,
+    noteCard,
+    stopRecording,
     load,
     refresh,
     create,

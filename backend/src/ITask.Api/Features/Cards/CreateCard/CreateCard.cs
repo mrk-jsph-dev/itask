@@ -42,7 +42,8 @@ public static class CreateCard
                 .WithValidation<Request>();
 
         private static async Task<Results<Created<CardSummary>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
+            Guid boardId, Guid listId, Request request, AppDbContext db, IBoardAccess access, ICurrentUser user, IActivityRecorder activity,
+            TimeProvider clock, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -71,7 +72,7 @@ public static class CreateCard
 
             if (await ListDoorways.CheckAsync(db, new Card { BoardId = boardId, Title = request.Title }, null, listId, ct) is { } blocked)
             {
-                return blocked.ToProblem();
+                return await blocked.RecordAsync(db, Guid.Empty, user.Id, clock.GetUtcNow(), ct);
             }
 
             for (var attempt = 1; ; attempt++)

@@ -1,3 +1,4 @@
+using ITask.Api.Common.Automations;
 using ITask.Api.Common.Notifications;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Domain;
@@ -63,6 +64,18 @@ internal sealed partial class NotificationDigestJob(
                     DigestText.Describe(r.Type, r.Data, r.Actor, r.Board, zone),
                     options.Value.Link(r.CardId is { } cardId ? $"boards/{r.BoardId}/cards/{cardId}" : "notifications")))
                 .ToList();
+
+            // Weekly digests start with what the automations on the boards they own did.
+            if (s.Prefs.Digest == DigestFrequency.Weekly)
+            {
+                var owned = await db.BoardMembers.AsNoTracking()
+                    .Where(m => m.UserId == userId && m.Role == BoardRole.Owner && m.Board!.ArchivedAt == null)
+                    .Select(m => m.BoardId)
+                    .ToListAsync(ct);
+                var receipts = await AutomationReceipts.ForBoardsAsync(db, owned, since, ct);
+                lines.InsertRange(0, receipts.Take(5).Select(r => new DigestLine(
+                    $"⚡ {r.BoardName}: {r.Sentence()}", options.Value.Link($"boards/{r.BoardId}"))));
+            }
 
             if (lines.Count > 0)
             {

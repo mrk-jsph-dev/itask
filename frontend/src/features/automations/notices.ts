@@ -3,6 +3,7 @@ import { onScopeDispose } from 'vue'
 import { onApiResponse } from '@/shared/api/http'
 import { toast, toastWithUndo } from '@/shared/ui/toast'
 import { automationsApi, type AutomationRunNotice } from './api'
+import { useAutomationsStore } from './store'
 
 export const RUNS_HEADER = 'X-ITask-Automations'
 
@@ -23,7 +24,17 @@ export function decodeRuns(value: string | null): AutomationRunNotice[] {
  * when the run can be undone, and calls `changed` so the page reloads what the run touched.
  */
 export function useAutomationNotices(boardId: () => string, changed: () => void) {
+  const store = useAutomationsStore()
   const stop = onApiResponse((response) => {
+    // While recording, the last card this tab changed is the one the rule is drafted from.
+    if (
+      store.recording &&
+      response.ok &&
+      response.url.includes(`/api/boards/${boardId()}/cards/`)
+    ) {
+      const cardId = response.url.split(`/api/boards/${boardId()}/cards/`)[1]?.split(/[/?]/)[0]
+      if (cardId) store.noteCard(cardId)
+    }
     const runs = decodeRuns(response.headers.get(RUNS_HEADER))
     if (runs.length === 0 || !response.url.includes(`/api/boards/${boardId()}/`)) return
     const board = boardId()

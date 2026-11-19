@@ -102,6 +102,11 @@ public static class AutomationCatalog
     public const string DoNotify = "notify";
     public const string DoArchive = "archive";
 
+    /// <summary>✨ AI actions: run once the change is saved, charged to the rule creator's AI quota.</summary>
+    public const string DoAiBreakdown = "ai.breakdown";
+    public const string DoAiTriage = "ai.triage";
+    public const string DoAiSummary = "ai.summary";
+
     public const int MaxConditions = 5;
     public const int MaxChecklistItems = 10;
     public const int MaxCommentLength = 1_000;
@@ -130,10 +135,12 @@ public static class AutomationCatalog
     private static readonly HashSet<string> ActionTypes = new HashSet<string>(StringComparer.Ordinal)
     {
         DoMove, DoComplete, DoReopen, DoAddLabel, DoRemoveLabel, DoAssign, DoUnassign, DoPriority, DoDue,
-        DoChecklist, DoComment, DoNotify, DoArchive,
+        DoChecklist, DoComment, DoNotify, DoArchive, DoAiBreakdown, DoAiTriage, DoAiSummary,
     };
 
     public static bool IsHourly(string trigger) => HourlyTriggers.Contains(trigger);
+
+    public static bool IsAi(string action) => action.StartsWith("ai.", StringComparison.Ordinal);
 
     /// <summary>
     /// Errors keyed by field (empty when valid). Every id must exist on <paramref name="board"/> now,
@@ -224,6 +231,17 @@ public static class AutomationCatalog
         foreach (var action in spec.Actions)
         {
             ValidateAction(action, Add, ListOk, LabelOk, MemberOk, board);
+        }
+
+        var ai = spec.Actions.Count(a => IsAi(a.Type));
+        if (ai > 1)
+        {
+            Add("actions", "Use at most one ✨ AI action.");
+        }
+
+        if (ai > 0 && (kind == AutomationKind.Doorway || IsHourly(spec.Trigger.Type)))
+        {
+            Add("actions", "✨ AI actions only run on rules with an instant trigger.");
         }
 
         return errors.ToDictionary(e => e.Key, e => e.Value.ToArray());

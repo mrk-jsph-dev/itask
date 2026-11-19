@@ -47,7 +47,8 @@ public static class MoveCard
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
-            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            Guid boardId, Guid cardId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity,
+            ICurrentUser user, TimeProvider clock, CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
             {
@@ -105,7 +106,7 @@ public static class MoveCard
             {
                 if (request.OverrideDoorway != true || !await access.HasAtLeastAsync(boardId, BoardRole.Owner, ct))
                 {
-                    return blocked.ToProblem();
+                    return await blocked.RecordAsync(db, cardId, user.Id, clock.GetUtcNow(), ct);
                 }
 
                 await activity.RecordCardAsync(ActivityTypes.DoorwayOverridden, boardId, cardId, new

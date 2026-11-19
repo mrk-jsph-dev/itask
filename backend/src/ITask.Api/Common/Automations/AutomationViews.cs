@@ -2,6 +2,7 @@ using ITask.Api.Common.Auth;
 using ITask.Api.Common.Cards;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Domain;
+using ITask.Api.Infrastructure.Ai;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -85,7 +86,8 @@ public static class AutomationGuard
     /// </summary>
     public static async Task<(AutomationSpec? Spec, Dictionary<string, string[]>? Errors)> ValidateAsync(
         AppDbContext db, Guid boardId, AutomationKind kind, Guid? listId, DoorwayDirection? direction, DoorwayMode? mode,
-        TriggerSpec? trigger, IReadOnlyList<ConditionSpec>? conditions, IReadOnlyList<ActionSpec>? actions, CancellationToken ct)
+        TriggerSpec? trigger, IReadOnlyList<ConditionSpec>? conditions, IReadOnlyList<ActionSpec>? actions, bool aiAllowed,
+        CancellationToken ct)
     {
         var spec = new AutomationSpec(
             kind == AutomationKind.Doorway && listId is { } id && direction is { } dir
@@ -98,8 +100,22 @@ public static class AutomationGuard
             return (null, new Dictionary<string, string[]> { ["kind"] = ["Only doorways have a list, direction and mode."] });
         }
 
+        if (!aiAllowed && spec.Actions.Any(a => AutomationCatalog.IsAi(a.Type)))
+        {
+            return (null, new Dictionary<string, string[]> { ["actions"] = ["✨ AI actions aren't available here (AI is off, or this is a demo account)."] });
+        }
+
         var board = await AutomationBoards.LoadAsync(db, boardId, ct);
         var errors = AutomationCatalog.Validate(kind, listId, direction, mode, spec, board);
         return errors.Count > 0 ? (null, errors) : (spec, null);
+    }
+
+    /// <summary>Whether the signed-in user may add ✨ AI actions: AI is on and they aren't a demo account.</summary>
+    public static async Task<bool> AiAllowedAsync(AppDbContext db, IAiService ai, ICurrentUser user, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(ai);
+        ArgumentNullException.ThrowIfNull(user);
+        return ai.IsEnabled && !await db.Users.AnyAsync(u => u.Id == user.Id && u.IsDemo, ct);
     }
 }
