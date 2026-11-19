@@ -11,7 +11,7 @@ and **Azure** infrastructure in **Bicep**, designed to run on free tiers.
 
 ### ✨ AI helpers
 
-OpenAI models deployed in **Azure AI Foundry**, called from the API through `IAiService`
+OpenAI models deployed in **Microsoft Foundry**, called from the API through `IAiService`
 (`Infrastructure/Ai`) with the API's managed identity and structured JSON outputs. Every answer
 comes back as an editable draft with Accept or Discard; nothing is written until the user accepts it.
 
@@ -51,7 +51,7 @@ rule needs no queue, worker or extra Azure service. Date triggers run in the hou
 
 ## Architecture
 
-![iTask architecture: the browser loads the Vue app from Static Web Apps and calls the ASP.NET Core API on Container Apps over JSON and SignalR. The API stores data in Azure SQL Database, files in Blob Storage, calls Azure AI Foundry only when a user asks, and sends logs to Log Analytics. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](.github/media/architecture.svg)
+![iTask architecture: the browser loads the Vue app from Static Web Apps and calls the ASP.NET Core API on Container Apps over JSON and SignalR. The API stores data in Azure SQL Database, files in Blob Storage, calls Microsoft Foundry only when a user asks, and sends logs to Log Analytics. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](.github/media/architecture.svg)
 
 - **Web:** Vue 3 + TypeScript PWA on Static Web Apps (Free). Boards opened once stay readable offline.
 - **API:** ASP.NET Core 10 minimal API in vertical slices on Container Apps (consumption, scales to
@@ -262,10 +262,10 @@ CHANGELOG section) for each release.
      `http://localhost:5080/api/auth/signin-github`, then
      `dotnet user-secrets set Auth:GitHub:ClientId <id>` (and `Auth:GitHub:ClientSecret`) in
      `backend/src/ITask.Api`.
-6. **AI features (optional, pay per token).** In the Azure portal create a Foundry (Azure
-   OpenAI) resource in `rg-itask` and deploy a small OpenAI chat model (for example
+6. **AI features (optional, pay per token).** In the Azure portal create a Microsoft Foundry
+   resource in `rg-itask` and deploy a small chat model from Azure OpenAI in Foundry Models (for example
    `gpt-4.1-mini`) with a low tokens-per-minute quota. The API identity already has
-   "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
+   the built-in role "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
    endpoint (`https://<name>.openai.azure.com/`) as the `production` secret `AI_ENDPOINT`
    and the deployment name as the `production` secret `AI_DEPLOYMENT` (secrets keep the
    resource name out of the public workflow logs), then run ci-cd again. Nothing bills until a user

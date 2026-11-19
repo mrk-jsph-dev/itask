@@ -31,7 +31,7 @@ public sealed class AiOptions
 
     public bool Enabled { get; set; }
 
-    /// <summary>Foundry / Azure OpenAI endpoint, e.g. https://&lt;name&gt;.openai.azure.com/.</summary>
+    /// <summary>Microsoft Foundry endpoint (Azure OpenAI in Foundry Models), e.g. https://&lt;name&gt;.openai.azure.com/.</summary>
     public Uri? Endpoint { get; set; }
 
     /// <summary>Deployment name of the OpenAI model in Foundry.</summary>

@@ -88,13 +88,13 @@
 <g id="ai" filter="url(#sh)"><rect x="1060" y="328" width="290" height="104" rx="14" fill="#FFFFFF" stroke="#DB2777" stroke-width="2"/>
 <circle cx="1085" cy="355" r="5" fill="#DB2777"/>
 <text x="1099" y="360" class="mono" font-size="14" letter-spacing="1" fill="#DB2777">AI</text>
-<text x="1080" y="390" font-size="22" font-weight="600" fill="#0F172A">Azure AI Foundry</text>
-<text x="1080" y="414" font-size="15" fill="#475569">OpenAI deployment, daily caps</text></g>
+<text x="1080" y="390" font-size="22" font-weight="600" fill="#0F172A">Microsoft Foundry</text>
+<text x="1080" y="414" font-size="15" fill="#475569">OpenAI models, daily caps</text></g>
 <g id="obs" filter="url(#sh)"><rect x="1060" y="472" width="290" height="104" rx="14" fill="#FFFFFF" stroke="#64748B" stroke-width="2"/>
 <circle cx="1085" cy="499" r="5" fill="#64748B"/>
 <text x="1099" y="504" class="mono" font-size="14" letter-spacing="1" fill="#64748B">OBSERVE</text>
 <text x="1080" y="534" font-size="22" font-weight="600" fill="#0F172A">Log Analytics</text>
-<text x="1080" y="558" font-size="15" fill="#475569">App Insights, daily ingest cap</text></g>
+<text x="1080" y="558" font-size="15" fill="#475569">Application Insights, daily cap</text></g>
 <g id="gha" filter="url(#sh)"><rect x="40" y="620" width="270" height="104" rx="14" fill="#FFFFFF" stroke="#CA8A04" stroke-width="2"/>
 <circle cx="65" cy="647" r="5" fill="#CA8A04"/>
 <text x="79" y="652" class="mono" font-size="14" letter-spacing="1" fill="#CA8A04">DEPLOY</text>

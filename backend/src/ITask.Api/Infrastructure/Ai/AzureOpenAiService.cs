@@ -7,7 +7,7 @@ using OpenAI.Chat;
 namespace ITask.Api.Infrastructure.Ai;
 
 /// <summary>
-/// Calls the Foundry OpenAI deployment with the API's managed identity
+/// Calls the OpenAI model deployment in Microsoft Foundry with the API's managed identity
 /// (role "Cognitive Services OpenAI User"); no keys.
 /// </summary>
 internal sealed class AzureOpenAiService : IAiService
