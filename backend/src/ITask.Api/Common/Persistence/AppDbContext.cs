@@ -52,6 +52,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<AiUsage> AiUsage => Set<AiUsage>();
 
+    public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -309,6 +311,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             usage.HasKey(u => new { u.UserId, u.Date });
             usage.HasOne<AppUser>().WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<UsageCounter>(counter =>
+        {
+            counter.HasKey(c => new { c.Name, c.Date });
+            counter.Property(c => c.Name).HasMaxLength(UsageCounter.NameMaxLength);
         });
 
         builder.Entity<Board>().Property(b => b.KeyPrefix).HasMaxLength(CardKeys.MaxLength);

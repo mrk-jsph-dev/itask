@@ -12,7 +12,7 @@ export function signInErrorMessage(e: unknown): string {
       case 'lockedout':
         return 'Too many failed attempts. This account is locked for a few minutes, so try again later.'
       case 'notallowed':
-        return 'Confirm your email address before signing in.'
+        return 'Confirm your email first.'
       default:
         return 'Email or password is incorrect.'
     }

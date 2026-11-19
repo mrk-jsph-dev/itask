@@ -6,6 +6,9 @@ public class Board
 {
     public const string DefaultColor = "#1D5BF5";
 
+    /// <summary>Most boards one user can own (archived ones included).</summary>
+    public const int MaxOwnedPerUser = 50;
+
     public Guid Id { get; set; } = Guid.CreateVersion7();
 
     public required string Name { get; set; }

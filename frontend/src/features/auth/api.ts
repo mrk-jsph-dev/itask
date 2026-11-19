@@ -28,8 +28,15 @@ export const authApi = {
   me: () => api.get<Me>('/me'),
   signIn: (email: string, password: string, token?: string | null) =>
     api.post<void>('/auth/login?useCookies=true', { email, password }, turnstile(token)),
+  /** Creates the account and emails a sign-up code to the returned address. */
   register: (input: RegisterInput, token?: string | null) =>
-    api.post<void>('/auth/register', input, turnstile(token)),
+    api.post<{ email: string }>('/auth/register', input, turnstile(token)),
+  /** Confirms the email with the six-digit code and signs in. */
+  verifyEmail: (email: string, code: string) =>
+    api.post<void>('/auth/verify-email', { email, code }),
+  /** Always succeeds, so it doesn't reveal which emails have accounts. */
+  resendCode: (email: string, token?: string | null) =>
+    api.post<void>('/auth/resend-code', { email }, turnstile(token)),
   signOut: () => api.post<void>('/auth/logout'),
   /** Always succeeds, so it doesn't reveal which emails have accounts. */
   forgotPassword: (email: string, token?: string | null) =>

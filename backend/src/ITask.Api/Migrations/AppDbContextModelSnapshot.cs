@@ -834,6 +834,23 @@ namespace ITask.Api.Migrations
                     b.ToTable("NotificationPreferences");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.UsageCounter", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("int");
+
+                    b.HasKey("Name", "Date");
+
+                    b.ToTable("UsageCounters");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")

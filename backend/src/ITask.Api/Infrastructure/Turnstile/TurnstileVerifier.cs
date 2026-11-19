@@ -8,7 +8,10 @@ public sealed class TurnstileOptions
 {
     public const string Section = "Turnstile";
 
-    /// <summary>Cloudflare Turnstile secret. When empty, verification is skipped (dev and tests).</summary>
+    /// <summary>
+    /// Cloudflare Turnstile secret. When empty, verification is skipped outside Production (dev and tests)
+    /// and every check fails in Production, so a missing secret never leaves sign-in unprotected.
+    /// </summary>
     public string? SecretKey { get; set; }
 }
 
@@ -18,7 +21,8 @@ public interface ITurnstileVerifier
     Task<bool> VerifyAsync(string? token, IPAddress? remoteIp, CancellationToken ct);
 }
 
-internal sealed class TurnstileVerifier(HttpClient http, IOptions<TurnstileOptions> options) : ITurnstileVerifier
+internal sealed partial class TurnstileVerifier(
+    HttpClient http, IOptions<TurnstileOptions> options, IHostEnvironment env, ILogger<TurnstileVerifier> logger) : ITurnstileVerifier
 {
     private static readonly Uri SiteVerify = new("https://challenges.cloudflare.com/turnstile/v0/siteverify");
 
@@ -27,7 +31,13 @@ internal sealed class TurnstileVerifier(HttpClient http, IOptions<TurnstileOptio
         var secret = options.Value.SecretKey;
         if (string.IsNullOrEmpty(secret))
         {
-            return true;
+            if (!env.IsProduction())
+            {
+                return true;
+            }
+
+            LogMissingSecret(logger);
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -53,4 +63,7 @@ internal sealed class TurnstileVerifier(HttpClient http, IOptions<TurnstileOptio
     }
 
     private sealed record SiteVerifyResult([property: JsonPropertyName("success")] bool Success);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Turnstile:SecretKey is not set; human verification fails until it is.")]
+    private static partial void LogMissingSecret(ILogger logger);
 }

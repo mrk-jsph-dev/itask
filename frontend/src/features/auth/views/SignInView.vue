@@ -8,6 +8,7 @@ import { turnstileEnabled } from '@/shared/ui/turnstile'
 import { authApi, type DemoRole } from '../api'
 import ExternalButtons from '../components/ExternalButtons.vue'
 import { signInErrorMessage } from '../signInError'
+import { ApiError } from '@/shared/api/http'
 import { useAuthStore } from '../store'
 
 const auth = useAuthStore()
@@ -18,6 +19,8 @@ const email = ref('')
 const password = ref('')
 const token = ref<string | null>(null)
 const error = ref<string | null>(null)
+/** The account exists but its email isn't confirmed yet: offer the code screen. */
+const needsCode = ref(false)
 const busy = ref(false)
 const demoEnabled = ref(false)
 const widget = useTemplateRef('widget')
@@ -73,11 +76,14 @@ async function goNext() {
 async function submit() {
   busy.value = true
   error.value = null
+  needsCode.value = false
   try {
     await auth.signIn(email.value, password.value, token.value)
     await goNext()
   } catch (e) {
     error.value = signInErrorMessage(e)
+    needsCode.value =
+      e instanceof ApiError && e.status === 401 && e.detail?.toLowerCase() === 'notallowed'
     widget.value?.reset()
   } finally {
     busy.value = false
@@ -143,7 +149,15 @@ async function tryDemo(role: DemoRole) {
               />
             </label>
             <TurnstileWidget ref="widget" v-model:token="token" />
-            <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+            <p v-if="error" role="alert" class="text-sm text-red-600">
+              {{ error }}
+              <RouterLink
+                v-if="needsCode"
+                :to="{ name: 'verify-email', query: { email: email.trim(), sent: '0' } }"
+                class="font-semibold text-accent-strong no-underline"
+                >Enter your code</RouterLink
+              >
+            </p>
             <button
               type="submit"
               :disabled="!canSubmit"

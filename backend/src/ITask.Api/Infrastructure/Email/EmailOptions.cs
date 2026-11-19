@@ -15,6 +15,12 @@ public sealed class EmailOptions
 
     public SmtpOptions Smtp { get; set; } = new();
 
+    /// <summary>Most emails the app sends per UTC day (Gmail allows about 500).</summary>
+    public int DailyLimit { get; set; } = 400;
+
+    /// <summary>Most emails one address receives per UTC day, so no inbox can be flooded through iTask.</summary>
+    public int DailyPerRecipient { get; set; } = 10;
+
     /// <summary>Absolute site URL for <paramref name="path"/>, or null without <see cref="PublicUrl"/>.</summary>
     public string? Link(string path) =>
         string.IsNullOrWhiteSpace(PublicUrl) ? null : $"{PublicUrl.TrimEnd('/')}/{path.TrimStart('/')}";

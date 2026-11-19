@@ -69,6 +69,8 @@ public static class ITaskServiceExtensions
 
         services.AddExternalLogins(config);
         services.AddScoped<ExternalSignInCodes>();
+        services.AddScoped<EmailCodes>();
+        services.AddScoped<DailyCounters>();
 
         // Keys live in the database so cookies and OAuth state survive restarts (the API scales to zero).
         services.AddDataProtection()

@@ -3,6 +3,7 @@ using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Security;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -37,9 +38,14 @@ public static class CreateBoard
                 .RequireAuthorization()
                 .WithValidation<Request>();
 
-        private static async Task<Created<Response>> Handle(
+        private static async Task<Results<Created<Response>, ProblemHttpResult>> Handle(
             Request request, AppDbContext db, ICurrentUser user, IActivityRecorder activity, CancellationToken ct)
         {
+            if (await DataLimits.CheckOwnedBoardsAsync(db, user.Id, ct) is { } full)
+            {
+                return full;
+            }
+
             var name = request.Name.Trim();
             var board = new Board
             {

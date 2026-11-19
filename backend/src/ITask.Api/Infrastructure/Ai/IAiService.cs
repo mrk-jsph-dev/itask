@@ -39,6 +39,9 @@ public sealed class AiOptions
 
     public int DailyRequestsPerUser { get; set; } = 20;
 
+    /// <summary>App-wide AI requests per UTC day, so many accounts can't multiply the bill.</summary>
+    public int DailyRequestsTotal { get; set; } = 200;
+
     public bool IsConfigured => Enabled && Endpoint is not null && !string.IsNullOrWhiteSpace(Deployment);
 }
 
