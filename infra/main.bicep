@@ -67,9 +67,11 @@ param microsoftClientId string = ''
 param microsoftClientSecret string = ''
 
 @description('Foundry (Azure OpenAI) endpoint, e.g. https://<name>.openai.azure.com/. AI is on only when this and aiDeployment are set.')
+@secure()
 param aiEndpoint string = ''
 
 @description('Name of the OpenAI model deployment in Foundry.')
+@secure()
 param aiDeployment string = ''
 
 var suffix = uniqueString(resourceGroup().id)

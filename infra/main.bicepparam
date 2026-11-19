@@ -13,9 +13,9 @@ param smtpUsername = readEnvironmentVariable('ITASK_SMTP_USERNAME', '')
 param smtpPassword = readEnvironmentVariable('ITASK_SMTP_PASSWORD', '')
 param githubClientSecret = readEnvironmentVariable('ITASK_GITHUB_CLIENT_SECRET', '')
 param microsoftClientSecret = readEnvironmentVariable('ITASK_MICROSOFT_CLIENT_SECRET', '')
+param aiEndpoint = readEnvironmentVariable('ITASK_AI_ENDPOINT', '')
+param aiDeployment = readEnvironmentVariable('ITASK_AI_DEPLOYMENT', '')
 
 // OAuth client ids are not secrets (they come from GitHub environment variables).
 param githubClientId = readEnvironmentVariable('ITASK_GITHUB_CLIENT_ID', '')
 param microsoftClientId = readEnvironmentVariable('ITASK_MICROSOFT_CLIENT_ID', '')
-param aiEndpoint = readEnvironmentVariable('ITASK_AI_ENDPOINT', '')
-param aiDeployment = readEnvironmentVariable('ITASK_AI_DEPLOYMENT', '')

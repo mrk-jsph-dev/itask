@@ -185,8 +185,9 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
    OpenAI) resource in `rg-itask` and deploy a small OpenAI chat model (for example
    `gpt-4.1-mini`) with a low tokens-per-minute quota. The API identity already has
    "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
-   endpoint (`https://<name>.openai.azure.com/`) as the variable `AI_ENDPOINT` and the
-   deployment name as `AI_DEPLOYMENT`, then run ci-cd again. Nothing bills until a user
+   endpoint (`https://<name>.openai.azure.com/`) as the `production` secret `AI_ENDPOINT`
+   and the deployment name as the `production` secret `AI_DEPLOYMENT` (secrets keep the
+   resource name out of the public workflow logs), then run ci-cd again. Nothing bills until a user
    presses a ✨ button; each user gets 20 AI requests a day (`Ai__DailyRequestsPerUser`).
    Locally: `dotnet user-secrets set Ai:Enabled true` plus `Ai:Endpoint` and `Ai:Deployment`,
    signed in with `az login`.
