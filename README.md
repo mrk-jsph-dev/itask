@@ -163,6 +163,24 @@ API image to GHCR, deploys `infra/main.bicep`, and publishes the frontend to Sta
 4. **Actions → ci-cd → Run workflow** on `main`, approve the deploy. After the first
    run, make the `itask-api` package on GHCR **public** so Azure can pull it without
    credentials (it contains no secrets), then run the workflow again.
+5. **Sign in with GitHub or Microsoft (optional, free).** Each button appears only once its
+   client id and secret are set. Use the API URL from the deploy output (`apiUrl`):
+   - **GitHub:** Settings → Developer settings → OAuth Apps → New OAuth App. Homepage = the
+     site URL, callback = `<apiUrl>/api/auth/signin-github`. Save the client id as the
+     variable `GH_OAUTH_CLIENT_ID` and a client secret as the `production` secret
+     `GH_OAUTH_CLIENT_SECRET` (GitHub reserves names starting with `GITHUB_`).
+   - **Microsoft:** Entra admin center → App registrations → New registration, account types
+     "Any Entra ID tenant + personal Microsoft accounts", Web redirect URI
+     `<apiUrl>/api/auth/signin-microsoft`. Save the application (client) id as the variable
+     `MICROSOFT_CLIENT_ID` and a client secret as the `production` secret
+     `MICROSOFT_CLIENT_SECRET` (secrets expire: note the date).
+   - Run ci-cd again. New accounts need a verified email from the provider. An existing account
+     is joined automatically only when its email is confirmed; otherwise the user signs in with
+     the password and connects the provider from Profile.
+   - Locally: create a second GitHub OAuth app with callback
+     `http://localhost:5080/api/auth/signin-github`, then
+     `dotnet user-secrets set Auth:GitHub:ClientId <id>` (and `Auth:GitHub:ClientSecret`) in
+     `backend/src/ITask.Api`.
 
 ### Operations
 

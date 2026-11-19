@@ -17,6 +17,7 @@ public static class GetMe
         string TimeZone,
         bool IsPlatformAdmin,
         bool IsDemo,
+        bool HasPassword,
         DateTimeOffset CreatedAt);
 
     internal sealed class Endpoint : IEndpoint
@@ -44,6 +45,7 @@ public static class GetMe
                 user.TimeZone,
                 isAdmin,
                 user.IsDemo,
+                user.PasswordHash is not null,
                 user.CreatedAt));
         }
     }

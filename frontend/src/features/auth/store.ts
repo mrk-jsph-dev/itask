@@ -44,6 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
     await reload()
   }
 
+  /** Finishes a GitHub or Microsoft sign-in (or link) and reloads the signed-in user. */
+  async function completeExternal(code: string, nonce: string) {
+    const { mode } = await authApi.completeExternal(code, nonce)
+    await reload()
+    return mode
+  }
+
   async function signOut() {
     try {
       await authApi.signOut()
@@ -57,5 +64,15 @@ export const useAuthStore = defineStore('auth', () => {
     if (user.value) user.value = { ...user.value, ...changes }
   }
 
-  return { user, isSignedIn, ensureLoaded, signIn, register, demoSignIn, signOut, patchUser }
+  return {
+    user,
+    isSignedIn,
+    ensureLoaded,
+    signIn,
+    register,
+    demoSignIn,
+    completeExternal,
+    signOut,
+    patchUser,
+  }
 })

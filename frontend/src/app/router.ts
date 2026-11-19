@@ -35,6 +35,12 @@ export const router = createRouter({
       meta: { public: true, guestOnly: true },
     },
     {
+      path: '/auth/external',
+      name: 'external-complete',
+      component: () => import('@/features/auth/views/ExternalCompleteView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/reset-password',
       name: 'reset-password',
       component: () => import('@/features/auth/views/ResetPasswordView.vue'),

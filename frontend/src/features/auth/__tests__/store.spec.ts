@@ -13,6 +13,7 @@ const me: Me = {
   timeZone: 'UTC',
   isPlatformAdmin: false,
   isDemo: false,
+  hasPassword: true,
   createdAt: '2026-11-18T00:00:00Z',
 }
 
@@ -77,5 +78,17 @@ describe('auth store', () => {
     store.patchUser({ displayName: 'Ada L.' })
 
     expect(store.user?.displayName).toBe('Ada L.')
+  })
+
+  it('completes an external sign-in and loads the user', async () => {
+    const complete = vi.spyOn(authApi, 'completeExternal').mockResolvedValue({ mode: 'signIn' })
+    vi.spyOn(authApi, 'me').mockResolvedValue(me)
+    const store = useAuthStore()
+
+    const mode = await store.completeExternal('code', 'nonce')
+
+    expect(complete).toHaveBeenCalledWith('code', 'nonce')
+    expect(mode).toBe('signIn')
+    expect(store.user).toEqual(me)
   })
 })

@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/http'
+import type { ExternalProvider } from './external'
 
 export interface Me {
   id: string
@@ -8,6 +9,8 @@ export interface Me {
   timeZone: string
   isPlatformAdmin: boolean
   isDemo: boolean
+  /** False for accounts created through GitHub or Microsoft until a password is set. */
+  hasPassword: boolean
   createdAt: string
 }
 
@@ -35,4 +38,9 @@ export const authApi = {
     api.post<void>('/auth/resetPassword', { email, resetCode, newPassword }),
   demoStatus: () => api.get<{ enabled: boolean }>('/auth/demo'),
   demoSignIn: (role: DemoRole) => api.post<void>(`/auth/demo/${role}`),
+  /** External providers configured on the server. */
+  providers: () => api.get<{ providers: ExternalProvider[] }>('/auth/providers'),
+  /** Redeems the code from the provider callback; `link` when it connected a provider to this account. */
+  completeExternal: (code: string, nonce: string) =>
+    api.post<{ mode: 'signIn' | 'link' }>('/auth/external/complete', { code, nonce }),
 }

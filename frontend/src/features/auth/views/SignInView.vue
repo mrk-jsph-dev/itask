@@ -6,6 +6,7 @@ import AppLogo from '@/shared/ui/AppLogo.vue'
 import TurnstileWidget from '@/shared/ui/TurnstileWidget.vue'
 import { turnstileEnabled } from '@/shared/ui/turnstile'
 import { authApi, type DemoRole } from '../api'
+import ExternalButtons from '../components/ExternalButtons.vue'
 import { signInErrorMessage } from '../signInError'
 import { useAuthStore } from '../store'
 
@@ -152,6 +153,10 @@ async function tryDemo(role: DemoRole) {
               {{ busy ? 'Signing in…' : 'Sign in' }}
             </button>
           </form>
+          <ExternalButtons
+            :next="typeof route.query.next === 'string' ? route.query.next : undefined"
+            :disabled="busy"
+          />
           <section
             v-if="demoEnabled"
             class="fade-in flex flex-col gap-3"

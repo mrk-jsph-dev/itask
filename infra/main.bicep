@@ -54,6 +54,18 @@ param smtpUsername string = ''
 @secure()
 param smtpPassword string = ''
 
+@description('GitHub OAuth app client id for "Continue with GitHub". Empty = off.')
+param githubClientId string = ''
+
+@secure()
+param githubClientSecret string = ''
+
+@description('Microsoft (Entra, personal + work accounts) app client id for "Continue with Microsoft". Empty = off.')
+param microsoftClientId string = ''
+
+@secure()
+param microsoftClientSecret string = ''
+
 var suffix = uniqueString(resourceGroup().id)
 var tags = { app: appName }
 
@@ -120,6 +132,10 @@ module api 'modules/containerapp.bicep' = {
     platformAdminEmails: platformAdminEmails
     smtpUsername: smtpUsername
     smtpPassword: smtpPassword
+    githubClientId: githubClientId
+    githubClientSecret: githubClientSecret
+    microsoftClientId: microsoftClientId
+    microsoftClientSecret: microsoftClientSecret
     tags: tags
   }
 }

@@ -6,6 +6,7 @@ import AppLogo from '@/shared/ui/AppLogo.vue'
 import TurnstileWidget from '@/shared/ui/TurnstileWidget.vue'
 import { turnstileEnabled } from '@/shared/ui/turnstile'
 import { ApiError } from '@/shared/api/http'
+import ExternalButtons from '../components/ExternalButtons.vue'
 import { passwordStrength } from '../passwordStrength'
 import { useAuthStore } from '../store'
 
@@ -134,6 +135,7 @@ async function submit() {
           {{ busy ? 'Creating account…' : 'Create account' }}
         </button>
       </form>
+      <ExternalButtons :disabled="busy" />
       <p class="text-center text-sm text-muted">
         Already have an account?
         <RouterLink to="/sign-in" class="font-semibold text-accent-strong no-underline"
