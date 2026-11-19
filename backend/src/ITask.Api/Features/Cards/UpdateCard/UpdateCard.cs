@@ -32,6 +32,8 @@ public static class UpdateCard
         public Patch<CardPriority> Priority { get; init; }
 
         public Patch<string?> CoverColor { get; init; }
+
+        public Patch<string?> Emoji { get; init; }
     }
 
     public sealed class Validator : AbstractValidator<Request>
@@ -55,6 +57,10 @@ public static class UpdateCard
                 .HexColor()
                 .When(r => r.CoverColor is { HasValue: true, Value: not null })
                 .OverridePropertyName(nameof(Request.CoverColor));
+            RuleFor(r => r.Emoji.Value)
+                .MaximumLength(Card.EmojiMaxLength)
+                .When(r => r.Emoji is { HasValue: true, Value: not null })
+                .OverridePropertyName(nameof(Request.Emoji));
         }
     }
 
@@ -90,7 +96,7 @@ public static class UpdateCard
                 });
             }
 
-            var before = new { card.Title, card.Description, card.DueAt, card.StartAt, card.Priority, card.CoverColor };
+            var before = new { card.Title, card.Description, card.DueAt, card.StartAt, card.Priority, card.CoverColor, card.Emoji };
             if (request.Title.HasValue)
             {
                 card.Title = request.Title.Value.Trim();
@@ -109,6 +115,11 @@ public static class UpdateCard
                 card.CoverColor = request.CoverColor.Value?.ToUpperInvariant();
             }
 
+            if (request.Emoji.HasValue)
+            {
+                card.Emoji = string.IsNullOrWhiteSpace(request.Emoji.Value) ? null : request.Emoji.Value.Trim();
+            }
+
             var fields = new (string Name, bool Changed)[]
                 {
                     ("title", before.Title != card.Title),
@@ -117,6 +128,7 @@ public static class UpdateCard
                     ("startAt", before.StartAt != card.StartAt),
                     ("priority", before.Priority != card.Priority),
                     ("coverColor", before.CoverColor != card.CoverColor),
+                    ("emoji", before.Emoji != card.Emoji),
                 }
                 .Where(f => f.Changed)
                 .Select(f => f.Name)

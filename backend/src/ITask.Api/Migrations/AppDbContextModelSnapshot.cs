@@ -416,6 +416,10 @@ namespace ITask.Api.Migrations
                     b.Property<DateTimeOffset?>("DueAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
                     b.Property<Guid>("ListId")
                         .HasColumnType("uniqueidentifier");
 

@@ -33,6 +33,8 @@ const tile: Card = {
   checklistDone: 1,
   checklistTotal: 2,
   commentCount: 3,
+  emoji: null,
+  attachmentCount: 0,
   rowVersion: 'rv',
 }
 

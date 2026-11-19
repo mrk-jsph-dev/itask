@@ -83,6 +83,8 @@ async function mockApi(page: Page, role = 'Editor') {
       checklistDone: 0,
       checklistTotal: 0,
       commentCount: 0,
+      attachmentCount: 0,
+      emoji: null,
       rowVersion: `v${version++}`,
       ...extra,
     }
@@ -206,8 +208,8 @@ test('editor creates a card and drags it to another list', async ({ page }) => {
   await expect(tile.getByText('High')).toBeVisible()
   await expect(tile.getByRole('list', { name: 'Labels' })).toContainText('Backend')
 
-  await page.getByRole('button', { name: 'Add card to In progress' }).click()
-  await page.getByLabel('Card title').fill('Ship it')
+  await page.getByRole('button', { name: 'Add task to In progress', exact: true }).click()
+  await page.getByLabel('Task title').fill('Ship it')
   await page.keyboard.press('Enter')
   await expect.poll(() => cardTitles(page, 'In progress')).toEqual(['Ship it'])
   await page.keyboard.press('Escape')
@@ -298,5 +300,5 @@ test('viewers see cards without editing controls', async ({ page }) => {
 
   await expect.poll(() => cardTitles(page, 'To do')).toHaveLength(2)
   await expect(page.getByRole('button', { name: /card menu/ })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /Add card/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Add task/ })).toHaveCount(0)
 })

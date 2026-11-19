@@ -1,6 +1,7 @@
 /*
  * Motion presets. Durations: fast 120ms, base 200ms, slow 320ms.
  * .fade-up staggers by 40ms per item using the --i custom property.
+ * Skeletons (SkeletonBlock) appear only after 150ms so fast loads never flash.
  * All animations collapse to ~1ms under prefers-reduced-motion.
  */
 :root {
@@ -9,6 +10,7 @@
   --d-fast: 120ms;
   --d-base: 200ms;
   --d-slow: 320ms;
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 @keyframes shimmer {
@@ -49,13 +51,48 @@
 }
 @keyframes pop {
   0% {
-    transform: scale(0.9);
+    transform: scale(0.6);
   }
   60% {
-    transform: scale(1.06);
+    transform: scale(1.15);
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.92);
+    opacity: 0.75;
+  }
+}
+@keyframes bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
   }
 }
 
@@ -77,6 +114,45 @@
 }
 .pop {
   animation: pop var(--d-base) var(--ease-spring) both;
+}
+.toast-in {
+  animation: toast-in var(--d-slow) var(--ease-spring) both;
+}
+/* Inline button spinner; inherits the text colour. */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: spin 0.7s linear infinite;
+}
+.pulse {
+  animation: pulse 1.2s var(--ease-in-out) infinite;
+}
+/* Thin top bar while a route loads. */
+.route-bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: 3px;
+  overflow: hidden;
+}
+.route-bar::after {
+  content: '';
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 3px;
+  animation: bar 1s var(--ease-in-out) infinite;
+}
+/* Completed text fades into a strike-through. */
+.strike {
+  transition:
+    color var(--d-base) var(--ease-out),
+    text-decoration-color var(--d-base) var(--ease-out);
 }
 
 .lift {

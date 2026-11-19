@@ -26,7 +26,7 @@ const tabClass = (active: boolean) => [
 <template>
   <div class="flex flex-col gap-2">
     <div class="flex items-center justify-between gap-2">
-      <span class="text-[13px] font-semibold">{{ label }}</span>
+      <span class="text-base font-semibold">{{ label }}</span>
       <div v-if="editable" class="flex gap-1" role="tablist" :aria-label="`${label} mode`">
         <button
           type="button"

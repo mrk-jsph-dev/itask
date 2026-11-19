@@ -32,7 +32,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="mx-auto flex max-w-md flex-col items-center gap-3 py-10 text-center">
+  <section class="mx-auto flex max-w-md flex-col items-center gap-3 px-5 py-10 text-center">
     <template v-if="error">
       <span class="text-4xl" aria-hidden="true">✉️</span>
       <h1 class="text-xl font-bold tracking-tight">Invite not accepted</h1>

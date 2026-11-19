@@ -1,159 +1,156 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 import AppLogo from '@/shared/ui/AppLogo.vue'
-import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { useAuthStore } from '@/features/auth/store'
+import NewBoardDialog from '@/features/boards/components/NewBoardDialog.vue'
+import { useBoardsStore } from '@/features/boards/store'
 import SearchPalette from '@/features/search/components/SearchPalette.vue'
+import AppSidebar from './AppSidebar.vue'
+import { useShellMode } from './sidebar'
 
 const auth = useAuthStore()
-const router = useRouter()
+const boards = useBoardsStore()
+const route = useRoute()
+const mode = useShellMode()
 
-const menuOpen = ref(false)
-const menu = useTemplateRef('menu')
 const searchOpen = ref(false)
+/** The sidebar sheet on phones. */
+const drawerOpen = ref(false)
+const drawer = useTemplateRef('drawer')
+const menuButton = useTemplateRef('menuButton')
 const searchShortcut = /Mac|iPhone|iPad/.test(navigator.userAgent) ? '⌘K' : 'Ctrl K'
 
-function closeOnOutside(event: MouseEvent) {
-  if (menuOpen.value && !menu.value?.contains(event.target as Node)) menuOpen.value = false
+function openSearch() {
+  drawerOpen.value = false
+  searchOpen.value = true
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') menuOpen.value = false
+  if (event.key === 'Escape' && drawerOpen.value) closeDrawer()
   if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey) && !event.altKey) {
     event.preventDefault()
-    menuOpen.value = false
+    drawerOpen.value = false
     searchOpen.value = !searchOpen.value
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', closeOnOutside)
-  document.addEventListener('keydown', onKeydown)
-})
-onBeforeUnmount(() => {
-  document.removeEventListener('click', closeOnOutside)
-  document.removeEventListener('keydown', onKeydown)
-})
-
-async function signOut() {
-  menuOpen.value = false
-  try {
-    await auth.signOut()
-  } catch {
-    // The store has already cleared the local session.
-  }
-  await router.replace('/sign-in')
+async function openDrawer() {
+  drawerOpen.value = true
+  await nextTick()
+  drawer.value?.querySelector<HTMLElement>('a, button')?.focus()
 }
+
+function closeDrawer() {
+  drawerOpen.value = false
+  menuButton.value?.focus()
+}
+
+watch(mode, (value) => {
+  if (value !== 'sheet') drawerOpen.value = false
+})
+watch(
+  () => route.fullPath,
+  () => (drawerOpen.value = false),
+)
+
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  if (boards.navBoards === null) boards.loadNav().catch(() => (boards.navBoards = []))
+})
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <div class="min-h-screen p-4 md:p-6">
-    <header class="mx-auto flex max-w-7xl items-center justify-between gap-4 pb-4">
+  <div class="flex min-h-screen flex-col gap-2 p-2 md:flex-row md:p-4">
+    <header v-if="mode === 'sheet'" class="flex items-center gap-2 px-1 py-1">
+      <button
+        ref="menuButton"
+        type="button"
+        class="ghost flex h-11 w-11 items-center justify-center rounded-full"
+        aria-label="Open menu"
+        :aria-expanded="drawerOpen"
+        aria-controls="app-drawer"
+        @click="openDrawer"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
       <RouterLink to="/" class="flex items-center gap-2 text-lg font-bold text-ink no-underline">
-        <AppLogo :size="30" />
+        <AppLogo :size="28" />
         iTask
       </RouterLink>
-      <nav class="flex items-center gap-1 rounded-full bg-panel p-1 text-sm font-medium">
-        <RouterLink
-          to="/"
-          class="ghost rounded-full px-4 py-2 text-muted"
-          exact-active-class="!bg-ink !text-white"
-          >🏠 Home</RouterLink
-        >
-        <RouterLink
-          to="/activity"
-          class="ghost rounded-full px-4 py-2 text-muted"
-          active-class="!bg-ink !text-white"
-          >⚡ Activity</RouterLink
-        >
-        <RouterLink
-          v-if="auth.user?.isPlatformAdmin"
-          to="/admin/users"
-          class="ghost rounded-full px-4 py-2 text-muted"
-          active-class="!bg-ink !text-white"
-          >🛡 Admin</RouterLink
-        >
-      </nav>
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="ghost flex h-10 items-center gap-2 rounded-full bg-panel px-3 text-sm text-muted sm:px-4"
-          aria-label="Search"
-          aria-haspopup="dialog"
-          :aria-keyshortcuts="searchShortcut === '⌘K' ? 'Meta+K' : 'Control+K'"
-          @click="searchOpen = true"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            class="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" />
-          </svg>
-          <span class="hidden sm:inline" aria-hidden="true">Search</span>
-          <kbd class="hidden rounded-md border border-line px-1.5 text-xs sm:inline">{{
-            searchShortcut
-          }}</kbd>
-        </button>
-        <div ref="menu" class="relative">
-          <button
-            type="button"
-            class="press flex items-center rounded-full"
-            aria-haspopup="menu"
-            :aria-expanded="menuOpen"
-            aria-controls="account-menu"
-            :aria-label="`Account menu for ${auth.user?.displayName || auth.user?.email}`"
-            @click="menuOpen = !menuOpen"
-          >
-            <UserAvatar
-              :name="auth.user?.displayName"
-              :email="auth.user?.email"
-              :color="auth.user?.avatarColor"
-            />
-          </button>
-          <div
-            v-if="menuOpen"
-            id="account-menu"
-            role="menu"
-            class="pop absolute right-0 z-20 mt-2 flex w-56 flex-col gap-1 rounded-2xl bg-panel p-2 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
-          >
-            <div class="flex flex-col px-3 py-2">
-              <span class="truncate text-sm font-semibold">{{ auth.user?.displayName }}</span>
-              <span class="truncate text-xs text-muted">{{ auth.user?.email }}</span>
-            </div>
-            <RouterLink
-              to="/profile"
-              role="menuitem"
-              class="ghost rounded-xl px-3 py-2 text-sm text-ink no-underline"
-              @click="menuOpen = false"
-              >👤 Profile</RouterLink
-            >
-            <button
-              type="button"
-              role="menuitem"
-              class="ghost rounded-xl px-3 py-2 text-left text-sm"
-              @click="signOut"
-            >
-              ↩ Sign out
-            </button>
-          </div>
-        </div>
-      </div>
     </header>
+    <aside
+      v-else
+      class="sticky top-4 shrink-0 self-start overflow-y-auto"
+      :class="mode === 'rail' ? 'w-[60px]' : 'w-[232px]'"
+      style="height: calc(100vh - 32px)"
+    >
+      <AppSidebar
+        :compact="mode === 'rail'"
+        :search-shortcut="searchShortcut"
+        @search="openSearch"
+      />
+    </aside>
+
+    <Teleport to="body">
+      <template v-if="drawerOpen">
+        <div class="fade-in fixed inset-0 z-40 bg-ink/30" aria-hidden="true" @click="closeDrawer" />
+        <div
+          id="app-drawer"
+          ref="drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+          class="drawer fixed inset-y-0 left-0 z-40 w-[280px] max-w-[85vw] overflow-y-auto bg-shell p-3 shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+        >
+          <AppSidebar
+            :search-shortcut="searchShortcut"
+            @search="openSearch"
+            @navigate="drawerOpen = false"
+          />
+        </div>
+      </template>
+    </Teleport>
+
     <SearchPalette
       v-if="searchOpen && auth.user"
       :user-id="auth.user.id"
       @close="searchOpen = false"
     />
-    <main class="mx-auto max-w-7xl rounded-[var(--radius-panel)] bg-panel p-6 md:p-8">
+    <main
+      class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-panel)] bg-panel shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+    >
       <RouterView />
     </main>
+    <NewBoardDialog v-if="boards.creating" @close="boards.creating = false" />
   </div>
 </template>
+
+<style scoped>
+.drawer {
+  animation: drawer-in var(--d-slow) var(--ease-out) both;
+}
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+</style>

@@ -66,6 +66,8 @@ async function mockApi(page: Page, role: 'Editor' | 'Viewer' = 'Editor') {
     checklistDone: checklist.filter((i) => i.isDone).length,
     checklistTotal: checklist.length,
     commentCount: comments.length,
+    emoji: null,
+    attachmentCount: attachments.length,
     rowVersion: 'v1',
   })
 
@@ -220,7 +222,9 @@ test('editor fills a card with a checklist, a comment and a file', async ({ page
   await composer.pressSequentially('please review')
   await sheet.getByRole('button', { name: 'Send' }).click()
   await expect(sheet.locator('.mention')).toHaveText('@Grace Hopper')
-  await expect(page.getByRole('article', { name: 'RM-1 Write the spec' })).toContainText('💬 1')
+  await expect(
+    page.getByRole('article', { name: 'RM-1 Write the spec' }).getByLabel('1 comment'),
+  ).toBeVisible()
 
   await sheet.getByLabel('Upload files').setInputFiles({
     name: 'plan.pdf',

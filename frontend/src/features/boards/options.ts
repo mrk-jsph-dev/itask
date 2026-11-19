@@ -39,3 +39,23 @@ export function inviteLink(token: string, origin: string = window.location.origi
 export function byName<T extends { name: string }>(a: T, b: T): number {
   return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
 }
+
+/** Emoji offered for cards, shown before the title. */
+export const cardEmojis = [
+  '📌',
+  '🐞',
+  '✨',
+  '🔑',
+  '🔒',
+  '🖱️',
+  '🔌',
+  '📎',
+  '🌐',
+  '✉️',
+  '🤝',
+  '🏗️',
+  '🗄️',
+  '🎨',
+  '🧪',
+  '🚀',
+] as const

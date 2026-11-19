@@ -2,6 +2,22 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.0.1
+
+Design alignment with Direction C.
+
+- **Shell:** left sidebar (Home, Search, Activity, Admin, boards with stars, board
+  members, Profile, Sign out) around one white panel; icon rail on tablets and a menu
+  sheet on phones.
+- **Screens:** split sign-in page, Home with a due summary and ⏰ Due soon list, board
+  header with "+ New task", redesigned columns and card tiles, card sheet with a field
+  grid, Activity and profile page with Boards/Tasks/Done counts.
+- **Cards:** optional emoji before the title; tiles show file counts.
+- **API:** `GET /api/me/stats`, `GET /api/me/due-soon`; card `emoji` (PATCH) and
+  `attachmentCount`.
+- **Motion:** skeletons appear after 150 ms, route progress bar, button spinners, logo
+  splash on first load, spring toasts.
+
 ## 1.0.0 (MVP)
 
 First public release.

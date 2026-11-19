@@ -1,12 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { attachmentsApi, type Attachment } from '../api'
-import { contentTypeOf, formatSize, typeBadge, uploadFile, uploadProblem } from '../upload'
+import {
+  badgeClass,
+  contentTypeOf,
+  formatSize,
+  typeBadge,
+  uploadFile,
+  uploadProblem,
+} from '../upload'
 
 const file = (name: string, type: string, size = 4) =>
   new File([new Uint8Array(size)], name, { type })
 
 describe('upload', () => {
+  it('colours badges for images, PDFs and other files', () => {
+    expect(badgeClass({ contentType: 'image/png' })).toContain('#1D4ED8')
+    expect(badgeClass({ contentType: 'application/pdf' })).toContain('#B91C1C')
+    expect(badgeClass({ contentType: 'text/plain' })).toBe('bg-hover text-muted')
+  })
+
   afterEach(() => vi.restoreAllMocks())
 
   it('accepts allowed files and explains the rest', () => {

@@ -67,7 +67,7 @@ describe('CommandPalette', () => {
 
   it('shows skeletons while loading and the empty text otherwise', async () => {
     const wrapper = mountPalette({ sections: [], loading: true, emptyText: 'Nothing here' })
-    expect(document.body.querySelectorAll('.skel').length).toBeGreaterThan(0)
+    expect(document.body.querySelectorAll('[data-testid="skeleton"]').length).toBeGreaterThan(0)
 
     await wrapper.setProps({ loading: false })
     expect(document.body.textContent).toContain('Nothing here')

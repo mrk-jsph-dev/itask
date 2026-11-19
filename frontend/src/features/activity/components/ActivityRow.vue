@@ -31,15 +31,15 @@ const cardLink = computed(() =>
     <UserAvatar
       :name="entry.actor.displayName"
       :color="entry.actor.avatarColor"
-      :size="compact ? 28 : 34"
+      :size="compact ? 28 : 32"
     />
     <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-      <p class="text-[15px] leading-snug" :class="{ 'text-sm': compact }">
+      <p class="text-sm leading-[1.45]">
         <span aria-hidden="true">{{ line.emoji }} </span>
         <span class="font-semibold">{{ entry.actor.displayName }}</span>
         {{ line.what }}
         <template v-if="line.target">
-          <RouterLink v-if="cardLink" :to="cardLink" class="font-semibold">{{
+          <RouterLink v-if="cardLink" :to="cardLink" class="font-semibold no-underline">{{
             line.target
           }}</RouterLink>
           <span v-else class="font-semibold">{{ line.target }}</span>

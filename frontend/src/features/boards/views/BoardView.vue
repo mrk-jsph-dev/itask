@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
+import { useAuthStore } from '@/features/auth/store'
+import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import { ApiError } from '@/shared/api/http'
 import { toast } from '@/shared/ui/toast'
@@ -22,6 +24,18 @@ const router = useRouter()
 const store = useBoardsStore()
 const lists = useListsStore()
 const cards = useCardsStore()
+const auth = useAuthStore()
+
+/** Column components by list id, so "+ New task" can open the first list's form. */
+const columns = new Map<string, InstanceType<typeof ListColumn>>()
+function columnRef(listId: string, el: unknown) {
+  if (el) columns.set(listId, el as InstanceType<typeof ListColumn>)
+  else columns.delete(listId)
+}
+function newTask() {
+  const first = ordered.value[0]
+  if (first) columns.get(first.id)?.addCard()
+}
 
 const notFound = ref(false)
 const settingsOpen = ref(false)
@@ -147,47 +161,37 @@ function onArchivedToggle(event: Event) {
 </script>
 
 <template>
-  <section v-if="notFound" class="fade-in flex flex-col items-start gap-3">
+  <section v-if="notFound" class="fade-in flex flex-col items-start gap-3 p-5 md:p-7">
     <h1 class="text-2xl font-bold tracking-tight">Board not found</h1>
     <p class="text-sm text-muted">It may have been deleted, or you're not a member.</p>
     <RouterLink to="/" class="text-sm font-semibold">Back to Home</RouterLink>
   </section>
 
-  <section v-else-if="store.current?.id === boardId" class="fade-in flex flex-col gap-6">
-    <div
-      v-if="store.current.archivedAt"
-      role="status"
-      class="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
-    >
-      🗄 This board is archived.
-      <template v-if="store.isOwner">Restore it from Settings to work on it again.</template>
-    </div>
-    <header class="flex flex-wrap items-start justify-between gap-4">
-      <div class="flex min-w-0 items-start gap-3">
+  <section v-else-if="store.current?.id === boardId" class="fade-in flex flex-col">
+    <PanelHeader :user="auth.user">
+      <template #title>
+        <h1 class="min-w-0 text-[22px] font-semibold break-words">{{ store.current.name }}</h1>
+      </template>
+      <template #chip>
         <span
-          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl"
-          :style="{ backgroundColor: `${store.current.color}1A` }"
-          aria-hidden="true"
-          >{{ store.current.emoji ?? '📋' }}</span
+          class="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-xs font-semibold text-[#374151]"
+          title="Only board members can see this board"
+          >Private</span
         >
-        <div class="flex min-w-0 flex-col gap-1">
-          <h1 class="text-2xl font-bold tracking-tight">{{ store.current.name }}</h1>
-          <p v-if="store.current.description" class="text-sm text-muted">
-            {{ store.current.description }}
-          </p>
-          <p class="text-xs text-muted">
-            {{ store.current.role }} · {{ store.current.memberCount }}
-            {{ store.current.memberCount === 1 ? 'member' : 'members' }}
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
+        <span
+          v-if="store.current.role !== 'Owner'"
+          class="rounded-full bg-hover px-2.5 py-1 text-xs font-semibold text-muted"
+          >{{ store.current.role }}</span
+        >
+      </template>
+      <template #actions>
         <button
           v-if="!store.current.archivedAt"
           type="button"
-          class="ghost flex h-10 w-10 items-center justify-center rounded-full border border-line text-lg"
+          class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-lg"
           :aria-pressed="store.current.isStarred"
           :aria-label="store.current.isStarred ? 'Unstar board' : 'Star board'"
+          :title="store.current.isStarred ? 'Unstar board' : 'Star board'"
           @click="store.toggleStar(store.current.id, store.current.isStarred)"
         >
           <span
@@ -196,94 +200,165 @@ function onArchivedToggle(event: Event) {
             >{{ store.current.isStarred ? '★' : '☆' }}</span
           >
         </button>
+        <RouterLink
+          :to="{ name: 'board-activity', params: { boardId } }"
+          class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-ink no-underline"
+          aria-label="Board activity"
+          title="Board activity"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M13 2L3 14h9l-1 8 10-12h-9z" />
+          </svg>
+        </RouterLink>
         <button
           type="button"
-          class="ghost h-10 rounded-full border border-line px-4 text-sm font-semibold"
+          class="ghost flex h-[42px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold"
+          :aria-label="store.isOwner ? 'Board settings' : 'Board members'"
+          :title="store.isOwner ? 'Settings' : 'Members'"
           @click="settingsOpen = true"
         >
-          ⚙ {{ store.isOwner ? 'Settings' : 'Members' }}
-        </button>
-      </div>
-    </header>
-    <BoardToolbar :board-id="boardId" :members="store.members" />
-
-    <div v-if="lists.lists === null" class="board-grid" aria-busy="true" aria-label="Loading lists">
-      <div v-for="i in 4" :key="i" class="flex flex-col gap-2.5">
-        <SkeletonBlock height="28px" width="60%" />
-        <SkeletonBlock height="96px" />
-      </div>
-    </div>
-    <VueDraggable
-      v-else
-      v-model="ordered"
-      class="board-grid"
-      :disabled="!editable"
-      draggable="[data-list]"
-      handle=".list-handle"
-      ghost-class="drag-ghost"
-      drag-class="dragging"
-      :animation="200"
-      :force-fallback="true"
-      @end="onDrop"
-    >
-      <div
-        v-for="(list, i) in ordered"
-        :key="list.id"
-        data-list
-        class="fade-up rounded-[18px]"
-        :class="{ settle: settledId === list.id }"
-        :style="{ '--i': i }"
-      >
-        <ListColumn
-          v-model:cards="list.cards"
-          :list="list"
-          :editable="editable"
-          :can-move-left="i > 0"
-          :can-move-right="i < ordered.length - 1"
-          :all-lists="listTargets"
-          :settled-card-id="settledCardId"
-          @rename="(input, done) => rename(list.id, input, done)"
-          @move="(delta) => moveBy(i, delta)"
-          @archive="lists.archive(list.id)"
-          @create-card="(title, done) => createCard(list.id, title, done)"
-          @open-card="openCard"
-          @move-card="moveCard"
-          @toggle-complete="cards.toggleComplete"
-          @archive-card="cards.archive"
-          @drag-start="cards.beginDrag"
-          @drop-card="onCardDrop"
-        />
-      </div>
-      <NewListColumn v-if="editable" @create="create" />
-    </VueDraggable>
-
-    <p v-if="lists.lists?.length === 0 && !editable" class="text-sm text-muted">
-      🌱 This board has no lists yet.
-    </p>
-
-    <details v-if="editable" class="text-sm" @toggle="onArchivedToggle">
-      <summary class="cursor-pointer font-semibold text-muted">🗄 Archived lists</summary>
-      <p v-if="lists.archived === null" class="mt-2 text-muted">Loading…</p>
-      <p v-else-if="lists.archived.length === 0" class="mt-2 text-muted">Nothing archived.</p>
-      <ul v-else class="mt-2 flex flex-col gap-1" aria-label="Archived lists">
-        <li
-          v-for="list in lists.archived"
-          :key="list.id"
-          class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-hover"
-        >
-          <span aria-hidden="true">{{ list.emoji }}</span>
-          <span class="min-w-0 flex-1 truncate">{{ list.name }}</span>
-          <button
-            type="button"
-            class="ghost rounded-full border border-line px-3 py-1 font-semibold"
-            :aria-label="`Restore ${list.name}`"
-            @click="lists.restore(list.id)"
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
           >
-            Restore
-          </button>
-        </li>
-      </ul>
-    </details>
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"
+            />
+          </svg>
+          <span class="hidden sm:inline">{{ store.isOwner ? 'Settings' : 'Members' }}</span>
+        </button>
+        <button
+          v-if="editable && ordered.length"
+          type="button"
+          class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white"
+          @click="newTask"
+        >
+          + New task
+        </button>
+      </template>
+    </PanelHeader>
+    <BoardToolbar />
+
+    <div class="flex flex-col gap-5 px-5 pt-5 pb-7 md:px-7">
+      <div
+        v-if="store.current.archivedAt"
+        role="status"
+        class="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      >
+        🗄 This board is archived.
+        <template v-if="store.isOwner">Restore it from Settings to work on it again.</template>
+      </div>
+      <p v-if="store.current.description" class="text-sm text-muted">
+        {{ store.current.description }}
+      </p>
+
+      <div
+        v-if="lists.lists === null"
+        class="board-grid"
+        aria-busy="true"
+        aria-label="Loading lists"
+      >
+        <div v-for="i in 4" :key="i" class="flex flex-col gap-2.5">
+          <SkeletonBlock height="28px" width="60%" />
+          <div
+            class="flex flex-col gap-2 rounded-[18px] border-[1.5px] border-dashed border-line p-2"
+          >
+            <SkeletonBlock height="96px" />
+            <SkeletonBlock height="96px" />
+          </div>
+        </div>
+      </div>
+      <VueDraggable
+        v-else
+        v-model="ordered"
+        class="board-grid"
+        :disabled="!editable"
+        draggable="[data-list]"
+        handle=".list-handle"
+        ghost-class="drag-ghost"
+        drag-class="dragging"
+        :animation="200"
+        :force-fallback="true"
+        @end="onDrop"
+      >
+        <div
+          v-for="(list, i) in ordered"
+          :key="list.id"
+          data-list
+          class="fade-up rounded-[18px]"
+          :class="{ settle: settledId === list.id }"
+          :style="{ '--i': Math.min(i, 8) }"
+        >
+          <ListColumn
+            :ref="(el) => columnRef(list.id, el)"
+            v-model:cards="list.cards"
+            :list="list"
+            :editable="editable"
+            :can-move-left="i > 0"
+            :can-move-right="i < ordered.length - 1"
+            :all-lists="listTargets"
+            :settled-card-id="settledCardId"
+            @rename="(input, done) => rename(list.id, input, done)"
+            @move="(delta) => moveBy(i, delta)"
+            @archive="lists.archive(list.id)"
+            @create-card="(title, done) => createCard(list.id, title, done)"
+            @open-card="openCard"
+            @move-card="moveCard"
+            @toggle-complete="cards.toggleComplete"
+            @archive-card="cards.archive"
+            @drag-start="cards.beginDrag"
+            @drop-card="onCardDrop"
+          />
+        </div>
+        <NewListColumn v-if="editable" @create="create" />
+      </VueDraggable>
+
+      <p v-if="lists.lists?.length === 0 && !editable" class="text-sm text-muted">
+        🌱 This board has no lists yet.
+      </p>
+
+      <details v-if="editable" class="text-sm" @toggle="onArchivedToggle">
+        <summary class="cursor-pointer font-semibold text-muted">🗄 Archived lists</summary>
+        <p v-if="lists.archived === null" class="mt-2 text-muted">Loading…</p>
+        <p v-else-if="lists.archived.length === 0" class="mt-2 text-muted">Nothing archived.</p>
+        <ul v-else class="mt-2 flex flex-col gap-1" aria-label="Archived lists">
+          <li
+            v-for="list in lists.archived"
+            :key="list.id"
+            class="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-hover"
+          >
+            <span aria-hidden="true">{{ list.emoji }}</span>
+            <span class="min-w-0 flex-1 truncate">{{ list.name }}</span>
+            <button
+              type="button"
+              class="ghost rounded-full border border-line px-3 py-1 font-semibold"
+              :aria-label="`Restore ${list.name}`"
+              @click="lists.restore(list.id)"
+            >
+              Restore
+            </button>
+          </li>
+        </ul>
+      </details>
+    </div>
     <BoardSettingsSheet v-if="settingsOpen" @close="settingsOpen = false" />
     <CardSheet
       v-if="openCardId"
@@ -294,7 +369,7 @@ function onArchivedToggle(event: Event) {
     />
   </section>
 
-  <section v-else class="flex flex-col gap-3" aria-busy="true">
+  <section v-else class="flex flex-col gap-3 p-5 md:p-7" aria-busy="true">
     <SkeletonBlock height="32px" width="40%" />
     <SkeletonBlock height="16px" width="25%" />
   </section>
@@ -303,7 +378,7 @@ function onArchivedToggle(event: Event) {
 <style scoped>
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
   gap: 16px;
   align-items: start;
 }

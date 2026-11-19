@@ -22,8 +22,13 @@ export function dismissToast(id: number) {
   items.value = items.value.filter((t) => t.id !== id)
 }
 
-/** Shows a short message for `ms` milliseconds. */
-export function toast(text: string, tone: Toast['tone'] = 'info', ms = 4000, action?: ToastAction) {
+/** Shows a short message for `ms` milliseconds (2.6 s for info, 4 s for errors by default). */
+export function toast(
+  text: string,
+  tone: Toast['tone'] = 'info',
+  ms = tone === 'error' ? 4000 : 2600,
+  action?: ToastAction,
+) {
   const id = nextId++
   items.value = [...items.value, { id, text, tone, action }]
   setTimeout(() => dismissToast(id), ms)

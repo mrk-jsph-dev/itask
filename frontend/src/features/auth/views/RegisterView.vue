@@ -55,9 +55,7 @@ async function submit() {
 
 <template>
   <div class="flex min-h-screen items-center justify-center px-4 py-12">
-    <div
-      class="fade-up flex w-full max-w-[460px] flex-col gap-6 rounded-[var(--radius-panel)] bg-panel p-10"
-    >
+    <div class="fade-up flex w-full max-w-[460px] flex-col gap-6 rounded-[28px] bg-panel p-10">
       <div class="flex items-center gap-2.5">
         <AppLogo />
         <span class="text-xl font-bold">iTask</span>
@@ -130,8 +128,9 @@ async function submit() {
         <button
           type="submit"
           :disabled="!canSubmit"
-          class="press mt-1 h-12 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
+          class="press mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
         >
+          <span v-if="busy" class="spinner" aria-hidden="true" />
           {{ busy ? 'Creating account…' : 'Create account' }}
         </button>
       </form>
