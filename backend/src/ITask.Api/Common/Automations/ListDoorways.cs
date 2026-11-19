@@ -8,6 +8,23 @@ namespace ITask.Api.Common.Automations;
 /// <summary>A block-mode doorway that refused a card, with the requirements it didn't meet.</summary>
 public sealed record DoorwayBlock(AutomationRule Rule, string ListName, bool Leaving, IReadOnlyList<string> Unmet)
 {
+    /// <summary>Saves the refusal as a blocked run (for the receipt) and returns the 409 to send.</summary>
+    public async Task<ProblemHttpResult> RecordAsync(AppDbContext db, Guid cardId, Guid actorId, DateTimeOffset now, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(db);
+        db.AutomationRuns.Add(new AutomationRun
+        {
+            RuleId = Rule.Id,
+            BoardId = Rule.BoardId,
+            CardId = cardId,
+            TriggeredById = actorId,
+            CreatedAt = now,
+            Outcome = AutomationOutcome.Blocked,
+        });
+        await db.SaveChangesAsync(ct);
+        return ToProblem();
+    }
+
     /// <summary>409 ProblemDetails with <c>code: "doorway"</c> and the unmet requirements.</summary>
     public ProblemHttpResult ToProblem() => TypedResults.Problem(
         title: Leaving

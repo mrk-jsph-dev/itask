@@ -23,9 +23,6 @@ internal sealed partial class AutomationTimersJob(AppDbContext db, AutomationEng
 
     public static readonly TimeSpan KeyedRunRetention = TimeSpan.FromDays(180);
 
-    /// <summary>Overdue cards older than this are left alone, so a new rule doesn't sweep up years of backlog.</summary>
-    public static readonly TimeSpan OverdueWindow = TimeSpan.FromDays(7);
-
     public string Name => "automation-timers";
 
     public DateTimeOffset Slot(DateTimeOffset now) => MaintenanceRunner.LastHour(now);
@@ -60,7 +57,7 @@ internal sealed partial class AutomationTimersJob(AppDbContext db, AutomationEng
             return;
         }
 
-        var due = await CandidatesAsync(rule.BoardId, spec.Trigger, now, ct);
+        var due = await AutomationSchedule.CandidatesAsync(db, rule.BoardId, spec.Trigger, now, ct);
         if (due.Count == 0)
         {
             return;
@@ -121,57 +118,6 @@ internal sealed partial class AutomationTimersJob(AppDbContext db, AutomationEng
         }
 
         db.ChangeTracker.Clear();
-    }
-
-    /// <summary>Cards the trigger applies to right now, each with the key of the occurrence.</summary>
-    private async Task<List<(Guid CardId, string Key)>> CandidatesAsync(Guid boardId, TriggerSpec trigger, DateTimeOffset now, CancellationToken ct)
-    {
-        var cards = db.Cards.AsNoTracking().Where(c => c.BoardId == boardId && c.ArchivedAt == null && c.List!.ArchivedAt == null);
-
-        // SQLite can't compare DateTimeOffset in queries, so the dates are checked in memory (a board holds at most 2,000 cards).
-        switch (trigger.Type)
-        {
-            case AutomationCatalog.DueSoon:
-            {
-                var until = now.AddDays(trigger.Days ?? 1);
-                return (await cards.Where(c => c.DueAt != null && c.CompletedAt == null).Select(c => new { c.Id, c.DueAt }).ToListAsync(ct))
-                    .Where(c => c.DueAt > now && c.DueAt <= until)
-                    .Select(c => (c.Id, $"{trigger.Type}:{c.DueAt!.Value.UtcTicks}"))
-                    .ToList();
-            }
-
-            case AutomationCatalog.DueOverdue:
-            {
-                var from = now - OverdueWindow;
-                return (await cards.Where(c => c.DueAt != null && c.CompletedAt == null).Select(c => new { c.Id, c.DueAt }).ToListAsync(ct))
-                    .Where(c => c.DueAt <= now && c.DueAt > from)
-                    .Select(c => (c.Id, $"{trigger.Type}:{c.DueAt!.Value.UtcTicks}"))
-                    .ToList();
-            }
-
-            case AutomationCatalog.ListStale:
-            {
-                var before = now.AddDays(-(trigger.Days ?? 1));
-                return (await cards.Where(c => c.ListId == trigger.ListId && c.CompletedAt == null)
-                        .Select(c => new { c.Id, c.ListEnteredAt })
-                        .ToListAsync(ct))
-                    .Where(c => c.ListEnteredAt <= before)
-                    .Select(c => (c.Id, $"{trigger.Type}:{c.ListEnteredAt.UtcTicks}"))
-                    .ToList();
-            }
-
-            case AutomationCatalog.CompletedAged:
-            {
-                var before = now.AddDays(-(trigger.Days ?? 1));
-                return (await cards.Where(c => c.CompletedAt != null).Select(c => new { c.Id, c.CompletedAt }).ToListAsync(ct))
-                    .Where(c => c.CompletedAt <= before)
-                    .Select(c => (c.Id, $"{trigger.Type}:{c.CompletedAt!.Value.UtcTicks}"))
-                    .ToList();
-            }
-
-            default:
-                return [];
-        }
     }
 
     private async Task PruneAsync(DateTimeOffset now, CancellationToken ct)

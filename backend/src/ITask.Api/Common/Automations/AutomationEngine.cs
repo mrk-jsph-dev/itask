@@ -167,6 +167,7 @@ public sealed partial class AutomationEngine(TimeProvider clock, AutomationRunLo
             ?? await db.Boards.AsNoTracking().Where(b => b.Id == card.BoardId).Select(b => b.KeyPrefix).FirstAsync(ct);
         var changes = new RunChanges();
         var summary = new List<string>();
+        var aiQueued = false;
 
         void Record(string type, object? data)
         {
@@ -358,6 +359,17 @@ public sealed partial class AutomationEngine(TimeProvider clock, AutomationRunLo
                     break;
                 }
 
+                case AutomationCatalog.DoAiBreakdown or AutomationCatalog.DoAiTriage or AutomationCatalog.DoAiSummary when !log.HasPendingAi:
+                    log.AddAi(new AiActionJob(rule.Id, card.BoardId, card.Id, actorId, action.Type));
+                    aiQueued = true;
+                    summary.Add(action.Type switch
+                    {
+                        AutomationCatalog.DoAiBreakdown => "asked ✨ AI for a checklist",
+                        AutomationCatalog.DoAiTriage => "asked ✨ AI to triage it",
+                        _ => "asked ✨ AI for a summary",
+                    });
+                    break;
+
                 case AutomationCatalog.DoArchive when card.ArchivedAt is null:
                     changes.ArchivedAt = new DateChange(null, now);
                     card.ArchivedAt = now;
@@ -373,8 +385,14 @@ public sealed partial class AutomationEngine(TimeProvider clock, AutomationRunLo
         }
 
         run.UndoJson = changes.IsEmpty ? null : JsonSerializer.Serialize(changes, AutomationSpec.Json);
-        db.AutomationRuns.Add(run);
         log.Add(new AutomationRunNotice(run.Id, rule.Name, Sentence(summary), run.UndoJson is not null));
+
+        // A run that only queued AI changes nothing yet; the AI action records its own run when it lands.
+        if (!(aiQueued && changes.IsEmpty))
+        {
+            db.AutomationRuns.Add(run);
+        }
+
         return run;
     }
 

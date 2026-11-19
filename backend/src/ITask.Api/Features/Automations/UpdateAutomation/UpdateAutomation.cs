@@ -7,6 +7,7 @@ using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
+using ITask.Api.Infrastructure.Ai;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +47,8 @@ public static class UpdateAutomation
                 .WithValidation<Request>();
 
         private static async Task<Results<Ok<AutomationView>, ValidationProblem, ProblemHttpResult>> Handle(
-            Guid boardId, Guid ruleId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity, CancellationToken ct)
+            Guid boardId, Guid ruleId, Request request, AppDbContext db, IBoardAccess access, IActivityRecorder activity,
+            ICurrentUser user, IAiService ai, CancellationToken ct)
         {
             if (await AutomationGuard.CheckAsync(boardId, BoardRole.Owner, true, db, access, ct) is { } denied)
             {
@@ -67,7 +69,8 @@ public static class UpdateAutomation
 
             var (spec, errors) = await AutomationGuard.ValidateAsync(
                 db, boardId, rule.Kind, request.ListId, request.Direction, request.Mode,
-                request.Trigger, request.Conditions, request.Actions, ct);
+                request.Trigger, request.Conditions, request.Actions,
+                await AutomationGuard.AiAllowedAsync(db, ai, user, ct), ct);
             if (errors is not null)
             {
                 return TypedResults.ValidationProblem(errors);

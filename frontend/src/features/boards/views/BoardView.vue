@@ -11,6 +11,8 @@ import { useAuthStore } from '@/features/auth/store'
 import AutomationsSheet from '@/features/automations/components/AutomationsSheet.vue'
 import DoorwayMarker from '@/features/automations/components/DoorwayMarker.vue'
 import DoorwayRefusal from '@/features/automations/components/DoorwayRefusal.vue'
+import RecordingBar from '@/features/automations/components/RecordingBar.vue'
+import type { AutomationInput } from '@/features/automations/api'
 import { unmetRequirements, type BoardRefs } from '@/features/automations/catalog'
 import { useAutomationNotices } from '@/features/automations/notices'
 import { useAutomationsStore } from '@/features/automations/store'
@@ -70,6 +72,9 @@ async function newTask() {
 const notFound = ref(false)
 const settingsOpen = ref(false)
 const automationsOpen = ref(false)
+/** A rule drafted by "Show me once", opened in the automations sheet. */
+const automationsDraft = ref<AutomationInput | null>(null)
+const recordingBusy = ref(false)
 /** The list that just dropped, for a brief glow. */
 const settledId = ref<string | null>(null)
 /** The card that just dropped, for a brief glow. */
@@ -104,6 +109,8 @@ const canWrite = computed(
 const editable = computed(() => canWrite.value && online.value)
 
 const ai = useAiStore()
+/** AI status is already off for demo accounts, so this also gates ✨ automation features. */
+const aiEnabledHere = computed(() => ai.enabled)
 watch(
   () => auth.user?.id,
   (id) => void ai.ensureLoaded(id),
@@ -281,6 +288,33 @@ function doorwayWarnings(list: BoardList) {
       unmet: warn.flatMap((d) => unmetRequirements(c, d, automationRefs.value)),
     }))
     .filter((w) => w.unmet.length)
+}
+
+function startRecording() {
+  automationsOpen.value = false
+  automations.startRecording()
+}
+
+async function stopRecording() {
+  recordingBusy.value = true
+  try {
+    const draft = await automations.stopRecording()
+    if (!draft) {
+      toast('Nothing was recorded. Change a card while recording.', 'error')
+      return
+    }
+    automationsDraft.value = draft
+    automationsOpen.value = true
+  } catch (e) {
+    toast(errorText(e, "Couldn't turn the steps into a rule."), 'error')
+  } finally {
+    recordingBusy.value = false
+  }
+}
+
+function closeAutomations() {
+  automationsOpen.value = false
+  automationsDraft.value = null
 }
 
 function openRefusedCard() {
@@ -708,7 +742,17 @@ function onArchivedToggle(event: Event) {
       :board-id="boardId"
       :refs="automationRefs"
       :can-manage="store.isOwner && !store.current.archivedAt && online"
-      @close="automationsOpen = false"
+      :ai-enabled="aiEnabledHere"
+      :draft="automationsDraft"
+      @close="closeAutomations"
+      @record="startRecording"
+    />
+    <RecordingBar
+      v-if="automations.recording"
+      :card-touched="!!automations.recording.cardId"
+      :busy="recordingBusy"
+      @stop="stopRecording"
+      @cancel="automations.recording = null"
     />
     <DoorwayRefusal
       v-if="automations.refused"

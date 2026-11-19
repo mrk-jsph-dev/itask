@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useId } from 'vue'
 
-import type { ActionSpec, AutomationInput, ConditionSpec } from '../api'
+import { ApiError } from '@/shared/api/http'
+import {
+  automationsApi,
+  type ActionSpec,
+  type AutomationInput,
+  type AutomationPreview,
+  type ConditionSpec,
+} from '../api'
 import {
   actionOptions,
+  aiActionOptions,
   clone,
+  isAiAction,
   conditionOptions,
   describe,
   isHourly,
@@ -15,10 +24,13 @@ import {
 } from '../catalog'
 
 const props = defineProps<{
+  boardId: string
   initial: AutomationInput
   refs: BoardRefs
   saving?: boolean
   error?: string | null
+  /** Offer ✨ AI actions (AI is on and the user isn't a demo account). */
+  aiEnabled?: boolean
 }>()
 const emit = defineEmits<{ save: [input: AutomationInput]; cancel: [] }>()
 
@@ -33,7 +45,41 @@ const local = ref<string | null>(null)
 const isDoorway = computed(() => draft.kind === 'Doorway')
 const trigger = computed(() => triggerOptions.find((t) => t.value === draft.trigger!.type))
 const editors = computed(() => props.refs.members.filter((m) => m.role !== 'Viewer'))
-const preview = computed(() => describe({ ...draft, trigger: draft.trigger! }, props.refs))
+const sentence = computed(() => describe({ ...draft, trigger: draft.trigger! }, props.refs))
+/** ✨ actions fit instant rules only, one per rule. */
+const canUseAi = computed(
+  () => !!props.aiEnabled && !isDoorway.value && !isHourly(draft.trigger!.type),
+)
+const hasAi = computed(() => draft.actions.some((a) => isAiAction(a.type)))
+const aiOptionsFor = (a: ActionSpec) =>
+  canUseAi.value && (!hasAi.value || isAiAction(a.type)) ? aiActionOptions : []
+
+const preview = ref<AutomationPreview | null>(null)
+const previewing = ref(false)
+const previewError = ref<string | null>(null)
+
+/** Replays the draft over the board's recent activity; nothing changes. */
+async function replay() {
+  previewing.value = true
+  previewError.value = null
+  try {
+    preview.value = await automationsApi.preview(props.boardId, {
+      ...clone(draft),
+      trigger: isDoorway.value ? null : draft.trigger,
+    })
+  } catch (e) {
+    preview.value = null
+    previewError.value =
+      e instanceof ApiError && e.errors
+        ? Object.values(e.errors).flat().join(' ')
+        : e instanceof Error
+          ? e.message
+          : "Couldn't replay it."
+  } finally {
+    previewing.value = false
+  }
+}
+
 const firstList = () => props.refs.lists[0]?.id ?? null
 const firstLabel = () => props.refs.labels[0]?.id ?? null
 
@@ -280,6 +326,11 @@ const chip = 'text-sm font-semibold text-muted'
           @change="onActionType(a)"
         >
           <option v-for="o in actionOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+          <optgroup v-if="aiOptionsFor(a).length" label="✨ AI (uses your AI quota)">
+            <option v-for="o in aiOptionsFor(a)" :key="o.value" :value="o.value">
+              {{ o.label }}
+            </option>
+          </optgroup>
         </select>
         <template v-if="a.type === 'move'">
           <select v-model="a.listId" :class="field" :aria-label="`Action ${i + 1} list`">
@@ -390,7 +441,8 @@ const chip = 'text-sm font-semibold text-muted'
     </fieldset>
 
     <p :id="`${id}-preview`" class="rounded-[12px] bg-hover px-3 py-2 text-sm">
-      {{ preview }}
+      {{ sentence }}
+      <span v-if="hasAi" class="ml-1 font-semibold text-violet-700">· ✨ uses AI quota</span>
       <span class="ml-1 text-muted">
         {{
           !isDoorway && isHourly(draft.trigger!.type)
@@ -399,6 +451,31 @@ const chip = 'text-sm font-semibold text-muted'
         }}
       </span>
     </p>
+    <div class="flex flex-col gap-1.5">
+      <button
+        type="button"
+        class="ghost w-fit rounded-full border border-line px-3 py-1 text-sm font-semibold"
+        :disabled="previewing"
+        @click="replay"
+      >
+        {{ previewing ? 'Replaying…' : '⏪ Replay before adding' }}
+      </button>
+      <p v-if="preview" class="text-sm" data-testid="automation-preview">
+        <template v-if="preview.basis === 'history'">
+          Would have {{ isDoorway ? 'stopped' : 'run' }} {{ preview.count }} time{{
+            preview.count === 1 ? '' : 's'
+          }}
+          in the last 30 days<span class="text-muted"> (based on how the cards look now)</span>.
+        </template>
+        <template v-else>
+          Would run on {{ preview.count }} card{{ preview.count === 1 ? '' : 's' }} now.
+        </template>
+        <span v-if="preview.samples.length" class="text-muted">
+          e.g. {{ preview.samples.map((c) => `${c.key} ${c.title}`).join(', ') }}
+        </span>
+      </p>
+      <p v-if="previewError" class="text-sm text-red-700">{{ previewError }}</p>
+    </div>
     <p v-if="local || error" role="alert" class="text-sm text-red-700">{{ local ?? error }}</p>
     <div class="flex gap-2">
       <button

@@ -58,6 +58,7 @@ public static class ActivityTypes
     public const string AutomationDeleted = "automation.deleted";
     public const string AutomationDisabled = "automation.disabled";
     public const string AutomationUndone = "automation.undone";
+    public const string AutomationAiSkipped = "automation.ai_skipped";
     public const string DoorwayOverridden = "doorway.overridden";
 
     /// <summary>Categories accepted by the feeds' <c>type</c> filter.</summary>

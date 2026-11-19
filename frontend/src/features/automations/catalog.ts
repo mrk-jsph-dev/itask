@@ -69,6 +69,18 @@ export const actionOptions: Option[] = [
   { value: 'archive', label: 'archive it' },
 ]
 
+/** ✨ AI actions: instant rules only, one per rule, charged to the rule creator's AI quota. */
+export const aiActionOptions: Option[] = [
+  { value: 'ai.breakdown', label: '✨ break it down into a checklist' },
+  { value: 'ai.triage', label: '✨ pick labels and priority' },
+  { value: 'ai.summary', label: '✨ add a summary comment' },
+]
+
+export const isAiAction = (type: string) => type.startsWith('ai.')
+
+/** True when the automation spends AI quota when it runs. */
+export const usesAi = (a: Pick<Automation, 'actions'>) => a.actions.some((x) => isAiAction(x.type))
+
 /** Requirements a fix-mode doorway can't fill in by itself. */
 export const unfixable = new Set(['due.set', 'checklist.done'])
 
@@ -170,7 +182,7 @@ export function describeAction(a: ActionSpec, refs: BoardRefs): string {
           ? 'notify the board'
           : 'notify the assignees'
     default:
-      return actionOptions.find((o) => o.value === a.type)?.label ?? a.type
+      return [...actionOptions, ...aiActionOptions].find((o) => o.value === a.type)?.label ?? a.type
   }
 }
 

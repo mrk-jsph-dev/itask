@@ -75,6 +75,42 @@ export interface AutomationRunNotice {
   canUndo: boolean
 }
 
+export interface AutomationPreview {
+  count: number
+  samples: { cardId: string; key: string; title: string }[]
+  /** `history` = replayed over the last 30 days; `now` = cards it would act on now. */
+  basis: 'history' | 'now'
+}
+
+export interface RecordingDraft {
+  name: string
+  trigger: TriggerSpec
+  actions: ActionSpec[]
+}
+
+export interface AutomationTally {
+  ruleId: string
+  name: string
+  ran: number
+  blocked: number
+}
+
+export interface AutomationSummary {
+  days: number
+  ran: number
+  blocked: number
+  sentence: string
+  rules: AutomationTally[]
+}
+
+/** An automation drafted by AI; ids are already the board's own. */
+export type AiAutomationDraft = Omit<AutomationInput, 'trigger'> & { trigger: TriggerSpec }
+
+export interface AiSuggestion {
+  reason: string
+  automation: AiAutomationDraft
+}
+
 const base = (boardId: string) => `/boards/${boardId}/automations`
 
 export const automationsApi = {
@@ -87,4 +123,20 @@ export const automationsApi = {
   remove: (boardId: string, id: string) => api.del(`${base(boardId)}/${id}`),
   undo: (boardId: string, runId: string) =>
     api.post<unknown>(`/boards/${boardId}/automation-runs/${runId}/undo`),
+  preview: (boardId: string, input: AutomationInput) =>
+    api.post<AutomationPreview>(`${base(boardId)}/preview`, input),
+  fromRecording: (boardId: string, cardId: string, since: string) =>
+    api.post<RecordingDraft>(`${base(boardId)}/from-recording`, { cardId, since }),
+  summary: (boardId: string) => api.get<AutomationSummary>(`${base(boardId)}/summary`),
+  aiDraft: (boardId: string, text: string) =>
+    api.post<{ automation: AiAutomationDraft; remaining: number }>(
+      `/boards/${boardId}/ai/automation`,
+      {
+        text,
+      },
+    ),
+  aiReview: (boardId: string) =>
+    api.post<{ suggestions: AiSuggestion[]; remaining: number }>(
+      `/boards/${boardId}/ai/automation-review`,
+    ),
 }

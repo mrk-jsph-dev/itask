@@ -27,7 +27,19 @@ public sealed partial class AiGateway(
     TimeProvider time,
     ILogger<AiGateway> logger)
 {
+    private Guid? _actingUser;
+
     public int DailyLimit => Math.Max(0, options.Value.DailyRequestsPerUser);
+
+    /// <summary>Whose quota the calls use: the signed-in user, or the one set with <see cref="ActAs"/>.</summary>
+    private Guid UserId => _actingUser ?? user.Id;
+
+    /// <summary>Charges this gateway's calls to <paramref name="userId"/>, for work done outside a request (automation AI actions).</summary>
+    public AiGateway ActAs(Guid userId)
+    {
+        _actingUser = userId;
+        return this;
+    }
 
     /// <summary>App-wide AI requests per UTC day, across all users.</summary>
     public int DailyTotalLimit => Math.Max(0, options.Value.DailyRequestsTotal);
@@ -37,7 +49,7 @@ public sealed partial class AiGateway(
     {
         var today = Today();
         var used = await db.AiUsage
-            .Where(u => u.UserId == user.Id && u.Date == today)
+            .Where(u => u.UserId == UserId && u.Date == today)
             .Select(u => (int?)u.Requests)
             .FirstOrDefaultAsync(ct) ?? 0;
         var leftForAll = DailyTotalLimit - await counters.CountAsync(DailyCounters.Ai, ct);
@@ -101,7 +113,7 @@ public sealed partial class AiGateway(
     /// <summary>Adds one request to today's row unless the cap is reached. Safe under concurrent calls.</summary>
     private async Task<bool> TryConsumeAsync(CancellationToken ct)
     {
-        var userId = user.Id;
+        var userId = UserId;
         var today = Today();
         var limit = DailyLimit;
         if (limit == 0)
@@ -147,7 +159,7 @@ public sealed partial class AiGateway(
 
     private Task<int> RecordTokensAsync(AiResult result, CancellationToken ct)
     {
-        var userId = user.Id;
+        var userId = UserId;
         var today = Today();
         return db.AiUsage
             .Where(u => u.UserId == userId && u.Date == today)
