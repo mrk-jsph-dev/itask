@@ -208,7 +208,7 @@ CHANGELOG section) for each release.
    endpoint (`https://<name>.openai.azure.com/`) as the `production` secret `AI_ENDPOINT`
    and the deployment name as the `production` secret `AI_DEPLOYMENT` (secrets keep the
    resource name out of the public workflow logs), then run ci-cd again. Nothing bills until a user
-   presses a ✨ button; each user gets 20 AI requests a day (`Ai__DailyRequestsPerUser`).
+   presses a ✨ button; each user gets 10 AI requests a day, 30 for the whole app (`Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal`).
    Locally: `dotnet user-secrets set Ai:Enabled true` plus `Ai:Endpoint` and `Ai:Deployment`,
    signed in with `az login`.
 
@@ -264,7 +264,7 @@ Abuse limits (all free, set in configuration, counted per UTC day in the databas
 |---|---|---|
 | New accounts (email code required) | 50 / day | `Auth__DailySignups` |
 | Unconfirmed accounts kept | 24 h | `UnverifiedAccountsJob` |
-| AI requests | 20 per user, 200 in total / day | `Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal` |
+| AI requests | 10 per user, 30 in total / day | `Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal` |
 | Emails | 400 / day, 10 per address / day | `Email__DailyLimit`, `Email__DailyPerRecipient` |
 | File storage | 100 MB per user, 2 GB in total | `Storage__QuotaBytesPerUser`, `Storage__QuotaBytesTotal` |
 | Upload links | 50 per user / day | `Storage__UploadUrlsPerUserPerDay` |
