@@ -19,6 +19,12 @@ param resourceGroupName string = 'rg-itask'
 @description('GitHub repository allowed to deploy, as owner/name.')
 param githubRepository string = 'mrk-jsph-dev/itask'
 
+@description('Numeric id of the repository owner (gh api repos/<owner>/<repo> -q .owner.id). GitHub puts it in the OIDC subject.')
+param githubOwnerId string = '333355033'
+
+@description('Numeric id of the repository (gh api repos/<owner>/<repo> -q .id). GitHub puts it in the OIDC subject.')
+param githubRepositoryId string = '1462512366'
+
 @description('GitHub environment whose jobs may sign in to Azure.')
 param githubEnvironment string = 'production'
 
@@ -46,6 +52,8 @@ module identities 'identities.bicep' = {
   params: {
     location: location
     githubRepository: githubRepository
+    githubOwnerId: githubOwnerId
+    githubRepositoryId: githubRepositoryId
     githubEnvironment: githubEnvironment
   }
 }
