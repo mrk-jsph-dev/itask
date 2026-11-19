@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import { OFFLINE_HINT, online } from '@/shared/pwa/network'
 import AppLogo from '@/shared/ui/AppLogo.vue'
 import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import { useAuthStore } from '@/features/auth/store'
@@ -217,9 +218,10 @@ async function signOut() {
         </h2>
         <button
           type="button"
-          class="ghost flex h-7 w-7 items-center justify-center rounded-full text-lg text-muted"
+          class="ghost flex h-7 w-7 items-center justify-center rounded-full text-lg text-muted disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="New board"
-          title="New board"
+          :title="online ? 'New board' : OFFLINE_HINT"
+          :disabled="!online"
           @click="newBoard"
         >
           +

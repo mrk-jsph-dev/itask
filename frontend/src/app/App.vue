@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 
+import UpdatePrompt from '@/shared/pwa/UpdatePrompt.vue'
 import AppLogo from '@/shared/ui/AppLogo.vue'
 import RouteProgress from '@/shared/ui/RouteProgress.vue'
 import ToastHost from '@/shared/ui/ToastHost.vue'
@@ -26,4 +27,5 @@ void useRouter()
   <RouteProgress />
   <RouterView />
   <ToastHost />
+  <UpdatePrompt />
 </template>

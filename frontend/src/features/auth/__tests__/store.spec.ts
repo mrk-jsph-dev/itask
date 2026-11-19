@@ -2,8 +2,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/shared/api/http'
+import { clearApiCache } from '@/shared/pwa/cache'
 import { authApi, type Me } from '../api'
 import { useAuthStore } from '../store'
+
+vi.mock('@/shared/pwa/cache', () => ({ clearApiCache: vi.fn<() => Promise<void>>() }))
 
 const me: Me = {
   id: '1',
@@ -90,5 +93,30 @@ describe('auth store', () => {
     expect(complete).toHaveBeenCalledWith('code', 'nonce')
     expect(mode).toBe('signIn')
     expect(store.user).toEqual(me)
+  })
+
+  it('drops the offline cache on sign-out, even when the request fails', async () => {
+    vi.spyOn(authApi, 'signOut').mockRejectedValue(new TypeError('Failed to fetch'))
+    const store = useAuthStore()
+
+    await expect(store.signOut()).rejects.toThrow('Failed to fetch')
+
+    expect(clearApiCache).toHaveBeenCalled()
+    expect(store.isSignedIn).toBe(false)
+  })
+
+  it('drops the offline cache when a different person signs in', async () => {
+    vi.spyOn(authApi, 'signIn').mockResolvedValue()
+    const getMe = vi.spyOn(authApi, 'me').mockResolvedValue(me)
+    const store = useAuthStore()
+    await store.ensureLoaded()
+    vi.mocked(clearApiCache).mockClear()
+
+    await store.signIn(me.email, 'pw')
+    expect(clearApiCache).not.toHaveBeenCalled()
+
+    getMe.mockResolvedValue({ ...me, id: '2' })
+    await store.signIn('grace@example.com', 'pw')
+    expect(clearApiCache).toHaveBeenCalledOnce()
   })
 })

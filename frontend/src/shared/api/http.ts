@@ -1,3 +1,5 @@
+import { noteResponse, OFFLINE_HINT, online } from '@/shared/pwa/network'
+
 /**
  * fetch wrapper for the API: sends credentials (HttpOnly auth cookie) and maps
  * ASP.NET Core ProblemDetails responses to ApiError.
@@ -24,6 +26,9 @@ export function setLiveConnection(id: string | null) {
 }
 
 export async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // Offline the app is read-only: writes fail at once instead of hanging on the network.
+  if (!online.value && (init.method ?? 'GET') !== 'GET') throw new ApiError(0, OFFLINE_HINT)
+
   const response = await fetch(`${baseUrl}/api${path}`, {
     ...init,
     credentials: 'include',
@@ -34,6 +39,7 @@ export async function http<T>(path: string, init: RequestInit = {}): Promise<T> 
       ...init.headers,
     },
   })
+  noteResponse(response)
 
   if (!response.ok) {
     let title = response.statusText
