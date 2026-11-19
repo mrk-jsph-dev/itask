@@ -1,6 +1,8 @@
 // Deploy and API identities with role assignments at resource-group scope.
 param location string
 param githubRepository string
+param githubOwnerId string
+param githubRepositoryId string
 param githubEnvironment string
 
 // Built-in role definition ids.
@@ -21,8 +23,10 @@ resource githubTrust 'Microsoft.ManagedIdentity/userAssignedIdentities/federated
   name: 'github-${githubEnvironment}'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    // Matches only jobs that run in the given GitHub environment of this repository.
-    subject: 'repo:${githubRepository}:environment:${githubEnvironment}'
+    // Matches only jobs that run in the given GitHub environment of this repository. GitHub's immutable
+    // subject format names the owner and repository with their numeric ids, so a renamed or re-created
+    // repository with the same name can't use this trust.
+    subject: 'repo:${split(githubRepository, '/')[0]}@${githubOwnerId}/${split(githubRepository, '/')[1]}@${githubRepositoryId}:environment:${githubEnvironment}'
     audiences: ['api://AzureADTokenExchange']
   }
 }
