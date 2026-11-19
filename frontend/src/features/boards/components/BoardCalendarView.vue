@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
-import type { Card } from '../api'
+import type { BoardList, Card } from '../api'
 import {
   addDays,
   addMonths,
@@ -16,6 +16,7 @@ import {
   weekDays,
 } from '../calendar'
 import { dueState } from '../cardOptions'
+import CalendarTaskPreview from './CalendarTaskPreview.vue'
 
 const props = defineProps<{
   /** Cards due in the shown days; null while loading. */
@@ -23,6 +24,8 @@ const props = defineProps<{
   /** Shown month as `yyyy-mm`; null = this month. */
   month: string | null
   editable: boolean
+  /** Active lists, for the preview's list name. */
+  lists: Pick<BoardList, 'id' | 'name' | 'emoji'>[]
   /** Matching tasks with no due date (they can't appear on the grid). */
   undatedCount: number
 }>()
@@ -31,6 +34,7 @@ const emit = defineEmits<{
   range: [range: { from: Date; to: Date }]
   open: [cardId: string]
   move: [cardId: string, dueAt: string]
+  toggleComplete: [cardId: string]
   showUndated: []
 }>()
 
@@ -47,6 +51,56 @@ onMounted(() => {
   media?.addEventListener('change', onMedia)
 })
 onBeforeUnmount(() => media?.removeEventListener('change', onMedia))
+
+const root = useTemplateRef('root')
+const previewBox = useTemplateRef('previewBox')
+/** Task shown in the preview panel. */
+const previewId = ref<string | null>(null)
+const previewCard = computed(() => props.cards?.find((c) => c.id === previewId.value) ?? null)
+const previewPos = ref({ top: 0, left: 0 })
+const previewWidth = 340
+
+/** Opens the preview beside the task: to its right when it fits, else to its left. */
+function openPreview(card: Card, event: MouseEvent | KeyboardEvent) {
+  if (previewId.value === card.id) return closePreview(true)
+  const chip = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const box = root.value!.getBoundingClientRect()
+  const gap = 10
+  let left = chip.right - box.left + gap
+  if (left + previewWidth > box.width) left = chip.left - box.left - previewWidth - gap
+  previewPos.value = {
+    top: Math.max(0, chip.top - box.top - 12),
+    left: Math.max(0, Math.min(left, box.width - previewWidth)),
+  }
+  previewId.value = card.id
+}
+
+function closePreview(focusTask = false) {
+  const id = previewId.value
+  previewId.value = null
+  if (focusTask && id)
+    void nextTick(() => root.value?.querySelector<HTMLElement>(`[data-card-chip="${id}"]`)?.focus())
+}
+
+function openFromPreview() {
+  const id = previewId.value
+  closePreview()
+  if (id) emit('open', id)
+}
+
+function closeOnOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!previewId.value || previewBox.value?.contains(target)) return
+  if (target.closest('[data-card-chip]')) return
+  closePreview()
+}
+onMounted(() => document.addEventListener('mousedown', closeOnOutside))
+onBeforeUnmount(() => document.removeEventListener('mousedown', closeOnOutside))
+
+// The task left the calendar (filtered out, or moved out of range): drop its preview.
+watch(previewCard, (card) => {
+  if (!card && previewId.value && props.cards) previewId.value = null
+})
 
 const picked = ref<'month' | 'week'>('month')
 const mode = computed(() => (narrow.value ? 'week' : picked.value))
@@ -133,6 +187,7 @@ const over = ref<string | null>(null)
 
 function onDragStart(event: DragEvent, card: Card) {
   if (!props.editable) return
+  closePreview()
   dragging.value = card.id
   event.dataTransfer?.setData('text/plain', card.id)
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
@@ -170,6 +225,8 @@ const time = (card: Card) =>
     ? new Date(card.dueAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
     : ''
 
+const listById = computed(() => new Map(props.lists.map((l) => [l.id, l])))
+
 const dayLabel = (d: Date) =>
   d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 const outside = (d: Date) => mode.value === 'month' && d.getMonth() !== shownMonth.value.getMonth()
@@ -181,7 +238,7 @@ const segment = (active: boolean) =>
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div ref="root" class="relative flex flex-col gap-4">
     <div class="cal-head">
       <div
         v-if="!narrow"
@@ -328,7 +385,9 @@ const segment = (active: boolean) =>
           :aria-keyshortcuts="
             editable ? 'Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown' : undefined
           "
-          @click="emit('open', card.id)"
+          aria-haspopup="dialog"
+          :aria-expanded="previewId === card.id"
+          @click="openPreview(card, $event)"
           @keydown="onChipKey($event, card)"
           @dragstart="onDragStart($event, card)"
           @dragend="dragging = null"
@@ -357,6 +416,21 @@ const segment = (active: boolean) =>
           +{{ hiddenCount(day) }} more
         </button>
       </div>
+    </div>
+    <div
+      v-if="previewCard"
+      ref="previewBox"
+      :class="narrow ? 'sheet-box fixed inset-x-4 bottom-4 z-40' : 'absolute z-40'"
+      :style="narrow ? undefined : { top: `${previewPos.top}px`, left: `${previewPos.left}px` }"
+    >
+      <CalendarTaskPreview
+        :card="previewCard"
+        :list="listById.get(previewCard.listId)"
+        :editable="editable"
+        @close="closePreview(true)"
+        @open="openFromPreview"
+        @toggle-complete="emit('toggleComplete', previewCard.id)"
+      />
     </div>
   </div>
 </template>
@@ -429,6 +503,10 @@ const segment = (active: boolean) =>
 
 .task.is-dragging {
   opacity: 0.45;
+}
+
+.sheet-box :deep(.preview) {
+  width: 100%;
 }
 
 @media (max-width: 767px) {

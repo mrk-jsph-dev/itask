@@ -120,12 +120,7 @@ function loadView() {
 }
 
 watch(
-  () => [
-    view.value,
-    JSON.stringify(state.value.filter),
-    state.value.sort,
-    calendarRange.value,
-  ],
+  () => [view.value, JSON.stringify(state.value.filter), state.value.sort, calendarRange.value],
   loadView,
 )
 
@@ -382,11 +377,13 @@ function onArchivedToggle(event: Event) {
         :cards="views.cards"
         :month="state.month"
         :editable="editable"
+        :lists="listNames"
         :undated-count="undatedCount"
         @update:month="(month) => setState({ month })"
         @range="onCalendarRange"
         @open="openCard"
         @move="(cardId, dueAt) => updateCard(cardId, { dueAt })"
+        @toggle-complete="views.toggleComplete"
         @show-undated="showUndated"
       />
       <template v-else>

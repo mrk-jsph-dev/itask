@@ -95,4 +95,41 @@ describe('views store', () => {
     expect(views.cards![0]!.dueAt).toBeNull()
     expect(toasts.value[toasts.value.length - 1]?.tone).toBe('error')
   })
+
+  it('toggles completion and tells the board lists', async () => {
+    vi.spyOn(cardsApi, 'query').mockResolvedValue({ items: [card('a')], truncated: false })
+    const done = card('a', { completedAt: '2026-11-19T10:00:00Z' })
+    const complete = vi.spyOn(cardsApi, 'complete').mockResolvedValue(done)
+    const views = useViewsStore()
+    const patch = vi.spyOn(useCardsStore(), 'patch')
+    await views.load('b1', emptyFilter(), 'position')
+
+    await views.toggleComplete('a')
+
+    expect(complete).toHaveBeenCalledWith('b1', 'a')
+    expect(views.cards![0]!.completedAt).toBe(done.completedAt)
+    expect(patch).toHaveBeenCalledWith('a', done)
+  })
+
+  it('fetches a card detail once per load', async () => {
+    vi.spyOn(cardsApi, 'query').mockResolvedValue({ items: [card('a')], truncated: false })
+    const get = vi.spyOn(cardsApi, 'get').mockResolvedValue({
+      card: card('a'),
+      description: 'Notes',
+      createdById: 'u1',
+      createdByName: 'Ada',
+      createdAt: '2026-11-19T10:00:00Z',
+      checklist: [],
+      attachments: [],
+    })
+    const views = useViewsStore()
+    await views.load('b1', emptyFilter(), 'position')
+
+    await views.detail('a')
+    await views.detail('a')
+    await views.load('b1', emptyFilter(), 'position')
+    await views.detail('a')
+
+    expect(get).toHaveBeenCalledTimes(2)
+  })
 })

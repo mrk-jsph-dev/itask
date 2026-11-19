@@ -127,6 +127,26 @@ async function mockApi(page: Page) {
         return route.fulfill({ json: { items, truncated: false } })
       }
       const one = pathname.match(/^\/api\/boards\/b1\/cards\/(\w+)$/)
+      if (one && request.method() === 'GET') {
+        const card = cards.find((c) => c.id === one[1])!
+        return route.fulfill({
+          json: {
+            card,
+            description: card.id === 'c1' ? 'Users get **logged out** after a refresh.' : null,
+            createdById: me.id,
+            createdByName: me.displayName,
+            createdAt: me.createdAt,
+            checklist: [],
+            attachments: [],
+          },
+        })
+      }
+      const complete = pathname.match(/^\/api\/boards\/b1\/cards\/(\w+)\/complete$/)
+      if (complete) {
+        const card = cards.find((c) => c.id === complete[1])!
+        Object.assign(card, { completedAt: new Date().toISOString(), rowVersion: `v${version++}` })
+        return route.fulfill({ json: card })
+      }
       if (one && request.method() === 'PATCH') {
         const card = cards.find((c) => c.id === one[1])!
         Object.assign(card, request.postDataJSON(), { rowVersion: `v${version++}` })
@@ -195,4 +215,27 @@ test('the last view is remembered per board', async ({ page }) => {
   await page.goto('/boards/b1')
 
   await expect(page.getByRole('tab', { name: 'Calendar' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('calendar task preview shows details, completes and opens the task', async ({ page }) => {
+  const api = await mockApi(page)
+  await page.goto('/boards/b1?view=calendar')
+
+  await page.locator('[data-card-chip=c1]').click()
+  const preview = page.getByRole('dialog', { name: 'Preview of Fix login' })
+  await expect(preview).toBeVisible()
+  await expect(preview.getByText('Users get logged out after a refresh.')).toBeVisible()
+  await expect(preview.getByText('Bug')).toBeVisible()
+
+  await preview.getByRole('button', { name: 'Mark as done' }).click()
+  await expect.poll(() => api.cards[0]!.completedAt).not.toBeNull()
+  await expect(preview.getByRole('button', { name: 'Mark as not done' })).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(preview).toHaveCount(0)
+  await expect(page.locator('[data-card-chip=c1]')).toBeFocused()
+
+  await page.locator('[data-card-chip=c1]').click()
+  await page.getByRole('button', { name: 'Open task' }).click()
+  await expect(page).toHaveURL(/\/boards\/b1\/cards\/c1\?view=calendar/)
 })
