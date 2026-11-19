@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { ApiError } from '@/shared/api/http'
+import { clearApiCache } from '@/shared/pwa/cache'
 import { authApi, type DemoRole, type Me, type RegisterInput } from './api'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -23,8 +24,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function reload() {
+    const previous = user.value?.id
     loaded.value = false
     await ensureLoaded()
+    // A (possibly different) person just signed in: drop what was cached for offline reading.
+    if (user.value?.id !== previous) await clearApiCache()
   }
 
   async function signIn(email: string, password: string, token?: string | null) {
@@ -57,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       user.value = null
       loaded.value = true
+      await clearApiCache()
     }
   }
 

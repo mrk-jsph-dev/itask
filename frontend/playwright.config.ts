@@ -14,6 +14,9 @@ export default defineConfig({
     baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
     trace: 'retain-on-failure',
     headless: true,
+    // The production build registers a service worker; its requests would bypass page.route
+    // mocks. Only the PWA spec allows it.
+    serviceWorkers: 'block',
   },
   projects: [
     {

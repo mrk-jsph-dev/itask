@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import { OFFLINE_HINT, online } from '@/shared/pwa/network'
 import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import { toast } from '@/shared/ui/toast'
@@ -55,7 +56,9 @@ onMounted(() => {
     <template #actions>
       <button
         type="button"
-        class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white"
+        class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!online"
+        :title="online ? undefined : OFFLINE_HINT"
         @click="store.creating = true"
       >
         + New board
@@ -141,8 +144,10 @@ onMounted(() => {
             <button
               v-if="!store.showArchived"
               type="button"
-              class="ghost fade-up min-h-[120px] rounded-[18px] border-[1.5px] border-dashed border-line bg-panel text-sm font-semibold text-[#374151]"
+              class="ghost fade-up min-h-[120px] rounded-[18px] border-[1.5px] border-dashed border-line bg-panel text-sm font-semibold text-[#374151] disabled:cursor-not-allowed disabled:opacity-50"
               :style="{ '--i': Math.min(ordered.length, 8) }"
+              :disabled="!online"
+              :title="online ? undefined : OFFLINE_HINT"
               @click="store.creating = true"
             >
               + New board

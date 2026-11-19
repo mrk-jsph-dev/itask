@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { VueDraggable, type SortableEvent } from 'vue-draggable-plus'
 
 import { useAuthStore } from '@/features/auth/store'
+import { OFFLINE_HINT, online } from '@/shared/pwa/network'
 import PanelHeader from '@/shared/ui/PanelHeader.vue'
 import SkeletonBlock from '@/shared/ui/SkeletonBlock.vue'
 import { ApiError } from '@/shared/api/http'
@@ -82,9 +83,11 @@ watch(openCardId, (id) => {
 })
 
 /** Editors and owners change lists, unless the board is archived. */
-const editable = computed(
+const canWrite = computed(
   () => !!store.current && store.current.role !== 'Viewer' && !store.current.archivedAt,
 )
+/** Offline the board is read-only, like it is for viewers. */
+const editable = computed(() => canWrite.value && online.value)
 
 const ordered = computed<BoardList[]>({
   get: () => lists.lists ?? [],
@@ -298,10 +301,13 @@ function onArchivedToggle(event: Event) {
         <button
           v-if="!store.current.archivedAt"
           type="button"
-          class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-lg"
+          class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-lg disabled:cursor-not-allowed disabled:opacity-50"
           :aria-pressed="store.current.isStarred"
           :aria-label="store.current.isStarred ? 'Unstar board' : 'Star board'"
-          :title="store.current.isStarred ? 'Unstar board' : 'Star board'"
+          :title="
+            online ? (store.current.isStarred ? 'Unstar board' : 'Star board') : OFFLINE_HINT
+          "
+          :disabled="!online"
           @click="store.toggleStar(store.current.id, store.current.isStarred)"
         >
           <span
@@ -356,9 +362,11 @@ function onArchivedToggle(event: Event) {
           <span class="hidden sm:inline">{{ store.isOwner ? 'Settings' : 'Members' }}</span>
         </button>
         <button
-          v-if="editable && ordered.length"
+          v-if="canWrite && ordered.length"
           type="button"
-          class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white"
+          class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!online"
+          :title="online ? undefined : OFFLINE_HINT"
           @click="newTask"
         >
           + New task
@@ -523,7 +531,7 @@ function onArchivedToggle(event: Event) {
       v-if="openCardId"
       :card-id="openCardId"
       :editable="editable"
-      :can-comment="!store.current.archivedAt"
+      :can-comment="!store.current.archivedAt && online"
       @close="closeCard"
     />
   </section>

@@ -11,6 +11,7 @@ import {
 } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
+import OfflineBanner from '@/shared/pwa/OfflineBanner.vue'
 import AppLogo from '@/shared/ui/AppLogo.vue'
 import { panelHeaderExtra } from '@/shared/ui/panelHeader'
 import { useAuthStore } from '@/features/auth/store'
@@ -152,6 +153,7 @@ onBeforeUnmount(() => {
     <main
       class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-panel)] bg-panel shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
     >
+      <OfflineBanner />
       <RouterView />
     </main>
     <NewBoardDialog v-if="boards.creating" @close="boards.creating = false" />
