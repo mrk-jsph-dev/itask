@@ -58,9 +58,10 @@ jobs:
       - name: Azure sign-in (OIDC)
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          # production secrets, so the tenant and subscription ids stay out of public run logs
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy infrastructure (Bicep)
         id: infra
@@ -76,9 +77,9 @@ jobs:
           ITASK_MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }} # optional; "Continue with Microsoft"
           ITASK_AI_ENDPOINT: ${{ secrets.AI_ENDPOINT }} # optional; Foundry endpoint, AI is off when empty
           ITASK_AI_DEPLOYMENT: ${{ secrets.AI_DEPLOYMENT }} # optional; model deployment name in Foundry
+          ITASK_SQL_ADMIN_GROUP_ID: ${{ secrets.SQL_ADMIN_GROUP_ID }} # optional; Entra group used as SQL admin
           ITASK_GITHUB_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }} # optional, not a secret
           ITASK_MICROSOFT_CLIENT_ID: ${{ vars.MICROSOFT_CLIENT_ID }} # optional, not a secret
-          ITASK_SQL_ADMIN_GROUP_ID: ${{ vars.SQL_ADMIN_GROUP_ID }} # optional, not a secret
         run: |
           out=$(az deployment group create \
             --resource-group "$RESOURCE_GROUP" \

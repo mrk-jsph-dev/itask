@@ -26,6 +26,7 @@ param apiIdentityName string = 'id-itask-api'
 param siteOrigin string = ''
 
 @description('Optional Entra group (object id) holding the API identity and you, used as SQL admin for manual queries.')
+@secure()
 param sqlAdminGroupId string = ''
 
 @description('Seed the demo accounts and reset them nightly.')
