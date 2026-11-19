@@ -1,23 +1,27 @@
-using System.Text;
 using FluentValidation;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Security;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
+using ITask.Api.Infrastructure.Email;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace ITask.Api.Features.Auth.Register;
 
 /// <summary>
-/// Creates an account with a display name. Replaces Identity's own register endpoint at the
-/// same route (lower <c>Order</c> wins the match) and sends the same confirmation email.
+/// Creates an account with a display name and emails a six-digit code to confirm the address
+/// (see <c>VerifyEmail</c>). Replaces Identity's own register endpoint at the same route (lower
+/// <c>Order</c> wins the match). Sign-ups across the whole app are capped per day
+/// (<c>Auth:DailySignups</c>) so scripted registrations can't pile up.
 /// </summary>
 public static class Register
 {
     public sealed record Request(string DisplayName, string Email, string Password);
+
+    /// <summary>The address the code was sent to.</summary>
+    public sealed record Response(string Email);
 
     public sealed class Validator : AbstractValidator<Request>
     {
@@ -39,13 +43,23 @@ public static class Register
                 .RequireTurnstile()
                 .WithValidation<Request>();
 
-        private static async Task<Results<Ok, ValidationProblem>> Handle(
+        private static async Task<Results<Ok<Response>, ValidationProblem, ProblemHttpResult>> Handle(
             Request request,
             UserManager<AppUser> users,
             PlatformAdmins admins,
-            IEmailSender<AppUser> emailSender,
-            HttpContext http)
+            EmailCodes codes,
+            DailyCounters counters,
+            IAppEmailSender emails,
+            IConfiguration config,
+            CancellationToken ct)
         {
+            if (!await counters.TryIncrementAsync(DailyCounters.Signups, config.GetValue("Auth:DailySignups", 50), ct))
+            {
+                return TypedResults.Problem(
+                    title: "Too many sign-ups today. Please try again tomorrow.",
+                    statusCode: StatusCodes.Status429TooManyRequests);
+            }
+
             var email = request.Email.Trim();
             var user = new AppUser { UserName = email, Email = email, DisplayName = request.DisplayName.Trim() };
 
@@ -59,17 +73,12 @@ public static class Register
 
             await admins.GrantIfListedAsync(user);
 
-            var code = await users.GenerateEmailConfirmationTokenAsync(user);
-            var query = new Dictionary<string, string?>
+            if (await codes.IssueAsync(user) is { } code)
             {
-                ["userId"] = user.Id.ToString(),
-                ["code"] = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code)),
-            };
-            var link = QueryHelpers.AddQueryString(
-                $"{http.Request.Scheme}://{http.Request.Host}/api/auth/confirmEmail", query);
-            await emailSender.SendConfirmationLinkAsync(user, email, link);
+                await emails.SendAsync(EmailTemplates.SignUpCode(email, code), ct);
+            }
 
-            return TypedResults.Ok();
+            return TypedResults.Ok(new Response(email));
         }
     }
 }

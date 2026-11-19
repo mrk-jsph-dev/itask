@@ -1,5 +1,6 @@
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Security;
 using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Ai;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,11 +23,16 @@ public sealed partial class AiGateway(
     IAiService ai,
     AiPrompts prompts,
     IOptions<AiOptions> options,
+    DailyCounters counters,
     TimeProvider time,
     ILogger<AiGateway> logger)
 {
     public int DailyLimit => Math.Max(0, options.Value.DailyRequestsPerUser);
 
+    /// <summary>App-wide AI requests per UTC day, across all users.</summary>
+    public int DailyTotalLimit => Math.Max(0, options.Value.DailyRequestsTotal);
+
+    /// <summary>The caller's requests left today, never more than what is left app-wide.</summary>
     public async Task<int> RemainingAsync(CancellationToken ct)
     {
         var today = Today();
@@ -34,7 +40,8 @@ public sealed partial class AiGateway(
             .Where(u => u.UserId == user.Id && u.Date == today)
             .Select(u => (int?)u.Requests)
             .FirstOrDefaultAsync(ct) ?? 0;
-        return Math.Max(0, DailyLimit - used);
+        var leftForAll = DailyTotalLimit - await counters.CountAsync(DailyCounters.Ai, ct);
+        return Math.Max(0, Math.Min(DailyLimit - used, leftForAll));
     }
 
     public async Task<AiOutcome<T>> RunAsync<T>(
@@ -47,9 +54,20 @@ public sealed partial class AiGateway(
     {
         ArgumentNullException.ThrowIfNull(parse);
 
+        if (await counters.CountAsync(DailyCounters.Ai, ct) >= DailyTotalLimit)
+        {
+            return new AiOutcome<T>(default, AiResults.AppBudgetSpent(), 0);
+        }
+
+        // The caller's own quota goes first, so a spent user never touches the app-wide budget.
         if (!await TryConsumeAsync(ct))
         {
             return new AiOutcome<T>(default, AiResults.QuotaSpent(DailyLimit), 0);
+        }
+
+        if (!await counters.TryIncrementAsync(DailyCounters.Ai, DailyTotalLimit, ct))
+        {
+            return new AiOutcome<T>(default, AiResults.AppBudgetSpent(), 0);
         }
 
         var remaining = await RemainingAsync(ct);

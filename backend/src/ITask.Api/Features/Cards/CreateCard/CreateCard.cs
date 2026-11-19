@@ -5,6 +5,7 @@ using ITask.Api.Common.Cards;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Ordering;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Security;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -59,6 +60,11 @@ public static class CreateCard
             if (list.ArchivedAt is not null)
             {
                 return BoardResults.Conflict("This list is archived. Restore it to add cards.");
+            }
+
+            if (await DataLimits.CheckCardsAsync(db, boardId, ct) is { } full)
+            {
+                return full;
             }
 
             for (var attempt = 1; ; attempt++)

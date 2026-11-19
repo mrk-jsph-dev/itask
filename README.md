@@ -150,17 +150,22 @@ CHANGELOG section) for each release.
    ```
 2. **GitHub → Settings → Environments → New environment `production`:** add yourself
    as a required reviewer and limit deployment branches to `main`. Add these
-   **environment secrets** (stored as Container Apps secrets on each deploy; all optional):
+   **environment secrets** (stored as Container Apps secrets on each deploy):
    - `DEMO_PASSWORD`: password of the demo accounts (empty = demo sign-in off)
-   - `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key (empty = check skipped)
+   - `TURNSTILE_SECRET_KEY`: Cloudflare Turnstile secret key. **Needed for sign-up and
+     sign-in:** in production the check fails closed, so password sign-in, registration,
+     password reset and new sign-up codes are refused until it is set (demo, GitHub and
+     Microsoft sign-in still work). The widget needs the site hostname, so add it right
+     after the first deploy.
    - `PLATFORM_ADMIN_EMAILS`: emails (`;` separated) made Platform admin at startup and
      when they register. Kept as a secret so the addresses stay out of public run logs.
      Removing an email later does not demote the account; use Admin › Users for that.
    - `SMTP_USERNAME` / `SMTP_PASSWORD`: a Gmail address and its
      [app password](https://myaccount.google.com/apppasswords) (needs 2-Step Verification)
-     used to send invites, password resets, email confirmation and digests. Use a dedicated
-     account: recipients see the address. Gmail allows about 500 emails a day. Empty =
-     emails are only logged and nothing is sent.
+     used to send sign-up codes, invites, password resets and digests. Use a dedicated
+     account: recipients see the address. **Needed for sign-up:** new accounts must enter
+     the emailed 6-digit code, so without SMTP nobody can finish registering (production
+     never logs email bodies). iTask sends at most 400 emails a day and 10 per address.
    - `AZURE_CLIENT_ID` (bootstrap output `deployClientId`), `AZURE_TENANT_ID`,
      `AZURE_SUBSCRIPTION_ID`: required, used by the OIDC sign-in. Secrets so the ids stay
      out of public run logs.
@@ -246,3 +251,15 @@ Free tiers everywhere (Static Web Apps Free, Container Apps consumption scaling 
 1 replica, Azure SQL free offer set to pause instead of bill, Log Analytics with a daily
 cap), a subscription budget with email alerts, rate limiting in the API, and per-user
 AI caps. See `SECURITY.md` for the security model.
+
+Abuse limits (all free, set in configuration, counted per UTC day in the database):
+
+| Limit | Default | Setting |
+|---|---|---|
+| New accounts (email code required) | 50 / day | `Auth__DailySignups` |
+| Unconfirmed accounts kept | 24 h | `UnverifiedAccountsJob` |
+| AI requests | 20 per user, 200 in total / day | `Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal` |
+| Emails | 400 / day, 10 per address / day | `Email__DailyLimit`, `Email__DailyPerRecipient` |
+| File storage | 100 MB per user, 2 GB in total | `Storage__QuotaBytesPerUser`, `Storage__QuotaBytesTotal` |
+| Upload links | 50 per user / day | `Storage__UploadUrlsPerUserPerDay` |
+| Boards and cards | 50 owned boards per user, 2,000 cards per board | `Board.MaxOwnedPerUser`, `Card.MaxPerBoard` |

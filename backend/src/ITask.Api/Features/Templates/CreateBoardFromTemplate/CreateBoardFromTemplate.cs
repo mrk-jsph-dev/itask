@@ -3,6 +3,7 @@ using ITask.Api.Common.Activity;
 using ITask.Api.Common.Auth;
 using ITask.Api.Common.Endpoints;
 using ITask.Api.Common.Persistence;
+using ITask.Api.Common.Security;
 using ITask.Api.Common.Templates;
 using ITask.Api.Common.Validation;
 using ITask.Api.Domain;
@@ -41,7 +42,7 @@ public static class CreateBoardFromTemplate
                 .RequireAuthorization()
                 .WithValidation<Request>();
 
-        private static async Task<Results<Created<Response>, NotFound>> Handle(
+        private static async Task<Results<Created<Response>, NotFound, ProblemHttpResult>> Handle(
             string templateId,
             Request request,
             AppDbContext db,
@@ -64,6 +65,11 @@ public static class CreateBoardFromTemplate
             if (template is not { } source)
             {
                 return TypedResults.NotFound();
+            }
+
+            if (await DataLimits.CheckOwnedBoardsAsync(db, user.Id, ct) is { } full)
+            {
+                return full;
             }
 
             var name = request.Name.Trim();

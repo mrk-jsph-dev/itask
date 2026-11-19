@@ -12,6 +12,9 @@ public class Card
 
     public const int EmojiMaxLength = 16;
 
+    /// <summary>Most cards one board can hold (archived ones included).</summary>
+    public const int MaxPerBoard = 2_000;
+
     /// <summary>Most labels or assignees one card can carry.</summary>
     public const int MaxLabelsOrAssignees = 10;
 

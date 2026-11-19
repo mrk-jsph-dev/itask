@@ -35,19 +35,28 @@ describe('auth store', () => {
     expect(store.isSignedIn).toBe(false)
   })
 
-  it('registers, then signs in with the same credentials', async () => {
-    const register = vi.spyOn(authApi, 'register').mockResolvedValue()
-    const signIn = vi.spyOn(authApi, 'signIn').mockResolvedValue()
+  it('registers without signing in, then signs in once the code is verified', async () => {
+    const register = vi.spyOn(authApi, 'register').mockResolvedValue({ email: me.email })
+    const signIn = vi.spyOn(authApi, 'signIn')
+    const verify = vi.spyOn(authApi, 'verifyEmail').mockResolvedValue()
     vi.spyOn(authApi, 'me').mockResolvedValue(me)
     const store = useAuthStore()
 
-    await store.register({ displayName: 'Ada', email: me.email, password: 'pw' }, 'token')
+    const sentTo = await store.register(
+      { displayName: 'Ada', email: me.email, password: 'pw' },
+      'token',
+    )
 
+    expect(sentTo).toBe(me.email)
     expect(register).toHaveBeenCalledWith(
       { displayName: 'Ada', email: me.email, password: 'pw' },
       'token',
     )
-    expect(signIn).toHaveBeenCalledWith(me.email, 'pw')
+    expect(signIn).not.toHaveBeenCalled()
+    expect(store.user).toBeNull()
+
+    await store.verifyEmail(me.email, '123456')
+    expect(verify).toHaveBeenCalledWith(me.email, '123456')
     expect(store.user?.displayName).toBe('Ada')
   })
 

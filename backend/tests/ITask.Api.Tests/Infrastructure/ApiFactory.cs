@@ -32,6 +32,9 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["Auth:RequireConfirmedEmail"] = "false",
             ["RateLimits:AuthPerMinute"] = "1000",
             ["RateLimits:PerMinute"] = "10000",
+            ["Auth:DailySignups"] = "100000",
+            ["Email:DailyPerRecipient"] = "100000",
+            ["Email:DailyLimit"] = "100000",
         }).AddInMemoryCollection(ExtraConfig));
         builder.ConfigureTestServices(ConfigureServices);
     }

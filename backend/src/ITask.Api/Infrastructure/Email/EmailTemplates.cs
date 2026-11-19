@@ -21,6 +21,15 @@ public static class EmailTemplates
         "If you didn't create an account, you can ignore this email.",
         list: false);
 
+    public static EmailMessage SignUpCode(string to, string code) => Build(
+        to,
+        $"{code} is your iTask code",
+        "Enter this code in iTask to confirm your email and finish creating your account.",
+        Plain($"Your code: {code}"),
+        null,
+        "The code expires in 10 minutes. If you didn't sign up, you can ignore this email.",
+        list: false);
+
     /// <param name="link">The reset page with the code filled in, when the site URL is known.</param>
     /// <param name="code">Shown as text too, so the email works without a link.</param>
     public static EmailMessage PasswordReset(string to, string? link, string? code) => Build(

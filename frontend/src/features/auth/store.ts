@@ -36,10 +36,14 @@ export const useAuthStore = defineStore('auth', () => {
     await reload()
   }
 
-  /** Creates the account, then signs in with the same credentials. */
+  /** Creates the account; it can sign in once `verifyEmail` confirms the emailed code. */
   async function register(input: RegisterInput, token?: string | null) {
-    await authApi.register(input, token)
-    await authApi.signIn(input.email, input.password)
+    return (await authApi.register(input, token)).email
+  }
+
+  /** Confirms the sign-up code; the API signs the new account in. */
+  async function verifyEmail(email: string, code: string) {
+    await authApi.verifyEmail(email, code)
     await reload()
   }
 
@@ -75,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
     ensureLoaded,
     signIn,
     register,
+    verifyEmail,
     demoSignIn,
     completeExternal,
     signOut,

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using ITask.Api.Common.Security;
 using ITask.Api.Domain;
 using ITask.Api.Features.Ai.BoardDigest;
 using ITask.Api.Features.Ai.BoardFromGoal;
@@ -285,6 +286,37 @@ public sealed class AiTests(AiApiFactory factory) : IClassFixture<AiApiFactory>
         var response = await card.Board.Owner.PostAsync(new Uri($"{card.Url}/ai/breakdown", UriKind.Relative), null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_app_wide_daily_cap_stops_every_user()
+    {
+        var owner = await factory.CreateSignedInClientAsync();
+        var boardId = await owner.CreateBoardAsync();
+        Answer(QuickAddAnswer);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        Task SetTotalAsync(int count) => factory.WithDbAsync(async db =>
+        {
+            await db.UsageCounters.Where(c => c.Name == DailyCounters.Ai && c.Date == today).ExecuteDeleteAsync();
+            db.UsageCounters.Add(new UsageCounter { Name = DailyCounters.Ai, Date = today, Count = count });
+            await db.SaveChangesAsync();
+        });
+        await SetTotalAsync(200);
+
+        try
+        {
+            var calls = factory.Ai.Requests.Count;
+            var response = await owner.PostAsJsonAsync(QuickAddUrl(boardId), new QuickAdd.Request("Task"));
+            var status = await owner.GetFromJsonAsync<GetAiStatus.Response>("/api/ai/status");
+
+            Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+            Assert.Equal(calls, factory.Ai.Requests.Count);
+            Assert.Equal(0, status!.Remaining);
+        }
+        finally
+        {
+            await SetTotalAsync(0);
+        }
     }
 
     private sealed record LabelView(Guid Id);

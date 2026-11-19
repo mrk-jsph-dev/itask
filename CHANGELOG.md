@@ -2,6 +2,20 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.2.1
+
+Abuse protection before the first public deploy. Nothing here costs money to run.
+
+- **Email code at sign-up:** a new account gets a 6-digit code by email and can't sign in
+  until it's entered (10 minutes, 5 tries, new code after 60 s, at most 5 a day).
+  Unconfirmed accounts are deleted after 24 hours. Production now requires a confirmed email.
+- **Bot check fails closed:** in production, sign-up, sign-in, password reset and new codes
+  are refused while the Turnstile secret is missing, instead of skipping the check.
+- **Daily caps for the whole app:** 50 sign-ups, 200 AI requests (on top of 20 per user),
+  400 emails, and 10 emails per address so no inbox can be flooded through iTask.
+- **Storage and data limits:** 100 MB of files per user, 2 GB for the app, 50 upload links per
+  user a day; at most 50 owned boards per user and 2,000 cards per board.
+
 ## 1.2.0
 
 Installable app and AI helpers.

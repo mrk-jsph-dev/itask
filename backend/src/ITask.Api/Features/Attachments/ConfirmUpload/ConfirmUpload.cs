@@ -11,6 +11,7 @@ using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Storage;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ITask.Api.Features.Attachments.ConfirmUpload;
 
@@ -50,6 +51,7 @@ public static class ConfirmUpload
             IBlobStorage storage,
             ICurrentUser user,
             IActivityRecorder activity,
+            IOptions<StorageOptions> storageOptions,
             CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
@@ -97,6 +99,13 @@ public static class ConfirmUpload
             {
                 await storage.DeleteAsync(name, ct);
                 return BoardResults.Conflict($"A card can have at most {Attachment.MaxPerCard} files.");
+            }
+
+            // Checked again with the real size: the declared size in RequestUpload can't be trusted.
+            if (await StorageQuota.CheckAsync(db, user.Id, blob.SizeBytes, storageOptions.Value, ct) is { } full)
+            {
+                await storage.DeleteAsync(name, ct);
+                return full;
             }
 
             var attachment = new Attachment

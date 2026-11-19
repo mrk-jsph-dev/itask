@@ -10,6 +10,7 @@ using ITask.Api.Domain;
 using ITask.Api.Infrastructure.Storage;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ITask.Api.Features.Attachments.RequestUpload;
 
@@ -56,6 +57,9 @@ public static class RequestUpload
             AppDbContext db,
             IBoardAccess access,
             IBlobStorage storage,
+            ICurrentUser user,
+            IOptions<StorageOptions> storageOptions,
+            DailyCounters counters,
             CancellationToken ct)
         {
             if (await CardGuard.CheckEditorAsync(boardId, db, access, ct) is { } denied)
@@ -71,6 +75,18 @@ public static class RequestUpload
             if (await db.Attachments.CountAsync(a => a.CardId == cardId, ct) >= Attachment.MaxPerCard)
             {
                 return BoardResults.Conflict($"A card can have at most {Attachment.MaxPerCard} files.");
+            }
+
+            if (await StorageQuota.CheckAsync(db, user.Id, request.SizeBytes, storageOptions.Value, ct) is { } full)
+            {
+                return full;
+            }
+
+            if (!await counters.TryIncrementAsync($"uploads:{user.Id:N}", storageOptions.Value.UploadUrlsPerUserPerDay, ct))
+            {
+                return TypedResults.Problem(
+                    title: "You've reached today's upload limit. Try again tomorrow.",
+                    statusCode: StatusCodes.Status429TooManyRequests);
             }
 
             var blobName = AttachmentRules.NewBlobName(boardId, cardId);

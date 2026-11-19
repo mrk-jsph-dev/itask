@@ -10,6 +10,7 @@ public static class MaintenanceServiceExtensions
         services.AddScoped<IMaintenanceJob, DemoResetJob>();
         services.AddScoped<IMaintenanceJob, ActivityRetentionJob>();
         services.AddScoped<IMaintenanceJob, OrphanUploadsJob>();
+        services.AddScoped<IMaintenanceJob, UnverifiedAccountsJob>();
         services.AddScoped<IMaintenanceJob, RecurringCardsJob>();
         services.AddScoped<MaintenanceRunner>();
         services.AddHostedService<MaintenanceService>();

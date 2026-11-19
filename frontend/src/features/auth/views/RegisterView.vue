@@ -33,7 +33,7 @@ async function submit() {
   busy.value = true
   errors.value = []
   try {
-    await auth.register(
+    const sentTo = await auth.register(
       {
         displayName: displayName.value.trim(),
         email: email.value.trim(),
@@ -41,12 +41,16 @@ async function submit() {
       },
       token.value,
     )
-    await router.replace('/')
+    await router.replace({ name: 'verify-email', query: { email: sentTo } })
   } catch (e) {
     errors.value =
       e instanceof ApiError && e.errors
         ? Object.values(e.errors).flat()
-        : [e instanceof ApiError && e.status === 400 ? e.message : 'Something went wrong.']
+        : [
+            e instanceof ApiError && (e.status === 400 || e.status === 429)
+              ? e.message
+              : 'Something went wrong.',
+          ]
     widget.value?.reset()
   } finally {
     busy.value = false

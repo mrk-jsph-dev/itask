@@ -138,8 +138,6 @@ resource app 'Microsoft.App/containerApps@2025-01-01' = {
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection' }
             { name: 'Demo__Enabled', value: string(demoEnabled) }
             { name: 'Auth__CookieSameSite', value: crossSiteCookies ? 'None' : 'Lax' }
-            // No email sender yet, so sign-up can't wait for a confirmation link.
-            { name: 'Auth__RequireConfirmedEmail', value: 'false' }
           ], optionalSettings, aiSettings, map(concat(optionalSecrets, aiSecrets), s => { name: s.env, secretRef: s.name }))
           probes: [
             {
