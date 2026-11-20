@@ -1,7 +1,8 @@
 # iTask
 
 A board-and-card task manager: **ASP.NET Core 10** API, **Vue 3** frontend,
-and **Azure** infrastructure in **Bicep**, designed to run on free tiers.
+and **Azure** infrastructure in **Bicep**, designed to run for near $0: free tiers,
+scale-to-zero and a $2 budget kill switch.
 
 <p align="center"><img src=".github/media/demo-automations.gif" alt="Automations on a sample board: a rule drafted from plain words, a replay of the last 30 days, AI suggestions from board activity, a doorway that blocks a card without an assignee (with the Owner override), and a rule run whose changes are reverted with one Undo" width="900"></p>
 
@@ -52,7 +53,7 @@ rule needs no queue, worker or extra Azure service. Date triggers run in the hou
 
 ## Architecture
 
-![iTask architecture: the browser loads the Vue app from Static Web Apps and calls the ASP.NET Core API on Container Apps over JSON and SignalR. The API stores data in Azure SQL Database, files in Blob Storage, calls Microsoft Foundry only when a user asks, and sends logs to Log Analytics. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](.github/media/architecture.svg)
+![iTask architecture: the browser loads the Vue app from Static Web Apps and calls the ASP.NET Core API on Container Apps over JSON and SignalR. The API stores data in Azure SQL Database, files in Blob Storage, calls Microsoft Foundry for the AI helpers and ✨ rule actions, and sends logs to Log Analytics. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](.github/media/architecture.svg)
 
 - **Web:** Vue 3 + TypeScript PWA on Static Web Apps (Free). Boards opened once stay readable offline.
 - **API:** ASP.NET Core 10 minimal API in vertical slices on Container Apps (consumption, scales to
@@ -61,14 +62,14 @@ rule needs no queue, worker or extra Azure service. Date triggers run in the hou
 - **Data:** Azure SQL Database free offer with auto-pause through EF Core; SQLite locally.
   Attachments live in Blob Storage and are served through short-lived user delegation SAS links.
 - **Identity:** the API reaches SQL, Blob Storage and Foundry with a user-assigned managed identity.
-  No connection strings or model keys in config.
+  No passwords, storage keys or model keys in config.
 - **Delivery:** GitHub Actions builds and tests, pushes the image to GHCR and deploys Bicep with
   OIDC after a manual approval. A budget with a Logic App kill switch stops the API if spend passes the cap.
 
 ## About this revamp
 
 This repository is the revamp of the legacy iTask app, a Laravel 5.2 project from
-2020 (kept privately as `itask-legacy`). It keeps the same idea, boards with lists
+2020 (`itask-legacy`). It keeps the same idea, boards with lists
 and cards, labels, checklists, comments, attachments and an activity log, and
 rebuilds it with a modern stack, proper authorization and cloud hosting. Compared
 with the legacy app it adds:
@@ -320,10 +321,13 @@ CHANGELOG section) for each release.
 
 ## Cost guardrails
 
-Free tiers everywhere (Static Web Apps Free, Container Apps consumption scaling from 0 to
-1 replica, Azure SQL free offer set to pause instead of bill, Log Analytics with a daily
-cap), a subscription budget with email alerts, rate limiting in the API, and per-user
-AI caps. See `SECURITY.md` for the security model.
+Near $0, not guaranteed $0. Free tiers where they exist (Static Web Apps Free, Azure SQL
+free offer set to pause instead of bill, images on GitHub Container Registry), Container Apps
+consumption scaling from 0 to 1 replica within its monthly free grant, and pay-per-use items
+kept to pennies (Blob Storage, Foundry tokens under per-user and app-wide AI caps, Log
+Analytics with a 0.1 GB daily cap). A $2 subscription budget emails alerts and triggers the
+kill switch that stops the API; cost data lags by hours, so it is a safety net rather than a
+real-time cap. Rate limiting in the API adds abuse protection. See `SECURITY.md` for the security model.
 
 Abuse limits (all free, set in configuration, counted per UTC day in the database):
 
