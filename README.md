@@ -3,9 +3,9 @@
 A board-and-card task manager: **ASP.NET Core 10** API, **Vue 3** frontend,
 and **Azure** infrastructure in **Bicep**, designed to run on free tiers.
 
-<p align="center"><img src=".github/media/demo-automations.gif" alt="Automations on a sample board: a rule drafted from plain words, a replay of the last 30 days, AI suggestions from board activity, a doorway that blocks a card without an assignee, and a rule run with Undo" width="900"></p>
+<p align="center"><img src=".github/media/demo-automations.gif" alt="Automations on a sample board: a rule drafted from plain words, a replay of the last 30 days, AI suggestions from board activity, a doorway that blocks a card without an assignee (with the Owner override), and a rule run whose changes are reverted with one Undo" width="900"></p>
 
-<p align="center"><em>Automations on the sample board: describe a rule, replay it, review the board, then watch a doorway block a move and a rule run with Undo.</em></p>
+<p align="center"><em>Automations on the sample board: describe a rule, replay it, review the board, watch a doorway block a move, then see a rule assign, label and comment on a bug and one Undo revert all three.</em></p>
 
 ## AI and automations
 
