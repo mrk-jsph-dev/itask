@@ -1,7 +1,7 @@
 # iTask
 
 A board-and-card task manager: **ASP.NET Core 10** API, **Vue 3** frontend,
-and **Azure** infrastructure in **Bicep**, designed to run on free tiers.
+and **Azure** infrastructure in **Bicep**, designed to run on Azure for near-$0.
 
 ## About this revamp
 
@@ -253,10 +253,25 @@ CHANGELOG section) for each release.
 
 ## Cost guardrails
 
-Free tiers everywhere (Static Web Apps Free, Container Apps consumption scaling from 0 to
-1 replica, Azure SQL free offer set to pause instead of bill, Log Analytics with a daily
-cap), a subscription budget with email alerts, rate limiting in the API, and per-user
-AI caps. See `SECURITY.md` for the security model.
+Near-$0, not guaranteed $0. What each part costs:
+
+| Part | Billing | Guardrail |
+|---|---|---|
+| Static Web Apps | Free tier | none needed |
+| Azure SQL | Free offer | pauses after 60 min idle, and pauses instead of billing when the monthly free limit runs out |
+| Container Apps (API) | Consumption, pay per use within a monthly free grant | scales from 0 to 1 replica |
+| Log Analytics | Pay per GB | 0.1 GB daily cap, 30-day retention |
+| Blob Storage (attachments) | Pay per use (Standard_LRS) | storage quotas below |
+| Microsoft Foundry (AI, optional) | Pay per token | per-user and app-wide daily caps below |
+| Container images | GHCR, free (not Azure) | none needed |
+
+A $2 subscription budget sends email alerts, and when it is spent the kill switch stops
+the API (see Operations). Azure cost data lags by hours, so the budget is a safety net,
+not a real-time cap. Stopping the API also ends AI calls; stored files keep billing.
+
+Trade-off: with the API and database scaled to zero, the first request after an idle
+period waits for a cold start (a few seconds for the API, up to about a minute when the
+database has paused). See `SECURITY.md` for the security model.
 
 Abuse limits (all free, set in configuration, counted per UTC day in the database):
 
