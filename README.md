@@ -13,8 +13,8 @@ scale-to-zero and a $2 budget kill switch.
 ### ✨ AI helpers
 
 OpenAI models deployed in **Microsoft Foundry**, called from the API through `IAiService`
-(`Infrastructure/Ai`) with the API's managed identity and structured JSON outputs. Every answer
-comes back as an editable draft with Accept or Discard; nothing is written until the user accepts it.
+(`Infrastructure/Ai`) with the API's managed identity and structured JSON outputs. Answers come
+back as editable drafts with Accept or Discard (the Daily digest is read-only); nothing is written until the user accepts it.
 
 | Helper | Where | What it returns |
 |---|---|---|
@@ -62,7 +62,9 @@ rule needs no queue, worker or extra Azure service. Date triggers run in the hou
 - **Data:** Azure SQL Database free offer with auto-pause through EF Core; SQLite locally.
   Attachments live in Blob Storage and are served through short-lived user delegation SAS links.
 - **Identity:** the API reaches SQL, Blob Storage and Foundry with a user-assigned managed identity.
-  No passwords, storage keys or model keys in config.
+  No database password, storage key or model key. The remaining secrets (SMTP app password,
+  Turnstile, OAuth client secrets, demo password) are Container Apps secrets fed from GitHub
+  `production` secrets.
 - **Delivery:** GitHub Actions builds and tests, pushes the image to GHCR and deploys Bicep with
   OIDC after a manual approval. A budget with a Logic App kill switch stops the API if spend passes the cap.
 
