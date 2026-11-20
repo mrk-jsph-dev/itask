@@ -31,7 +31,7 @@ resource githubTrust 'Microsoft.ManagedIdentity/userAssignedIdentities/federated
   }
 }
 
-// Runtime identity of the API container (SQL, Blob Storage, Azure OpenAI).
+// Runtime identity of the API container (SQL, Blob Storage, Microsoft Foundry).
 resource apiIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: 'id-itask-api'
   location: location
