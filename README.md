@@ -329,6 +329,10 @@ Analytics with a 0.1 GB daily cap). A $2 subscription budget emails alerts and t
 kill switch that stops the API; cost data lags by hours, so it is a safety net rather than a
 real-time cap. Rate limiting in the API adds abuse protection. See `SECURITY.md` for the security model.
 
+Trade-off: with the API and database scaled to zero, the first request after an idle
+period waits for a cold start (a few seconds for the API, up to about a minute when the
+database has paused).
+
 Abuse limits (all free, set in configuration, counted per UTC day in the database):
 
 | Limit | Default | Setting |
