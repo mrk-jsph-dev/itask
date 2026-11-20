@@ -3,6 +3,67 @@
 A board-and-card task manager: **ASP.NET Core 10** API, **Vue 3** frontend,
 and **Azure** infrastructure in **Bicep**, designed to run on free tiers.
 
+<p align="center"><img src=".github/media/demo-automations.gif" alt="Automations on a sample board: a rule drafted from plain words, a replay of the last 30 days, AI suggestions from board activity, a doorway that blocks a card without an assignee (with the Owner override), and a rule run whose changes are reverted with one Undo" width="900"></p>
+
+<p align="center"><em>Automations on the sample board: describe a rule, replay it, review the board, watch a doorway block a move, then see a rule assign, label and comment on a bug and one Undo revert all three.</em></p>
+
+## AI and automations
+
+### ✨ AI helpers
+
+OpenAI models deployed in **Microsoft Foundry**, called from the API through `IAiService`
+(`Infrastructure/Ai`) with the API's managed identity and structured JSON outputs. Every answer
+comes back as an editable draft with Accept or Discard; nothing is written until the user accepts it.
+
+| Helper | Where | What it returns |
+|---|---|---|
+| Quick add | ✨ AI › Quick add | A sentence becomes a task draft: title, due date, priority, labels and list |
+| Break down | Card › ✨ Break down | Up to 12 checklist steps, minus the ones the card already has |
+| Summarize | Card › ✨ Summarize | Description, comments and activity in one paragraph, optionally posted as a comment |
+| Daily digest | ✨ AI › Daily digest | What is due, stuck and done on the board |
+| From a goal | New board › From a goal | Lists and starter cards with checklists |
+
+Limits: editors and owners only, not for demo accounts, 10 requests per user and 30 for the whole
+app per UTC day (`Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal`). AI is off until
+`AI_ENDPOINT` and `AI_DEPLOYMENT` are set.
+
+<p align="center"><img src=".github/media/demo-ai.gif" alt="AI helpers on a sample board: Quick add drafts a task from one sentence, Break down suggests checklist steps, Summarize condenses a card, and the Daily digest reports what is due, stuck and done" width="900"></p>
+
+<p align="center"><em>Quick add, Break down, Summarize and the Daily digest. Each result is a draft until accepted.</em></p>
+
+### ⚡ Automations
+
+Automations run inside the request that changes the card (`Common/Automations`), so an instant
+rule needs no queue, worker or extra Azure service. Date triggers run in the hourly maintenance job.
+
+- **List doorways (🚪):** requirements for entering or leaving a list (assignee, label, due date,
+  finished checklist, priority). A doorway can **block** the move and say what is missing (owners can
+  move anyway, which is recorded), **fill in** what is missing, or **warn** on the column.
+- **Rules (⚡):** *when* a trigger fires, *if* the conditions hold, *then* run up to three actions
+  (move, complete, reopen, labels, assign, priority, due date, checklist items, comment, notify, archive).
+- **Explain and undo:** automated changes appear as "(⚡ rule)" in the activity feeds with an Undo
+  toast, and they never set off other automations.
+- **Replay before adding:** shows how often a draft rule would have run in the last 30 days.
+- **Show me once:** record the steps on one card and get a rule draft.
+- **✨ Describe it / Review my board:** draft a rule from plain words, or get up to three
+  suggestions from the board's activity counts (no card text is sent). A rule can also carry one
+  ✨ action (break down, pick labels and priority, or summarize), charged to its creator's quota.
+
+## Architecture
+
+![iTask architecture: the browser loads the Vue app from Static Web Apps and calls the ASP.NET Core API on Container Apps over JSON and SignalR. The API stores data in Azure SQL Database, files in Blob Storage, calls Microsoft Foundry only when a user asks, and sends logs to Log Analytics. GitHub Actions pushes the API image to GitHub Container Registry, and a budget kill switch can stop the API.](.github/media/architecture.svg)
+
+- **Web:** Vue 3 + TypeScript PWA on Static Web Apps (Free). Boards opened once stay readable offline.
+- **API:** ASP.NET Core 10 minimal API in vertical slices on Container Apps (consumption, scales to
+  zero, one replica because SignalR live updates and presence are in-process). The automation
+  engine, the AI gateway (quotas, prompts, answer validation) and the hourly jobs run here.
+- **Data:** Azure SQL Database free offer with auto-pause through EF Core; SQLite locally.
+  Attachments live in Blob Storage and are served through short-lived user delegation SAS links.
+- **Identity:** the API reaches SQL, Blob Storage and Foundry with a user-assigned managed identity.
+  No connection strings or model keys in config.
+- **Delivery:** GitHub Actions builds and tests, pushes the image to GHCR and deploys Bicep with
+  OIDC after a manual approval. A budget with a Logic App kill switch stops the API if spend passes the cap.
+
 ## About this revamp
 
 This repository is the revamp of the legacy iTask app, a Laravel 5.2 project from
@@ -201,10 +262,10 @@ CHANGELOG section) for each release.
      `http://localhost:5080/api/auth/signin-github`, then
      `dotnet user-secrets set Auth:GitHub:ClientId <id>` (and `Auth:GitHub:ClientSecret`) in
      `backend/src/ITask.Api`.
-6. **AI features (optional, pay per token).** In the Azure portal create a Foundry (Azure
-   OpenAI) resource in `rg-itask` and deploy a small OpenAI chat model (for example
+6. **AI features (optional, pay per token).** In the Azure portal create a Microsoft Foundry
+   resource in `rg-itask` and deploy a small chat model from Azure OpenAI in Foundry Models (for example
    `gpt-4.1-mini`) with a low tokens-per-minute quota. The API identity already has
-   "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
+   the built-in role "Cognitive Services OpenAI User" on the resource group, so no key is needed. Save the
    endpoint (`https://<name>.openai.azure.com/`) as the `production` secret `AI_ENDPOINT`
    and the deployment name as the `production` secret `AI_DEPLOYMENT` (secrets keep the
    resource name out of the public workflow logs), then run ci-cd again. Nothing bills until a user

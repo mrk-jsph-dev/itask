@@ -7,7 +7,7 @@ src/ITask.Api/
   Features/<Area>/<UseCase>/   one folder per use case: Request, Validator, Endpoint, handler
   Domain/                      entities and enums shared by slices (Board, BoardMember, BoardRole)
   Common/                      cross-cutting: auth (IBoardAccess), persistence, validation, security
-  Infrastructure/              outside services: Ai (OpenAI in Foundry), Integrations, Demo seeding
+  Infrastructure/              outside services: Ai (OpenAI in Microsoft Foundry), Integrations, Demo seeding
 tests/ITask.Api.Tests/         integration tests through the real HTTP pipeline
 ```
 
