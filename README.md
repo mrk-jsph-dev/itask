@@ -23,7 +23,8 @@ comes back as an editable draft with Accept or Discard; nothing is written until
 | Daily digest | ✨ AI › Daily digest | What is due, stuck and done on the board |
 | From a goal | New board › From a goal | Lists and starter cards with checklists |
 
-Limits: editors and owners only, not for demo accounts, 10 requests per user and 30 for the whole
+Limits: editors and owners only, not for demo accounts (register a free account to try AI),
+10 requests per user and 30 for the whole
 app per UTC day (`Ai__DailyRequestsPerUser`, `Ai__DailyRequestsTotal`). AI is off until
 `AI_ENDPOINT` and `AI_DEPLOYMENT` are set.
 
@@ -181,6 +182,11 @@ members get "not found" rather than "forbidden", so a private board's existence 
 Demo environment only: one account per role (Platform admin, Owner, Editor, Viewer) on a
 shared sample board, reset nightly. Demo accounts can't change passwords, upload files or
 use admin actions that change other accounts.
+
+AI features are turned off for demo accounts, because the logins are shared and every AI
+request is billed to the deployment. To try AI, register your own account (email
+verification required): it can use the AI helpers on any board where it is an Editor or
+Owner (including boards it creates), within the daily limits above.
 
 ## CI/CD
 
