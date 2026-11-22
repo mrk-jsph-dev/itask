@@ -350,6 +350,3 @@ Abuse limits (all free, set in configuration, counted per UTC day in the databas
 ## License
 
 © 2026 MJ Dev. All rights reserved.
-
-The source is public so it can be read and reviewed. No license is granted to copy,
-modify, distribute or host it.
