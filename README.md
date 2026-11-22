@@ -346,3 +346,10 @@ Abuse limits (all free, set in configuration, counted per UTC day in the databas
 | File storage | 100 MB per user, 2 GB in total | `Storage__QuotaBytesPerUser`, `Storage__QuotaBytesTotal` |
 | Upload links | 50 per user / day | `Storage__UploadUrlsPerUserPerDay` |
 | Boards and cards | 50 owned boards per user, 2,000 cards per board | `Board.MaxOwnedPerUser`, `Card.MaxPerBoard` |
+
+## License
+
+© 2026 MJ Dev. All rights reserved.
+
+The source is public so it can be read and reviewed. No license is granted to copy,
+modify, distribute or host it.
