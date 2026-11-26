@@ -240,7 +240,7 @@ public static class Recurrences
             ActivityTypes.CardCreated,
             source.BoardId,
             copy.Id,
-            new { list = list.Name, recurringFrom = Card.Key(board.KeyPrefix, source.Number) },
+            new { list = list.Name, listId = list.Id, recurringFrom = Card.Key(board.KeyPrefix, source.Number) },
             ct);
         return copy;
     }

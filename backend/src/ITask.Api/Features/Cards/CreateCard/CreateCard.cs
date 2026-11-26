@@ -93,7 +93,7 @@ public static class CreateCard
                 };
                 board.NextCardNumber++;
                 db.Cards.Add(card);
-                await activity.RecordCardAsync(ActivityTypes.CardCreated, boardId, card.Id, new { list = list.Name }, ct);
+                await activity.RecordCardAsync(ActivityTypes.CardCreated, boardId, card.Id, new { list = list.Name, listId }, ct);
 
                 try
                 {

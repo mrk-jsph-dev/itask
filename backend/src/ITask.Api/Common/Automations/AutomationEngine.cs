@@ -199,7 +199,7 @@ public sealed partial class AutomationEngine(TimeProvider clock, AutomationRunLo
                     changes.List = changes.List with { ToId = target, ToPosition = position };
                     card.ListId = target;
                     card.Position = position;
-                    Record(ActivityTypes.CardMoved, new { fromList = board.Lists.GetValueOrDefault(from, "a list"), toList = board.Lists[target] });
+                    Record(ActivityTypes.CardMoved, new { fromList = board.Lists.GetValueOrDefault(from, "a list"), toList = board.Lists[target], fromListId = from, toListId = target });
                     summary.Add($"moved to {board.Lists[target]}");
                     break;
                 }

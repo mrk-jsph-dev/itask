@@ -80,6 +80,12 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'boards/:boardId/insights',
+          name: 'board-insights',
+          component: () => import('@/features/insights/views/InsightsView.vue'),
+          props: true,
+        },
+        {
           path: 'activity',
           name: 'activity',
           component: () => import('@/features/activity/views/ActivityView.vue'),

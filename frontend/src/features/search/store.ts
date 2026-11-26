@@ -10,6 +10,30 @@ export interface SearchItem extends PaletteItem {
   to:
     | { name: 'board'; params: { boardId: string } }
     | { name: 'card'; params: { boardId: string; cardId: string } }
+    | { name: 'board-insights' | 'board-activity'; params: { boardId: string } }
+}
+
+/** Board pages offered while a board is open: everything with an empty query, else the matching ones. */
+export function boardCommands(boardId: string | null, query: string): SearchItem[] {
+  if (!boardId) return []
+  const commands: SearchItem[] = [
+    {
+      id: `cmd:insights:${boardId}`,
+      icon: '📈',
+      title: 'Insights',
+      subtitle: 'Throughput, cycle time and stuck cards on this board',
+      to: { name: 'board-insights', params: { boardId } },
+    },
+    {
+      id: `cmd:activity:${boardId}`,
+      icon: '⚡',
+      title: 'Activity',
+      subtitle: 'Recent changes on this board',
+      to: { name: 'board-activity', params: { boardId } },
+    },
+  ]
+  const text = query.trim().toLowerCase()
+  return text ? commands.filter((c) => c.title.toLowerCase().includes(text)) : commands
 }
 
 export const debounceMs = 200
@@ -81,6 +105,7 @@ export const useSearchStore = defineStore('search', () => {
   const loading = ref(false)
   const failed = ref(false)
   const recent = ref<SearchItem[]>([])
+  const boardId = ref<string | null>(null)
   let userId: string | null = null
   let timer: ReturnType<typeof setTimeout> | undefined
   let request = 0
@@ -88,11 +113,18 @@ export const useSearchStore = defineStore('search', () => {
   const searching = computed(() => query.value.trim().length >= minQueryLength)
 
   const sections = computed<PaletteSection<SearchItem>[]>(() => {
+    const commands = boardCommands(boardId.value, query.value)
+    const board = commands.length ? [{ title: 'This board', items: commands }] : []
     if (!searching.value) {
-      return recent.value.length ? [{ title: 'Recent', items: recent.value }] : []
+      return [...board, ...(recent.value.length ? [{ title: 'Recent', items: recent.value }] : [])]
     }
-    return results.value ? toSections(results.value) : []
+    return [...board, ...(results.value ? toSections(results.value) : [])]
   })
+
+  /** The board open behind the palette, for the "This board" section. */
+  function setBoard(id: string | null) {
+    boardId.value = id
+  }
 
   /** Loads the recent list of the signed-in user. */
   function setUser(id: string) {
@@ -138,6 +170,7 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   function remember(item: SearchItem) {
+    if (item.id.startsWith('cmd:')) return
     recent.value = [item, ...recent.value.filter((r) => r.id !== item.id)].slice(0, maxRecent)
     if (userId) writeRecent(userId, recent.value)
   }
@@ -151,6 +184,7 @@ export const useSearchStore = defineStore('search', () => {
     searching,
     sections,
     setUser,
+    setBoard,
     setQuery,
     reset,
     remember,

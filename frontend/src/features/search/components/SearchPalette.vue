@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import CommandPalette from '@/shared/ui/CommandPalette.vue'
 
@@ -11,7 +11,9 @@ const emit = defineEmits<{ close: [] }>()
 
 const search = useSearchStore()
 const router = useRouter()
+const route = useRoute()
 search.setUser(props.userId)
+search.setBoard(typeof route.params.boardId === 'string' ? route.params.boardId : null)
 
 const query = computed({ get: () => search.query, set: (value: string) => search.setQuery(value) })
 
