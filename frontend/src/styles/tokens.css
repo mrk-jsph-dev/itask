@@ -13,6 +13,10 @@
   --color-accent: #1d5bf5;
   --color-accent-strong: #1d4ed8;
 
+  /* Chart series (validated for colour-blind separation and 3:1 on the panel). */
+  --color-chart-done: #1d5bf5;
+  --color-chart-created: #eb6834;
+
   --radius-panel: 24px;
   --radius-control: 12px;
 }

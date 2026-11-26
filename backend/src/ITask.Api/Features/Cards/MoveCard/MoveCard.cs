@@ -124,7 +124,7 @@ public static class MoveCard
             else
             {
                 var fromList = await db.Lists.Where(l => l.Id == card.ListId).Select(l => l.Name).FirstAsync(ct);
-                await activity.RecordCardAsync(ActivityTypes.CardMoved, boardId, cardId, new { fromList, toList = target.Name }, ct);
+                await activity.RecordCardAsync(ActivityTypes.CardMoved, boardId, cardId, new { fromList, toList = target.Name, fromListId = card.ListId, toListId = request.ListId }, ct);
             }
 
             card.ListId = request.ListId;

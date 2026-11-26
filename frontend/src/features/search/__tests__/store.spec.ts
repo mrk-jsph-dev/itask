@@ -2,7 +2,14 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { searchApi, type SearchResults } from '../api'
-import { debounceMs, maxRecent, toSections, useSearchStore, type SearchItem } from '../store'
+import {
+  boardCommands,
+  debounceMs,
+  maxRecent,
+  toSections,
+  useSearchStore,
+  type SearchItem,
+} from '../store'
 
 const results = (title = 'Write spec'): SearchResults => ({
   boards: [{ id: 'b1', name: 'Roadmap', emoji: '🚀', color: '#1D5BF5' }],
@@ -173,6 +180,20 @@ describe('search store', () => {
 
     store.setUser('u1')
 
+    expect(store.recent).toEqual([])
+  })
+
+  it('offers board commands on a board page and filters them by the query', () => {
+    expect(boardCommands(null, '')).toEqual([])
+    expect(boardCommands('b1', '').map((c) => c.title)).toEqual(['Insights', 'Activity'])
+    expect(boardCommands('b1', 'ins').map((c) => c.to)).toEqual([
+      { name: 'board-insights', params: { boardId: 'b1' } },
+    ])
+
+    const store = useSearchStore()
+    store.setBoard('b1')
+    expect(store.sections[0]?.title).toBe('This board')
+    store.remember(store.sections[0]!.items[0]!)
     expect(store.recent).toEqual([])
   })
 })

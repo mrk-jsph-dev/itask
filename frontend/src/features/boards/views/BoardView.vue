@@ -273,7 +273,11 @@ useAutomationNotices(
 const automationRefs = computed<BoardRefs>(() => ({
   lists: ordered.value.map((l) => ({ id: l.id, name: l.name })),
   labels: (cards.labels ?? []).map((l) => ({ id: l.id, name: l.name })),
-  members: store.members.map((m) => ({ userId: m.userId, displayName: m.displayName, role: m.role })),
+  members: store.members.map((m) => ({
+    userId: m.userId,
+    displayName: m.displayName,
+    role: m.role,
+  })),
 }))
 
 /** Cards that sit in a list while missing its warn-mode doorway's requirements. */
@@ -464,6 +468,27 @@ function onArchivedToggle(event: Event) {
             aria-hidden="true"
           >
             <path d="M13 2L3 14h9l-1 8 10-12h-9z" />
+          </svg>
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'board-insights', params: { boardId } }"
+          class="ghost flex h-[42px] w-[42px] items-center justify-center rounded-full text-ink no-underline"
+          aria-label="Board insights"
+          title="Insights"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 3v18h18" />
+            <path d="M7 15v2M12 10v7M17 6v11" />
           </svg>
         </RouterLink>
         <button
