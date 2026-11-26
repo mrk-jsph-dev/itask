@@ -1,3 +1,4 @@
+using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
@@ -28,7 +29,7 @@ internal sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IAppEmai
         var security = o.Smtp.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
         await client.ConnectAsync(o.Smtp.Host, o.Smtp.Port, security, ct);
         await client.AuthenticateAsync(o.Smtp.Username, o.Smtp.Password, ct);
-        await client.SendAsync(mime, ct);
+        await client.SendAsync(new SendRequest(mime), ct);
         await client.DisconnectAsync(quit: true, ct);
     }
 }
