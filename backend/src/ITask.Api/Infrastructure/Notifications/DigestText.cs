@@ -22,6 +22,7 @@ public static class DigestText
             NotificationTypes.Mentioned => $"{who} mentioned you on {card} · {board}",
             NotificationTypes.Assigned => $"{who} assigned you to {card} · {board}",
             NotificationTypes.CommentOnMyCard => $"{who} commented on {card} · {board}",
+            NotificationTypes.Unblocked => $"{card} is no longer blocked · {board}",
             NotificationTypes.DueSoon => $"{card} is due {When(root, zone)} · {board}",
             NotificationTypes.Overdue => $"{card} is overdue · {board}",
             NotificationTypes.Invited => $"{who} invited you to {board}",

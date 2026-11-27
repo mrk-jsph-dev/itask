@@ -90,6 +90,7 @@ public static class ReviewAutomations
                 AutomationCatalog.AssigneesChanged => "assignees changed",
                 AutomationCatalog.ChecklistDone => "checklist items ticked",
                 AutomationCatalog.CommentAdded => "comments added",
+                AutomationCatalog.CardUnblocked => "cards unblocked",
                 _ => null,
             };
         }

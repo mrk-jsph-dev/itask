@@ -66,6 +66,9 @@ public static class AutomationHistory
             case ActivityTypes.CommentAdded:
                 yield return Event(AutomationCatalog.CommentAdded);
                 break;
+            case ActivityTypes.CardUnblocked:
+                yield return Event(AutomationCatalog.CardUnblocked);
+                break;
             case ActivityTypes.ChecklistChecked:
                 yield return Event(AutomationCatalog.ChecklistDone);
                 break;

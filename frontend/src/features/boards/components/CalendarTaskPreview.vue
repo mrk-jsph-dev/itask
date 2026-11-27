@@ -7,6 +7,7 @@ import UserAvatar from '@/shared/ui/UserAvatar.vue'
 import type { BoardList, Card } from '../api'
 import { dueState, priorityStyle } from '../cardOptions'
 import { useViewsStore } from '../viewsStore'
+import BlockedChip from './BlockedChip.vue'
 
 const props = defineProps<{
   card: Card
@@ -165,6 +166,7 @@ function onKeydown(event: KeyboardEvent) {
     </div>
 
     <div class="flex flex-wrap items-center gap-3 pl-10 text-xs text-muted">
+      <BlockedChip :card="card" show-blocking />
       <span
         v-if="priority"
         class="rounded-full px-2 py-0.5 font-semibold"

@@ -20,6 +20,7 @@ import { cardEmojis } from '../options'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
 import CardAttachments from './CardAttachments.vue'
+import CardBlockers from './CardBlockers.vue'
 import CardChecklist from './CardChecklist.vue'
 import CardComments from './CardComments.vue'
 import MarkdownField from './MarkdownField.vue'
@@ -575,6 +576,7 @@ const dateClass =
             @post="postSummary"
           />
         </div>
+        <CardBlockers :card-id="card.id" :editable="editable && !card.archivedAt" />
         <CardChecklist :editable="editable" />
         <CardAttachments :editable="editable" :is-demo="!!auth.user?.isDemo" />
         <section

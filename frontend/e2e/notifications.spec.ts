@@ -47,6 +47,9 @@ const card = {
   emoji: null,
   attachmentCount: 0,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'v1',
 }
 
@@ -73,6 +76,7 @@ async function mockApi(page: Page) {
       overdue: true,
       invited: true,
       commentOnMyCard: true,
+      unblocked: true,
     },
     emailConfirmed: true,
   }

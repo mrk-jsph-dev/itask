@@ -70,6 +70,9 @@ async function mockApi(page: Page, role: 'Editor' | 'Viewer' = 'Editor') {
     emoji: null,
     attachmentCount: attachments.length,
     recurring: false,
+    blocked: false,
+    blockerCount: 0,
+    blockingCount: 0,
     rowVersion: 'v1',
   })
 

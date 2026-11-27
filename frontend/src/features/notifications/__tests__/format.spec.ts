@@ -18,6 +18,12 @@ describe('describeNotification', () => {
     expect(describeNotification(notification({ type })).what).toBe(what)
   })
 
+  it('starts unblocked notices with the card', () => {
+    const line = describeNotification(notification({ type: 'unblocked', actor: null }))
+
+    expect(line).toMatchObject({ emoji: '🔓', actor: null, what: 'Unblocked:', target: 'Fix login' })
+  })
+
   it('starts reminders with the card and has no actor', () => {
     const due = describeNotification(
       notification({

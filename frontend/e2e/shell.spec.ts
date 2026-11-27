@@ -45,6 +45,9 @@ const card = {
   commentCount: 0,
   attachmentCount: 2,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'v1',
 }
 

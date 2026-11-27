@@ -21,6 +21,8 @@ export const useViewsStore = defineStore('views', () => {
   let request = 0
   /** Card details fetched for the calendar preview, by card id. */
   let details = new Map<string, Promise<CardDetail>>()
+  /** Arguments of the latest load, to reload after a change that touches other cards. */
+  let last: [BoardFilter, SortKey, { from: Date; to: Date } | undefined] | null = null
 
   async function load(
     id: string,
@@ -29,6 +31,7 @@ export const useViewsStore = defineStore('views', () => {
     range?: { from: Date; to: Date },
   ) {
     const mine = ++request
+    last = [filter, sort, range]
     if (boardId.value !== id) cards.value = null
     boardId.value = id
     details = new Map()
@@ -65,6 +68,8 @@ export const useViewsStore = defineStore('views', () => {
       const saved = await cardsApi.update(boardId.value, cardId, patch)
       replace(saved)
       cardsStore.patch(cardId, saved)
+      // Cards waiting on this one change their blocked state.
+      if (saved.blockingCount && last && boardId.value) await load(boardId.value, ...last)
     } catch (e) {
       replace(before)
       toast(errorText(e, "Couldn't update the card."), 'error')

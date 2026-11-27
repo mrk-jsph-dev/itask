@@ -73,6 +73,7 @@ public static class AutomationCatalog
     public const string AssigneesChanged = "assignees.changed";
     public const string ChecklistDone = "checklist.done";
     public const string CommentAdded = "comment.added";
+    public const string CardUnblocked = "card.unblocked";
 
     public const string DueSoon = "due.soon";
     public const string DueOverdue = "due.overdue";
@@ -87,6 +88,8 @@ public static class AutomationCatalog
     public const string IfAssigneeIs = "assignee.is";
     public const string IfDueSet = "due.set";
     public const string IfChecklistDone = "checklist.done";
+    public const string IfBlocked = "blocked.yes";
+    public const string IfNotBlocked = "blocked.no";
 
     public const string DoMove = "move";
     public const string DoComplete = "complete";
@@ -115,7 +118,7 @@ public static class AutomationCatalog
     public static readonly IReadOnlySet<string> InstantTriggers = new HashSet<string>(StringComparer.Ordinal)
     {
         CardEntered, CardLeft, CardCreated, CardCompleted, CardReopened, LabelAdded, LabelRemoved,
-        AssigneesChanged, ChecklistDone, CommentAdded,
+        AssigneesChanged, ChecklistDone, CommentAdded, CardUnblocked,
     };
 
     /// <summary>Checked by the hourly <c>automation-timers</c> job, so they may run late while the app sleeps.</summary>
@@ -126,7 +129,7 @@ public static class AutomationCatalog
 
     private static readonly HashSet<string> ConditionTypes = new HashSet<string>(StringComparer.Ordinal)
     {
-        IfLabelAny, IfLabelNone, IfPriorityAtLeast, IfAssigneeSet, IfAssigneeNone, IfAssigneeIs, IfDueSet, IfChecklistDone,
+        IfLabelAny, IfLabelNone, IfPriorityAtLeast, IfAssigneeSet, IfAssigneeNone, IfAssigneeIs, IfDueSet, IfChecklistDone, IfBlocked, IfNotBlocked,
     };
 
     /// <summary>Requirements a fix-mode doorway can't fill in by itself.</summary>

@@ -97,6 +97,16 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
         ["card.recurrence_cleared"] = new(
             c => c.Owner.PutAsJsonAsync($"{c.Card.Url}/recurrence", new { kind = "Daily", targetListId = c.Lists[0] }),
             c => c.Owner.DeleteAsync(new Uri($"{c.Card.Url}/recurrence", UriKind.Relative))),
+        ["card.dependency_added"] = new(
+            async c => c.Id = (await c.Owner.CreateCardAsync(c.Card.BoardId, c.Lists[0], "Blocker")).Id,
+            c => c.Owner.PutAsync(new Uri($"{c.Card.Url}/blocked-by/{c.Id}", UriKind.Relative), null)),
+        ["card.dependency_removed"] = new(
+            async c =>
+            {
+                c.Id = (await c.Owner.CreateCardAsync(c.Card.BoardId, c.Lists[0], "Blocker")).Id;
+                (await c.Owner.PutAsync(new Uri($"{c.Card.Url}/blocked-by/{c.Id}", UriKind.Relative), null)).EnsureSuccessStatusCode();
+            },
+            c => c.Owner.DeleteAsync(new Uri($"{c.Card.Url}/blocked-by/{c.Id}", UriKind.Relative))),
         ["label.created"] = new(null, c => c.Post($"{c.Board}/labels", new { name = "Bug", color = "#DC2626" })),
         ["label.updated"] = new(
             async c => c.Id = await Ctx.CreatedIdAsync(c.Post($"{c.Board}/labels", new { name = "Bug", color = "#DC2626" })),
@@ -213,7 +223,9 @@ public sealed class ActivityRecordingTests(ApiFactory factory) : IClassFixture<A
             .Where(f => f.IsLiteral)
             .Select(f => (string)f.GetRawConstantValue()!)
             // These are always recorded next to the change that caused them; AutomationTests cover them.
-            .Where(t => t is not ("board.created" or "automation.disabled" or "automation.ai_skipped" or "doorway.overridden"));
+            .Where(t => t is not ("board.created" or "automation.disabled" or "automation.ai_skipped" or "doorway.overridden"
+                // Recorded next to the blocker's card.completed or card.archived; CardDependencyTests cover it.
+                or "card.unblocked"));
 
         Assert.Empty(constants.Except(Cases.Keys));
     }

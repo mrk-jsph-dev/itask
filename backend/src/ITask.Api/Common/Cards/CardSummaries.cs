@@ -10,7 +10,9 @@ public sealed record LabelChip(Guid Id, string Name, string Color, string? Emoji
 public sealed record AssigneeChip(Guid UserId, string DisplayName, string AvatarColor);
 
 /// <summary>
-/// What a card tile shows. <c>AttachmentCount</c> counts confirmed uploads only (rows exist after ConfirmUpload). <c>Recurring</c> is true while the card carries a repeat rule. <c>RowVersion</c> (base64) goes back with MoveCard.
+/// What a card tile shows. <c>AttachmentCount</c> counts confirmed uploads only (rows exist after ConfirmUpload). <c>Recurring</c> is true while the card carries a repeat rule.
+/// <c>BlockerCount</c> counts the open cards this one waits on (<c>Blocked</c> while above 0); <c>BlockingCount</c> counts the open cards waiting on it.
+/// <c>RowVersion</c> (base64) goes back with MoveCard.
 /// </summary>
 public sealed record CardSummary(
     Guid Id,
@@ -33,6 +35,9 @@ public sealed record CardSummary(
     int CommentCount,
     int AttachmentCount,
     bool Recurring,
+    bool Blocked,
+    int BlockerCount,
+    int BlockingCount,
     string RowVersion);
 
 /// <summary>Loads <see cref="CardSummary"/> rows in one query per call.</summary>
@@ -75,6 +80,8 @@ public static class CardSummaries
                 CommentCount = c.Comments.Count,
                 AttachmentCount = c.Attachments.Count,
                 Recurring = db.CardRecurrences.Any(r => r.CardId == c.Id),
+                BlockerCount = c.BlockedBy.Count(d => d.BlockedBy!.CompletedAt == null && d.BlockedBy.ArchivedAt == null),
+                BlockingCount = c.Blocking.Count(d => d.Card!.CompletedAt == null && d.Card.ArchivedAt == null),
                 c.RowVersion,
             })
             .ToListAsync(ct);
@@ -100,6 +107,9 @@ public static class CardSummaries
             c.CommentCount,
             c.AttachmentCount,
             c.Recurring,
+            c.BlockerCount > 0,
+            c.BlockerCount,
+            c.BlockingCount,
             Convert.ToBase64String(c.RowVersion)))];
     }
 

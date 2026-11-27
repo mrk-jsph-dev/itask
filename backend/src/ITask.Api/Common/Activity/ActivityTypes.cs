@@ -34,6 +34,11 @@ public static class ActivityTypes
     public const string CardLabelsChanged = "card.labels_changed";
     public const string CardRecurrenceSet = "card.recurrence_set";
     public const string CardRecurrenceCleared = "card.recurrence_cleared";
+    public const string CardDependencyAdded = "card.dependency_added";
+    public const string CardDependencyRemoved = "card.dependency_removed";
+
+    /// <summary>The card's last open blocker was completed or archived.</summary>
+    public const string CardUnblocked = "card.unblocked";
 
     public const string LabelCreated = "label.created";
     public const string LabelUpdated = "label.updated";

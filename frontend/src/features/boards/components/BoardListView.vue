@@ -14,6 +14,7 @@ import {
   toDateInput,
 } from '../cardOptions'
 import { groupCards, type GroupKey } from '../filters'
+import BlockedChip from './BlockedChip.vue'
 
 const props = defineProps<{
   /** Filtered, sorted cards; null while loading. */
@@ -125,6 +126,7 @@ const dueClass = (card: Card) => {
               >
                 <span v-if="card.emoji" aria-hidden="true">{{ card.emoji }}</span>
                 <span class="min-w-0 break-words">{{ card.title }}</span>
+                <BlockedChip :card="card" />
               </button>
             </td>
             <td data-label="List">

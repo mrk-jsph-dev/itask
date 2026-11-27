@@ -60,6 +60,9 @@ const baseCard = {
   commentCount: 0,
   attachmentCount: 0,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'v1',
 }
 

@@ -48,7 +48,8 @@ public static partial class QueryCards
         DateTimeOffset? DueFrom,
         DateTimeOffset? DueTo,
         string? Sort,
-        string? Tz);
+        string? Tz,
+        string? Blocked = null);
 
     public sealed record Response(IReadOnlyList<CardSummary> Items, bool Truncated);
 
@@ -70,6 +71,7 @@ public static partial class QueryCards
             RuleFor(r => r.Sort)
                 .Must(v => v is null || TryEnum<SortBy>(v, out _))
                 .WithMessage("Use position, due, priority, created or title.");
+            RuleFor(r => r.Blocked).Must(v => v is null or "yes" or "no").WithMessage("Use yes or no.");
             RuleFor(r => r.Tz).Must(v => v is null || TryZone(v, out _)).WithMessage("Unknown time zone.");
             RuleFor(r => r.DueTo)
                 .Must((r, to) => r.DueFrom <= to && to - r.DueFrom <= MaxRange)
@@ -143,6 +145,11 @@ public static partial class QueryCards
             if (buckets.Count > 0)
             {
                 matches = matches.Where(c => buckets.Any(b => DueBuckets.Matches(b, c.DueAt, c.CompletedAt, now, zone)));
+            }
+
+            if (request.Blocked is { } blocked)
+            {
+                matches = matches.Where(c => c.Blocked == (blocked == "yes"));
             }
 
             if (request.DueFrom is { } from)

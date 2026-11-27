@@ -8,6 +8,8 @@ import {
   checklistApi,
   commentsApi,
   type Attachment,
+  type Blocker,
+  type Card,
   type ChecklistItem,
   type ChecklistPatch,
   type Comment,
@@ -35,6 +37,8 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
   const description = ref('')
   /** The card's repeat rule, or null when it doesn't repeat. */
   const recurrence = ref<Recurrence | null>(null)
+  /** Cards the open card waits on, open ones first. */
+  const blockedBy = ref<Blocker[]>([])
   const checklist = ref<ChecklistItem[]>([])
   const attachments = ref<Attachment[]>([])
   /** Oldest first, as the thread shows them. */
@@ -82,6 +86,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     loading.value = true
     description.value = ''
     recurrence.value = null
+    blockedBy.value = []
     checklist.value = []
     attachments.value = []
     comments.value = []
@@ -91,6 +96,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
       if (!isOpen(b, c)) return
       description.value = detail.description ?? ''
       recurrence.value = detail.recurrence ?? null
+      blockedBy.value = detail.blockedBy ?? []
       checklist.value = detail.checklist
       attachments.value = detail.attachments
       comments.value = [...page.items].reverse()
@@ -147,6 +153,7 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
       if (!isOpen(b, c)) return
       description.value = detail.description ?? ''
       recurrence.value = detail.recurrence ?? null
+      blockedBy.value = detail.blockedBy ?? []
       checklist.value = shown(detail.checklist)
       attachments.value = shown(detail.attachments)
       return
@@ -381,8 +388,54 @@ export const useCardDetailStore = defineStore('cardDetail', () => {
     cards.patch(c, { recurring: false })
   }
 
+  /** Keeps the blocker's "blocks N" in step; only open cards count as waiting. */
+  function bumpBlocking(blockerId: string, waiting: Card, delta: 1 | -1) {
+    if (waiting.completedAt || waiting.archivedAt) return
+    const spot = cards.find(blockerId)
+    if (!spot) return
+    const tile = spot.list.cards[spot.index]!
+    cards.patch(blockerId, { blockingCount: Math.max(0, tile.blockingCount + delta) })
+  }
+
+  /** Makes the open card wait on `blocker`; throws the API error (e.g. 409 for a loop). */
+  async function addBlocker(blocker: Pick<Card, 'id' | 'key' | 'title' | 'completedAt'>) {
+    const [b, c] = ids()
+    if (blockedBy.value.some((x) => x.id === blocker.id)) return
+    const saved = await cardsApi.addBlocker(b, c, blocker.id)
+    cards.upsert(saved)
+    bumpBlocking(blocker.id, saved, 1)
+    if (!isOpen(b, c)) return
+    const item = {
+      id: blocker.id,
+      key: blocker.key,
+      title: blocker.title,
+      completed: !!blocker.completedAt,
+      archived: false,
+    }
+    blockedBy.value = [...blockedBy.value, item].sort(
+      (x, y) => Number(x.completed || x.archived) - Number(y.completed || y.archived),
+    )
+  }
+
+  async function removeBlocker(blockerId: string) {
+    const [b, c] = ids()
+    const before = blockedBy.value
+    blockedBy.value = before.filter((x) => x.id !== blockerId)
+    try {
+      const saved = await cardsApi.removeBlocker(b, c, blockerId)
+      cards.upsert(saved)
+      bumpBlocking(blockerId, saved, -1)
+    } catch (e) {
+      if (isOpen(b, c)) blockedBy.value = before
+      toast(errorText(e, "Couldn't remove the blocker."), 'error')
+    }
+  }
+
   return {
     cardId,
+    blockedBy,
+    addBlocker,
+    removeBlocker,
     loading,
     description,
     recurrence,

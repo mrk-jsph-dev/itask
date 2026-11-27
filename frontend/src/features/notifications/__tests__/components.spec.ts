@@ -78,6 +78,7 @@ describe('DigestPreferences', () => {
       overdue: true,
       invited: true,
       commentOnMyCard: true,
+      unblocked: true,
     },
     emailConfirmed: true,
     ...change,

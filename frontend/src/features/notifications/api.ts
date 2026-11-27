@@ -7,6 +7,7 @@ export type NotificationType =
   | 'overdue'
   | 'invited'
   | 'comment_on_my_card'
+  | 'unblocked'
   | 'automation'
 
 export interface AppNotification {
@@ -37,6 +38,7 @@ export interface DigestTypes {
   overdue: boolean
   invited: boolean
   commentOnMyCard: boolean
+  unblocked: boolean
 }
 
 export interface NotificationPreferences {

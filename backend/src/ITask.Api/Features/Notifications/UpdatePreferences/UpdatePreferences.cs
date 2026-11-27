@@ -58,6 +58,7 @@ public static class UpdatePreferences
             prefs.Overdue = request.Types.Overdue;
             prefs.Invited = request.Types.Invited;
             prefs.CommentOnMyCard = request.Types.CommentOnMyCard;
+            prefs.Unblocked = request.Types.Unblocked;
             await db.SaveChangesAsync(ct);
 
             var emailConfirmed = await db.Users.Where(u => u.Id == userId).Select(u => u.EmailConfirmed).FirstAsync(ct);

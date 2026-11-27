@@ -13,7 +13,7 @@ import DoorwayMarker from '@/features/automations/components/DoorwayMarker.vue'
 import DoorwayRefusal from '@/features/automations/components/DoorwayRefusal.vue'
 import RecordingBar from '@/features/automations/components/RecordingBar.vue'
 import type { AutomationInput } from '@/features/automations/api'
-import { unmetRequirements, type BoardRefs } from '@/features/automations/catalog'
+import { unmetRequirements, warnOnlyInFix, type BoardRefs } from '@/features/automations/catalog'
 import { useAutomationNotices } from '@/features/automations/notices'
 import { useAutomationsStore } from '@/features/automations/store'
 import { useMenu } from '@/shared/ui/menu'
@@ -284,7 +284,14 @@ const automationRefs = computed<BoardRefs>(() => ({
 function doorwayWarnings(list: BoardList) {
   const warn = automations
     .doorwaysFor(list.id)
-    .filter((d) => d.mode === 'Warn' && d.direction === 'Enter' && d.conditions.length)
+    .filter((d) => d.direction === 'Enter' && (d.mode === 'Warn' || d.mode === 'Fix'))
+    // Fix doorways fill in what they can; requirements they can't fill in only warn.
+    .map((d) =>
+      d.mode === 'Fix'
+        ? { ...d, conditions: d.conditions.filter((c) => warnOnlyInFix.has(c.type)) }
+        : d,
+    )
+    .filter((d) => d.conditions.length)
   if (!warn.length) return []
   return list.cards
     .map((c) => ({
