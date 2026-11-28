@@ -1,3 +1,4 @@
+using ITask.Api.Common.Cards;
 using ITask.Api.Common.Persistence;
 using ITask.Api.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,20 @@ internal sealed class AutomationInterceptor(AutomationEngine engine, AutomationR
         ArgumentNullException.ThrowIfNull(eventData);
         if (eventData.Context is AppDbContext db)
         {
+            // Unblocks found before the automations can trigger rules; the second pass covers cards
+            // that the automations themselves completed or archived.
+            var handled = new HashSet<ActivityEntry>();
+            if (!db.SuppressAutomations)
+            {
+                await Dependencies.RecordUnblockedAsync(db, handled, clock.GetUtcNow(), cancellationToken);
+            }
+
             await engine.RunAsync(db, cancellationToken);
+            if (!db.SuppressAutomations)
+            {
+                await Dependencies.RecordUnblockedAsync(db, handled, clock.GetUtcNow(), cancellationToken);
+            }
+
             StampListEntered(db);
             db.PrepareForSave();
         }

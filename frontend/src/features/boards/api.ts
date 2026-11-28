@@ -240,7 +240,22 @@ export interface Card {
   attachmentCount: number
   /** The card carries a repeat rule. */
   recurring: boolean
+  /** At least one card it waits on is still open. */
+  blocked: boolean
+  /** Open cards this one waits on. */
+  blockerCount: number
+  /** Open cards waiting on this one. */
+  blockingCount: number
   rowVersion: string
+}
+
+/** A card another card waits on, as the card sheet lists it. */
+export interface Blocker {
+  id: string
+  key: string
+  title: string
+  completed: boolean
+  archived: boolean
 }
 
 export interface ChecklistItem {
@@ -300,6 +315,7 @@ export interface CardDetail {
   checklist: ChecklistItem[]
   attachments: Attachment[]
   recurrence: Recurrence | null
+  blockedBy: Blocker[]
 }
 
 export type RecurrenceKind = 'Daily' | 'Weekly' | 'Monthly'
@@ -372,6 +388,11 @@ export const cardsApi = {
     api.put<Recurrence>(`${cards(boardId)}/${cardId}/recurrence`, input),
   clearRecurrence: (boardId: string, cardId: string) =>
     api.del(`${cards(boardId)}/${cardId}/recurrence`),
+  /** 409 `dependency_cycle` when the blocker already waits on this card. */
+  addBlocker: (boardId: string, cardId: string, blockerId: string) =>
+    api.put<Card>(`${cards(boardId)}/${cardId}/blocked-by/${blockerId}`),
+  removeBlocker: (boardId: string, cardId: string, blockerId: string) =>
+    api.del<Card>(`${cards(boardId)}/${cardId}/blocked-by/${blockerId}`),
 }
 
 const card = (boardId: string, cardId: string) => `${cards(boardId)}/${cardId}`

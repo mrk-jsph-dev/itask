@@ -48,6 +48,24 @@ public sealed class LiveUpdatesTests(ApiFactory factory) : IClassFixture<ApiFact
     }
 
     [Fact]
+    public async Task Completing_a_blocker_pushes_the_unblocked_card()
+    {
+        var board = await CreateBoardAsync();
+        var waiting = await board.Editor.Client.CreateCardAsync(board.Id, board.TodoId, "Ship it");
+        var blocker = await board.Editor.Client.CreateCardAsync(board.Id, board.TodoId, "Test it");
+        (await board.Editor.Client.PutAsync(
+            new Uri($"{CardTestKit.Cards(board.Id)}/{waiting.Id}/blocked-by/{blocker.Id}", UriKind.Relative), null))
+            .EnsureSuccessStatusCode();
+        await using var viewer = await JoinAsync(board.Viewer, board.Id);
+
+        (await board.Editor.Client.PostEmptyAsync($"{CardTestKit.Cards(board.Id)}/{blocker.Id}/complete")).EnsureSuccessStatusCode();
+
+        var events = new[] { await LiveConnection.NextAsync(viewer.Events), await LiveConnection.NextAsync(viewer.Events) };
+        Assert.Contains(events, e => e.Type == ActivityTypes.CardCompleted && e.CardId == blocker.Id);
+        Assert.Contains(events, e => e.Type == ActivityTypes.CardUnblocked && e.CardId == waiting.Id);
+    }
+
+    [Fact]
     public async Task Non_members_cannot_join()
     {
         var board = await CreateBoardAsync();

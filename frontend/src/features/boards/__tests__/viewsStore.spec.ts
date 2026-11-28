@@ -29,6 +29,9 @@ const card = (id: string, extra: Partial<Card> = {}): Card => ({
   commentCount: 0,
   attachmentCount: 0,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'rv',
   ...extra,
 })
@@ -123,6 +126,7 @@ describe('views store', () => {
       checklist: [],
       attachments: [],
       recurrence: null,
+      blockedBy: [],
     })
     const views = useViewsStore()
     await views.load('b1', emptyFilter(), 'position')

@@ -381,7 +381,7 @@ const segment = (active: boolean) =>
             'is-done': !!card.completedAt,
           }"
           :style="{ '--tone': tone(card) }"
-          :aria-label="`${card.key} ${card.title}`"
+          :aria-label="`${card.key} ${card.title}${card.blocked ? ', blocked' : ''}`"
           :aria-keyshortcuts="
             editable ? 'Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown' : undefined
           "
@@ -400,6 +400,7 @@ const segment = (active: boolean) =>
           <span
             class="w-full truncate text-xs font-semibold"
             :class="{ 'line-clamp-2 whitespace-normal': mode === 'week' }"
+            ><span v-if="card.blocked" aria-hidden="true" data-testid="blocked-chip">🔒 </span
             ><span v-if="card.emoji" aria-hidden="true">{{ card.emoji }} </span
             >{{ card.title }}</span
           >

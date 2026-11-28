@@ -55,7 +55,11 @@ export interface BoardFilter {
   priority: CardPriority[]
   q: string
   hideCompleted: boolean
+  /** `yes` = only blocked cards, `no` = only unblocked ones, `''` = all. */
+  blocked: BlockedFilter
 }
+
+export type BlockedFilter = '' | 'yes' | 'no'
 
 /** Everything a board page keeps in the URL query. `view` is null when the URL doesn't say. */
 export interface BoardState {
@@ -72,6 +76,7 @@ export const emptyFilter = (): BoardFilter => ({
   assignees: [],
   due: [],
   priority: [],
+  blocked: '',
   q: '',
   hideCompleted: false,
 })
@@ -113,6 +118,7 @@ export function parseQuery(query: LocationQuery): BoardState {
       ),
       q: first(query.q).slice(0, 100),
       hideCompleted: first(query.completed) === 'false',
+      blocked: oneOf(first(query.blocked), ['yes', 'no'] as const, '' as BlockedFilter),
     },
     sort: oneOf(first(query.sort), sortKeys, 'position'),
     group: oneOf(first(query.group), groupKeys, 'none'),
@@ -131,6 +137,7 @@ export function toQuery(state: BoardState): LocationQueryRaw {
   if (filter.priority.length) query.priority = filter.priority.join(',')
   if (filter.q.trim()) query.q = filter.q.trim()
   if (filter.hideCompleted) query.completed = 'false'
+  if (filter.blocked) query.blocked = filter.blocked
   if (state.sort !== 'position') query.sort = state.sort
   if (state.group !== 'none') query.group = state.group
   if (state.month) query.month = state.month
@@ -142,7 +149,8 @@ export function activeCount(filter: BoardFilter): number {
   return (
     [filter.labels, filter.assignees, filter.due, filter.priority].filter((v) => v.length).length +
     (filter.q.trim() ? 1 : 0) +
-    (filter.hideCompleted ? 1 : 0)
+    (filter.hideCompleted ? 1 : 0) +
+    (filter.blocked ? 1 : 0)
   )
 }
 
@@ -160,6 +168,7 @@ export function toApiParams(
   if (filter.priority.length) params.set('priority', filter.priority.join(','))
   if (filter.q.trim()) params.set('q', filter.q.trim())
   if (filter.hideCompleted) params.set('completed', 'false')
+  if (filter.blocked) params.set('blocked', filter.blocked)
   if (sort !== 'position') params.set('sort', sort)
   if (range) {
     params.set('dueFrom', range.from.toISOString())
@@ -213,6 +222,7 @@ export function matches(card: Card, filter: BoardFilter, now = new Date()): bool
     if (!hit) return false
   }
   if (filter.priority.length && !filter.priority.includes(card.priority)) return false
+  if (filter.blocked && card.blocked !== (filter.blocked === 'yes')) return false
   const q = filter.q.trim().toLowerCase()
   if (q) {
     const keyHit = keyPattern.test(q) && card.key.toLowerCase() === q

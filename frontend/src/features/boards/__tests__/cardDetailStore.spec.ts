@@ -36,6 +36,9 @@ const tile: Card = {
   emoji: null,
   attachmentCount: 0,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'rv',
 }
 
@@ -84,6 +87,7 @@ async function opened() {
     checklist: [item('a', true), item('b')],
     attachments: [],
     recurrence: null,
+    blockedBy: [],
   })
   // Newest first from the API.
   vi.spyOn(commentsApi, 'page').mockResolvedValue({

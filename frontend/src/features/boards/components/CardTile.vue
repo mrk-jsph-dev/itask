@@ -5,6 +5,7 @@ import { initials } from '@/shared/ui/initials'
 import { useMenu } from '@/shared/ui/menu'
 import type { BoardList, Card } from '../api'
 import { dueState, formatDue, priorityStyle } from '../cardOptions'
+import BlockedChip from './BlockedChip.vue'
 
 const props = defineProps<{
   card: Card
@@ -69,7 +70,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
   <article
     class="lift relative flex flex-col gap-3 rounded-[14px] border border-line-soft bg-panel p-3.5 shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
     :class="{ 'cursor-grab active:cursor-grabbing': editable }"
-    :aria-label="`${card.key} ${card.title}`"
+    :aria-label="`${card.key} ${card.title}${card.blocked ? ', blocked' : ''}`"
   >
     <span
       v-if="card.coverColor"
@@ -189,9 +190,17 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
     </ul>
 
     <div
-      v-if="priority || card.recurring || card.checklistTotal || card.attachmentCount"
+      v-if="
+        priority ||
+        card.recurring ||
+        card.checklistTotal ||
+        card.attachmentCount ||
+        card.blocked ||
+        card.blockingCount
+      "
       class="flex items-center gap-2.5 text-[13px] text-[#374151]"
     >
+      <BlockedChip :card="card" show-blocking />
       <span
         v-if="priority"
         class="flex items-center gap-[5px] rounded-lg px-[9px] py-[3px] font-semibold"

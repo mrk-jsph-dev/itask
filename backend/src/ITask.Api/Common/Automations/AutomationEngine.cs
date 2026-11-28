@@ -449,6 +449,9 @@ public sealed partial class AutomationEngine(TimeProvider clock, AutomationRunLo
                 case ActivityTypes.CardReopened:
                     events.Add(new CardEvent(AutomationCatalog.CardReopened));
                     break;
+                case ActivityTypes.CardUnblocked:
+                    events.Add(new CardEvent(AutomationCatalog.CardUnblocked));
+                    break;
                 case ActivityTypes.CardAssigneesChanged:
                     events.Add(new CardEvent(AutomationCatalog.AssigneesChanged));
                     break;

@@ -32,6 +32,8 @@ public class NotificationPreference
 
     public bool CommentOnMyCard { get; set; } = true;
 
+    public bool Unblocked { get; set; } = true;
+
     /// <summary>When the last digest went out (or was skipped as empty).</summary>
     public DateTimeOffset? LastDigestAt { get; set; }
 }

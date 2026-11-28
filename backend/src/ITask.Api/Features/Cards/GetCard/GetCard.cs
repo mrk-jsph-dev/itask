@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ITask.Api.Features.Cards.GetCard;
 
 /// <summary>
-/// One card with its description, checklist, files and repeat rule, including archived cards. Any member may
+/// One card with its description, checklist, files, repeat rule and blockers, including archived cards. Any member may
 /// read. Comments load separately, paged.
 /// </summary>
 public static class GetCard
@@ -21,7 +21,8 @@ public static class GetCard
         DateTimeOffset CreatedAt,
         IReadOnlyList<ChecklistItemView> Checklist,
         IReadOnlyList<AttachmentView> Attachments,
-        RecurrenceView? Recurrence);
+        RecurrenceView? Recurrence,
+        IReadOnlyList<BlockerView> BlockedBy);
 
     internal sealed class Endpoint : IEndpoint
     {
@@ -77,7 +78,8 @@ public static class GetCard
                 detail.CreatedAt,
                 checklist,
                 [.. attachments.OrderBy(a => a.CreatedAt)],
-                recurrence is null ? null : RecurrenceView.From(recurrence)));
+                recurrence is null ? null : RecurrenceView.From(recurrence),
+                await Dependencies.BlockersAsync(db, boardId, cardId, ct)));
         }
     }
 }

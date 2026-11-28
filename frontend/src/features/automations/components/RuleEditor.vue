@@ -20,6 +20,7 @@ import {
   priorities,
   triggerOptions,
   unfixable,
+  warnOnlyInFix,
   type BoardRefs,
 } from '../catalog'
 
@@ -192,6 +193,12 @@ const chip = 'text-sm font-semibold text-muted'
         <option value="Fix">fill in what's missing</option>
         <option value="Warn">let it through with a warning</option>
       </select>
+      <p
+        v-if="draft.mode === 'Fix' && draft.conditions.some((c) => warnOnlyInFix.has(c.type))"
+        class="basis-full text-sm text-muted"
+      >
+        Fix can't unblock a card; for open blockers it only warns.
+      </p>
     </fieldset>
 
     <fieldset v-else class="flex flex-wrap items-center gap-2">

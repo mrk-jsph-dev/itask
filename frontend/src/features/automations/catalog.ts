@@ -36,6 +36,7 @@ export const triggerOptions: (Option & {
   { value: 'assignees.changed', label: 'assignees change' },
   { value: 'checklist.done', label: 'the checklist is finished' },
   { value: 'comment.added', label: 'someone comments' },
+  { value: 'card.unblocked', label: 'a card is unblocked' },
   { value: 'due.soon', label: 'a due date is close', needs: 'days', hourly: true },
   { value: 'due.overdue', label: 'a card is overdue', hourly: true },
   { value: 'list.stale', label: 'a card sits in', needs: 'list+days', hourly: true },
@@ -51,6 +52,8 @@ export const conditionOptions: Option[] = [
   { value: 'priority.atLeast', label: 'has priority at least' },
   { value: 'due.set', label: 'has a due date' },
   { value: 'checklist.done', label: 'has a finished checklist' },
+  { value: 'blocked.no', label: 'has no open blockers' },
+  { value: 'blocked.yes', label: 'waits on an open card' },
 ]
 
 export const actionOptions: Option[] = [
@@ -83,6 +86,9 @@ export const usesAi = (a: Pick<Automation, 'actions'>) => a.actions.some((x) => 
 
 /** Requirements a fix-mode doorway can't fill in by itself. */
 export const unfixable = new Set(['due.set', 'checklist.done'])
+
+/** Requirements a fix-mode doorway can't fill in either, so it only warns about them. */
+export const warnOnlyInFix = new Set(['blocked.no'])
 
 export const isHourly = (trigger: string) =>
   triggerOptions.some((t) => t.value === trigger && t.hourly)
@@ -148,6 +154,10 @@ export function describeCondition(c: ConditionSpec, refs: BoardRefs): string {
       return 'a due date'
     case 'checklist.done':
       return 'a finished checklist'
+    case 'blocked.no':
+      return 'no open blockers'
+    case 'blocked.yes':
+      return 'an open blocker'
     default:
       return c.type
   }
@@ -224,6 +234,7 @@ export function unmetRequirements(
     dueAt: string | null
     checklistDone: number
     checklistTotal: number
+    blocked?: boolean
   },
   doorway: Pick<Automation, 'conditions'>,
   refs: BoardRefs,
@@ -247,6 +258,10 @@ export function unmetRequirements(
         return card.dueAt !== null
       case 'checklist.done':
         return card.checklistTotal > 0 && card.checklistDone === card.checklistTotal
+      case 'blocked.no':
+        return !card.blocked
+      case 'blocked.yes':
+        return !!card.blocked
       default:
         return true
     }

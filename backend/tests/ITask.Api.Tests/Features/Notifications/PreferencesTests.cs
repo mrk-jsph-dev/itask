@@ -26,7 +26,7 @@ public sealed class PreferencesTests(ApiFactory factory) : IClassFixture<ApiFact
     public async Task Saves_and_reads_back()
     {
         var client = await factory.CreateSignedInClientAsync();
-        var types = new DigestTypes(Mentioned: true, Assigned: false, DueSoon: true, Overdue: false, Invited: true, CommentOnMyCard: false);
+        var types = new DigestTypes(Mentioned: true, Assigned: false, DueSoon: true, Overdue: false, Invited: true, CommentOnMyCard: false, Unblocked: false);
 
         var response = await client.PutAsJsonAsync(Url, new { digest = "Weekly", types });
 

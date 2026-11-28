@@ -54,6 +54,8 @@ export function planFor(e: BoardEvent, plan: LivePlan) {
     case 'comment':
     case 'doorway':
       if (!e.cardId) break
+      // The blocker's "blocks N" changes too, and events only carry the blocked card's id.
+      if (e.type.startsWith('card.dependency_')) plan.lists = true
       plan.cards.add(e.cardId)
       plan.view = true
       detail(plan, e.cardId, category === 'comment' ? 'comments' : 'card')

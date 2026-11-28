@@ -57,6 +57,10 @@ const chip =
 const chipState = (active: boolean) =>
   active ? 'border-accent bg-[#EFF4FF] text-accent' : 'border-line text-[#374151] hover:bg-hover'
 const priorityChoices = priorities as readonly CardPriority[]
+const blockedChoices = [
+  { value: 'yes', label: '🔒 Blocked' },
+  { value: 'no', label: 'Not blocked' },
+] as const
 </script>
 
 <template>
@@ -107,6 +111,24 @@ const priorityChoices = priorities as readonly CardPriority[]
           @click="toggle('priority', p)"
         >
           {{ p === 'None' ? 'No priority' : p }}
+        </button>
+      </div>
+    </fieldset>
+
+    <fieldset class="flex flex-col gap-2">
+      <legend class="mb-2 text-xs font-semibold text-muted">Dependencies</legend>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="b in blockedChoices"
+          :key="b.value"
+          type="button"
+          :class="[chip, chipState(filter.blocked === b.value)]"
+          :aria-pressed="filter.blocked === b.value"
+          @click="
+            emit('change', { ...filter, blocked: filter.blocked === b.value ? '' : b.value })
+          "
+        >
+          {{ b.label }}
         </button>
       </div>
     </fieldset>

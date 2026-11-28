@@ -36,6 +36,9 @@ const card = (id: string, listId: string, position: number, extra: Partial<Card>
   commentCount: 0,
   attachmentCount: 0,
   recurring: false,
+  blocked: false,
+  blockerCount: 0,
+  blockingCount: 0,
   rowVersion: 'rv',
   ...extra,
 })
@@ -59,6 +62,7 @@ const detailOf = (c: Card, extra: Partial<CardDetail> = {}): CardDetail => ({
   checklist: [],
   attachments: [],
   recurrence: null,
+  blockedBy: [],
   ...extra,
 })
 

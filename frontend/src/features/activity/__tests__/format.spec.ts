@@ -59,6 +59,21 @@ describe('describeActivity', () => {
     ],
     ['card.recurrence_cleared', { card }, 'stopped the repeat on Fix login'],
     [
+      'card.dependency_added',
+      { card, blocker: { key: 'ITK-2', title: 'Write tests' } },
+      'made ITK-2 Write tests block Fix login',
+    ],
+    [
+      'card.dependency_removed',
+      { card, blocker: { key: 'ITK-2', title: 'Write tests' } },
+      'removed ITK-2 Write tests as a blocker of Fix login',
+    ],
+    [
+      'card.unblocked',
+      { card, blocker: { key: 'ITK-2', title: 'Write tests' } },
+      'finished ITK-2 Write tests, which unblocked Fix login',
+    ],
+    [
       'card.updated',
       { card, fields: ['title'], from: 'Login bug' },
       'renamed “Login bug” to Fix login',

@@ -62,6 +62,14 @@ export function joinNames(names: string[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
+/** "ITK-2 Write tests" for the blocker a dependency entry names. */
+function blockerText(data: Record<string, unknown>): string {
+  const blocker = data.blocker as { key?: unknown; title?: unknown } | undefined
+  const key = typeof blocker?.key === 'string' ? blocker.key : null
+  const title = typeof blocker?.title === 'string' ? blocker.title : null
+  return [key, title].filter(Boolean).join(' ') || 'a card'
+}
+
 function cardTitle(data: Record<string, unknown>): string | null {
   const card = data.card as { title?: unknown } | undefined
   return str(card?.title)
@@ -180,6 +188,12 @@ function sentence(type: string, data: Record<string, unknown>): [string, string 
       return [`set ${repeatText(data)} on`, card]
     case 'card.recurrence_cleared':
       return ['stopped the repeat on', card]
+    case 'card.dependency_added':
+      return [`made ${blockerText(data)} block`, card]
+    case 'card.dependency_removed':
+      return [`removed ${blockerText(data)} as a blocker of`, card]
+    case 'card.unblocked':
+      return [`finished ${blockerText(data)}, which unblocked`, card]
     case 'card.updated':
       return [cardUpdate(data), card]
     case 'card.moved':

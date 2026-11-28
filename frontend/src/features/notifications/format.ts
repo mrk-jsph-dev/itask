@@ -55,6 +55,8 @@ export function describeNotification(n: AppNotification): NotificationLine {
         suffix: due ? ` · ${dueLabel(due)}` : null,
         to,
       }
+    case 'unblocked':
+      return { emoji: '🔓', actor: null, what: 'Unblocked:', target: card, suffix: null, to }
     case 'overdue':
       return { emoji: '🔥', actor: null, what: 'Overdue:', target: card, suffix: null, to }
     case 'invited':
@@ -105,4 +107,5 @@ export const digestTypeOptions: readonly {
   { key: 'dueSoon', label: 'Due soon', type: 'due_soon' },
   { key: 'overdue', label: 'Overdue', type: 'overdue' },
   { key: 'invited', label: 'Board invites', type: 'invited' },
+  { key: 'unblocked', label: 'My cards unblocked', type: 'unblocked' },
 ]

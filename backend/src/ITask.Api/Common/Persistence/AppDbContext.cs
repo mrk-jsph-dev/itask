@@ -44,6 +44,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<CardRecurrence> CardRecurrences => Set<CardRecurrence>();
 
+    public DbSet<CardDependency> CardDependencies => Set<CardDependency>();
+
     public DbSet<BoardTemplate> BoardTemplates => Set<BoardTemplate>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -179,6 +181,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             // Deleting a board cascades through cards; label deletes clear their links in the slice.
             cardLabel.HasOne(cl => cl.Label).WithMany().HasForeignKey(cl => cl.LabelId).OnDelete(DeleteBehavior.NoAction);
             cardLabel.HasIndex(cl => cl.LabelId);
+        });
+
+        builder.Entity<CardDependency>(dependency =>
+        {
+            dependency.HasKey(d => new { d.CardId, d.BlockedById });
+            dependency.HasOne(d => d.Card).WithMany(c => c.BlockedBy).HasForeignKey(d => d.CardId);
+
+            // Deleting a board cascades through CardId; a second cascade path is not allowed on SQL Server.
+            dependency.HasOne(d => d.BlockedBy).WithMany(c => c.Blocking).HasForeignKey(d => d.BlockedById).OnDelete(DeleteBehavior.NoAction);
+            dependency.HasIndex(d => d.BlockedById);
         });
 
         builder.Entity<CardAssignee>(assignee =>

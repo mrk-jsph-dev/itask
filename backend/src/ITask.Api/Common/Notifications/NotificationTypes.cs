@@ -15,6 +15,9 @@ public static class NotificationTypes
     public const string Invited = "invited";
     public const string CommentOnMyCard = "comment_on_my_card";
 
+    /// <summary>A card you are assigned to no longer waits on any open card.</summary>
+    public const string Unblocked = "unblocked";
+
     /// <summary>Sent by a board automation's notify action; in-app only.</summary>
     public const string Automation = "automation";
 
@@ -30,6 +33,7 @@ public static class NotificationTypes
             Overdue => prefs.Overdue,
             Invited => prefs.Invited,
             CommentOnMyCard => prefs.CommentOnMyCard,
+            Unblocked => prefs.Unblocked,
             _ => false,
         };
     }

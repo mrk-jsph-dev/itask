@@ -156,10 +156,9 @@ export const useCardsStore = defineStore('cards', () => {
           ? cardsApi.reopen(boardId(), card.id)
           : cardsApi.complete(boardId(), card.id)),
       )
-      if (spawns) {
-        await reloadLists()
-        toast('🔁 Next one is on the board.')
-      }
+      // New copies and the cards waiting on this one are elsewhere on the board.
+      if (spawns || card.blockingCount) await reloadLists()
+      if (spawns) toast('🔁 Next one is on the board.')
     } catch (e) {
       toast(errorText(e, "Couldn't update the card."), 'error')
     }
@@ -180,6 +179,7 @@ export const useCardsStore = defineStore('cards', () => {
       toast(errorText(e, "Couldn't archive the card."), 'error')
       return
     }
+    if (card.blockingCount) await reloadLists()
     toastWithUndo(`Archived "${card.title}".`, () => void restore(card))
   }
 
@@ -189,6 +189,7 @@ export const useCardsStore = defineStore('cards', () => {
       const restored = await cardsApi.restore(boardId(), card.id)
       const list = listsStore.lists?.find((l) => l.id === restored.listId)
       if (list) list.cards = [...list.cards, restored]
+      if (restored.blockingCount) await reloadLists()
     } catch (e) {
       toast(errorText(e, "Couldn't restore the card."), 'error')
     }

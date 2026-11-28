@@ -89,6 +89,18 @@ describe('doorway requirements on a card', () => {
       'a finished checklist',
     ])
   })
+
+  it('knows whether a card is blocked', () => {
+    const doorway = { conditions: [{ type: 'blocked.no' }] }
+
+    expect(unmetRequirements({ ...card, blocked: true }, doorway, refs)).toEqual([
+      'no open blockers',
+    ])
+    expect(unmetRequirements({ ...card, blocked: false }, doorway, refs)).toEqual([])
+    expect(unmetRequirements(card, { conditions: [{ type: 'blocked.yes' }] }, refs)).toEqual([
+      'an open blocker',
+    ])
+  })
 })
 
 describe('presets', () => {

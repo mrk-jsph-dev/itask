@@ -20,6 +20,9 @@ public sealed class CardState
 
     public int ChecklistDone { get; init; }
 
+    /// <summary>At least one blocker is open (not completed, not archived), with the save's pending changes applied.</summary>
+    public bool Blocked { get; init; }
+
     public static async Task<CardState> LoadAsync(AppDbContext db, Card card, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(db);
@@ -46,8 +49,17 @@ public sealed class CardState
             .DistinctBy(i => i.Id)
             .ToList();
 
+        var blockers = await db.CardDependencies.AsNoTracking()
+            .Where(d => d.CardId == card.Id)
+            .Select(d => new { d.BlockedById, d.BlockedBy!.CompletedAt, d.BlockedBy.ArchivedAt })
+            .ToListAsync(ct);
+        var blocked = blockers.Any(b => db.Cards.Local.FirstOrDefault(c => c.Id == b.BlockedById) is { } local
+            ? local.CompletedAt is null && local.ArchivedAt is null
+            : b.CompletedAt is null && b.ArchivedAt is null);
+
         return new CardState
         {
+            Blocked = blocked,
             Card = card,
             Labels = labels,
             Assignees = assignees,
@@ -74,6 +86,8 @@ public sealed class CardState
             AutomationCatalog.IfAssigneeIs => condition.UserId is { } id && Assignees.Contains(id),
             AutomationCatalog.IfDueSet => Card.DueAt is not null,
             AutomationCatalog.IfChecklistDone => ChecklistComplete,
+            AutomationCatalog.IfBlocked => Blocked,
+            AutomationCatalog.IfNotBlocked => !Blocked,
             _ => false,
         };
     }
@@ -94,6 +108,8 @@ public sealed class CardState
             AutomationCatalog.IfAssigneeIs => $"{(condition.UserId is { } id && board.Members.TryGetValue(id, out var m) ? m.Name : "a former member")} assigned",
             AutomationCatalog.IfDueSet => "a due date",
             AutomationCatalog.IfChecklistDone => "a finished checklist",
+            AutomationCatalog.IfBlocked => "an open blocker",
+            AutomationCatalog.IfNotBlocked => "no open blockers",
             _ => condition.Type,
         };
     }

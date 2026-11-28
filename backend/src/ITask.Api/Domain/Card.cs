@@ -78,6 +78,12 @@ public class Card
 
     public List<Attachment> Attachments { get; } = [];
 
+    /// <summary>Links to the cards this card waits on.</summary>
+    public List<CardDependency> BlockedBy { get; } = [];
+
+    /// <summary>Links to the cards waiting on this card.</summary>
+    public List<CardDependency> Blocking { get; } = [];
+
     /// <summary>Display key such as ITK-42.</summary>
     public static string Key(string prefix, int number) => $"{prefix}-{number}";
 }

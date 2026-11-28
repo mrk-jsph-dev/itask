@@ -666,6 +666,27 @@ namespace ITask.Api.Migrations
                     b.ToTable("CardAssignees");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.CardDependency", b =>
+                {
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlockedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CardId", "BlockedById");
+
+                    b.HasIndex("BlockedById");
+
+                    b.ToTable("CardDependencies");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.CardLabel", b =>
                 {
                     b.Property<Guid>("CardId")
@@ -948,6 +969,9 @@ namespace ITask.Api.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("Overdue")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Unblocked")
                         .HasColumnType("bit");
 
                     b.HasKey("UserId");
@@ -1312,6 +1336,25 @@ namespace ITask.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ITask.Api.Domain.CardDependency", b =>
+                {
+                    b.HasOne("ITask.Api.Domain.Card", "BlockedBy")
+                        .WithMany("Blocking")
+                        .HasForeignKey("BlockedById")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ITask.Api.Domain.Card", "Card")
+                        .WithMany("BlockedBy")
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlockedBy");
+
+                    b.Navigation("Card");
+                });
+
             modelBuilder.Entity("ITask.Api.Domain.CardLabel", b =>
                 {
                     b.HasOne("ITask.Api.Domain.Card", "Card")
@@ -1521,6 +1564,10 @@ namespace ITask.Api.Migrations
                     b.Navigation("Assignees");
 
                     b.Navigation("Attachments");
+
+                    b.Navigation("BlockedBy");
+
+                    b.Navigation("Blocking");
 
                     b.Navigation("Checklist");
 
