@@ -37,7 +37,11 @@ const at = (d: number, h = 12) => new Date(2026, 2, d, h).toISOString()
 function setWidth(phone: boolean) {
   vi.stubGlobal(
     'matchMedia',
-    vi.fn(() => ({ matches: phone, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+    vi.fn(() => ({
+      matches: phone,
+      addEventListener: vi.fn<() => void>(),
+      removeEventListener: vi.fn<() => void>(),
+    })),
   )
 }
 
