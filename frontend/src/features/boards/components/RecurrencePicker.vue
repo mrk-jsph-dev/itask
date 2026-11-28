@@ -83,10 +83,10 @@ function onKeydown(event: KeyboardEvent) {
 
 const segment = (active: boolean) =>
   active
-    ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+    ? 'bg-panel font-semibold text-ink shadow-card'
     : 'font-medium text-muted'
 const chip = (active: boolean) =>
-  active ? 'border-accent bg-[#EFF4FF] text-accent' : 'border-line text-[#374151] hover:bg-hover'
+  active ? 'border-accent bg-accent-soft text-accent-strong' : 'border-line text-ink-soft hover:bg-hover'
 </script>
 
 <template>
@@ -98,7 +98,7 @@ const chip = (active: boolean) =>
       type="button"
       class="ghost flex min-h-[30px] items-center gap-1.5 rounded-lg px-2.5 text-left text-[13px] font-medium"
       :class="
-        rule ? 'bg-[#EFF4FF] text-accent-strong' : 'border border-dashed border-line text-[#374151]'
+        rule ? 'bg-accent-soft text-accent-strong' : 'border border-dashed border-line text-ink-soft'
       "
       aria-haspopup="dialog"
       :aria-expanded="open"
@@ -121,7 +121,7 @@ const chip = (active: boolean) =>
       ref="panel"
       role="dialog"
       aria-label="Repeat task"
-      class="pop absolute top-10 left-0 z-30 flex w-[min(320px,calc(100vw-32px))] flex-col gap-4 rounded-[var(--radius-control)] border border-line-soft bg-panel p-4 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+      class="pop absolute top-10 left-0 z-30 flex w-[min(320px,calc(100vw-32px))] flex-col gap-4 rounded-[var(--radius-control)] border border-line-soft bg-panel p-4 text-sm shadow-pop"
       @keydown="onKeydown"
       @submit.prevent="save"
     >
@@ -194,7 +194,7 @@ const chip = (active: boolean) =>
         <button
           v-if="rule"
           type="button"
-          class="ghost mr-auto h-9 rounded-full px-3 text-sm font-semibold text-[#B91C1C]"
+          class="ghost mr-auto h-9 rounded-full px-3 text-sm font-semibold text-danger"
           :disabled="saving"
           @click="stop"
         >
@@ -209,7 +209,7 @@ const chip = (active: boolean) =>
         </button>
         <button
           type="submit"
-          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
           :disabled="saving || !isValid(form) || !form.targetListId"
         >
           Save

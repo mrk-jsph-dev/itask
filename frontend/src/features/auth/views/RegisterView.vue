@@ -127,13 +127,13 @@ async function submit() {
           </span>
         </div>
         <TurnstileWidget ref="widget" v-model:token="token" />
-        <ul v-if="errors.length" role="alert" class="flex flex-col gap-1 text-sm text-red-600">
+        <ul v-if="errors.length" role="alert" class="flex flex-col gap-1 text-sm text-danger">
           <li v-for="message in errors" :key="message">{{ message }}</li>
         </ul>
         <button
           type="submit"
           :disabled="!canSubmit"
-          class="press mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
+          class="press mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-on-accent disabled:opacity-60"
         >
           <span v-if="busy" class="spinner" aria-hidden="true" />
           {{ busy ? 'Creating account…' : 'Create account' }}

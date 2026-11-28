@@ -6,9 +6,9 @@ const emit = defineEmits<{ stop: []; cancel: [] }>()
 <template>
   <div
     role="status"
-    class="pop fixed bottom-6 left-1/2 z-40 flex w-[min(460px,calc(100%-32px))] -translate-x-1/2 items-center gap-3 rounded-full border border-line-soft bg-panel py-2 pr-2 pl-4 text-sm shadow-[0_18px_40px_rgb(17_24_39/0.18)]"
+    class="pop fixed bottom-6 left-1/2 z-40 flex w-[min(460px,calc(100%-32px))] -translate-x-1/2 items-center gap-3 rounded-full border border-line-soft bg-panel py-2 pr-2 pl-4 text-sm shadow-float"
   >
-    <span class="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-600" aria-hidden="true" />
+    <span class="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-danger-fill" aria-hidden="true" />
     <span class="min-w-0 flex-1">
       {{
         cardTouched
@@ -18,7 +18,7 @@ const emit = defineEmits<{ stop: []; cancel: [] }>()
     </span>
     <button
       type="button"
-      class="press h-8 rounded-full bg-accent px-3 font-semibold text-white disabled:opacity-60"
+      class="press h-8 rounded-full bg-accent px-3 font-semibold text-on-accent disabled:opacity-60"
       :disabled="busy"
       @click="emit('stop')"
     >

@@ -136,7 +136,13 @@ public static class ITaskServiceExtensions
         ArgumentNullException.ThrowIfNull(app);
 
         app.UseForwardedHeaders();
-        app.UseExceptionHandler();
+        // Development throws BadHttpRequestException for unreadable bodies; keep its 400 instead of a 500.
+        app.UseExceptionHandler(new ExceptionHandlerOptions
+        {
+            StatusCodeSelector = ex => ex is BadHttpRequestException bad
+                ? bad.StatusCode
+                : StatusCodes.Status500InternalServerError,
+        });
         app.UseStatusCodePages();
 
         if (!app.Environment.IsDevelopment())

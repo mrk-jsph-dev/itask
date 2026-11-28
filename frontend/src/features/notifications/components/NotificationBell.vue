@@ -110,7 +110,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onOutside))
         v-if="badge"
         :key="popKey"
         data-testid="bell-badge"
-        class="pop absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-white ring-2 ring-panel"
+        class="pop absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-on-accent ring-2 ring-panel"
         aria-hidden="true"
         >{{ badge }}</span
       >
@@ -123,10 +123,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onOutside))
       role="dialog"
       aria-label="Notifications"
       tabindex="-1"
-      class="fade-up absolute top-12 right-0 z-40 flex w-[min(380px,calc(100vw-32px))] flex-col rounded-[18px] border border-line bg-panel shadow-[0_10px_24px_rgb(17_24_39/0.10)] outline-none"
+      class="fade-up absolute top-12 right-0 z-40 flex w-[min(380px,calc(100vw-32px))] flex-col rounded-[18px] border border-line bg-panel shadow-pop outline-none"
       @keydown.esc.stop="close(true)"
     >
-      <div class="flex items-center gap-2 border-b border-[#EEF1F6] px-4 py-3">
+      <div class="flex items-center gap-2 border-b border-line-faint px-4 py-3">
         <h2 class="text-[15px] font-semibold">Notifications</h2>
         <button
           v-if="store.unreadCount"
@@ -152,8 +152,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onOutside))
         <li
           v-for="n in store.latest"
           :key="n.id"
-          class="border-b border-[#EEF1F6] px-4 py-3 hover:bg-hover"
-          :class="{ 'bg-[#F6F8FD]': !n.readAt }"
+          class="border-b border-line-faint px-4 py-3 hover:bg-hover"
+          :class="{ 'bg-highlight': !n.readAt }"
         >
           <NotificationRow
             :notification="n"

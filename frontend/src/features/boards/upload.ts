@@ -84,7 +84,7 @@ export function typeBadge(attachment: Pick<Attachment, 'fileName' | 'contentType
 
 /** Badge colours per frame C5: images blue, PDFs red, everything else grey. */
 export function badgeClass(attachment: Pick<Attachment, 'contentType'>): string {
-  if (attachment.contentType.startsWith('image/')) return 'bg-[#EFF4FF] text-[#1D4ED8]'
-  if (attachment.contentType === 'application/pdf') return 'bg-[#FEF2F2] text-[#B91C1C]'
+  if (attachment.contentType.startsWith('image/')) return 'bg-accent-soft text-accent-strong'
+  if (attachment.contentType === 'application/pdf') return 'bg-danger-soft text-danger'
   return 'bg-hover text-muted'
 }

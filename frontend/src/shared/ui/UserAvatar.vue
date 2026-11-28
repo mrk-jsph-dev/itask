@@ -2,10 +2,11 @@
 import { computed } from 'vue'
 
 import { initials } from './initials'
+import { colorPalette } from './palette'
 
 const props = withDefaults(
   defineProps<{ name?: string | null; email?: string; color?: string; size?: number }>(),
-  { name: null, email: '', color: '#1D5BF5', size: 36 },
+  { name: null, email: '', color: colorPalette[0], size: 36 },
 )
 
 const text = computed(() => initials(props.name, props.email))
@@ -13,7 +14,7 @@ const text = computed(() => initials(props.name, props.email))
 
 <template>
   <span
-    class="inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white select-none"
+    class="inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-on-accent select-none"
     :style="{
       width: `${size}px`,
       height: `${size}px`,

@@ -15,8 +15,8 @@ const file = (name: string, type: string, size = 4) =>
 
 describe('upload', () => {
   it('colours badges for images, PDFs and other files', () => {
-    expect(badgeClass({ contentType: 'image/png' })).toContain('#1D4ED8')
-    expect(badgeClass({ contentType: 'application/pdf' })).toContain('#B91C1C')
+    expect(badgeClass({ contentType: 'image/png' })).toContain('text-accent-strong')
+    expect(badgeClass({ contentType: 'application/pdf' })).toContain('text-danger')
     expect(badgeClass({ contentType: 'text/plain' })).toBe('bg-hover text-muted')
   })
 

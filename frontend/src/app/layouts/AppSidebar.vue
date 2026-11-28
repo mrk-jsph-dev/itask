@@ -43,10 +43,10 @@ const icons = {
 }
 
 const pill = computed(() => [
-  'ghost flex h-11 items-center gap-3 rounded-full text-[15px] font-medium text-[#374151] no-underline',
+  'ghost flex h-11 items-center gap-3 rounded-full text-[15px] font-medium text-ink-soft no-underline',
   props.compact ? 'w-11 justify-center self-center' : 'px-3.5',
 ])
-const active = '!bg-panel !font-semibold !text-ink shadow-[0_1px_2px_rgb(17_24_39/0.06)]'
+const active = '!bg-panel !font-semibold !text-ink shadow-card'
 const label = computed(() => (props.compact ? 'sr-only' : 'truncate'))
 
 function newBoard() {
@@ -200,7 +200,7 @@ async function signOut() {
             :to="{ name: 'board', params: { boardId: board.id } }"
             :class="[
               pill,
-              board.id === activeBoardId ? '!bg-[#F6F8FB] !font-semibold !text-ink' : '',
+              board.id === activeBoardId ? '!bg-sunken !font-semibold !text-ink' : '',
             ]"
             :aria-current="board.id === activeBoardId ? 'page' : undefined"
             :title="compact ? board.name : undefined"
@@ -210,7 +210,7 @@ async function signOut() {
               board.emoji ?? '📋'
             }}</span>
             <span :class="label">{{ board.name }}</span>
-            <span v-if="board.isStarred && !compact" class="ml-auto text-xs text-amber-500"
+            <span v-if="board.isStarred && !compact" class="ml-auto text-xs text-warn"
               ><span aria-hidden="true">★</span><span class="sr-only">Starred</span></span
             >
           </RouterLink>
@@ -233,7 +233,7 @@ async function signOut() {
         <li
           v-for="member in members.slice(0, shownMembers)"
           :key="member.userId"
-          class="flex items-center gap-3 text-[15px] text-[#374151]"
+          class="flex items-center gap-3 text-[15px] text-ink-soft"
           :class="compact ? 'justify-center' : 'px-3.5'"
           :title="member.displayName || member.email"
         >

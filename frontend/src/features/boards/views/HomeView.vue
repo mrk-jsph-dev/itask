@@ -56,7 +56,7 @@ onMounted(() => {
     <template #actions>
       <button
         type="button"
-        class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="!online"
         :title="online ? undefined : OFFLINE_HINT"
         @click="store.creating = true"
@@ -113,7 +113,7 @@ onMounted(() => {
               <time
                 :datetime="item.dueAt"
                 class="min-w-14 text-right text-[13px] font-medium"
-                :class="new Date(item.dueAt) < now ? 'text-red-700' : 'text-[#374151]'"
+                :class="new Date(item.dueAt) < now ? 'text-danger' : 'text-ink-soft'"
                 ><span v-if="new Date(item.dueAt) < now" class="sr-only">Overdue, </span
                 >{{ dueDayLabel(item.dueAt, now) }}</time
               >
@@ -144,7 +144,7 @@ onMounted(() => {
             <button
               v-if="!store.showArchived"
               type="button"
-              class="ghost fade-up min-h-[120px] rounded-[18px] border-[1.5px] border-dashed border-line bg-panel text-sm font-semibold text-[#374151] disabled:cursor-not-allowed disabled:opacity-50"
+              class="ghost fade-up min-h-[120px] rounded-[18px] border-[1.5px] border-dashed border-line bg-panel text-sm font-semibold text-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
               :style="{ '--i': Math.min(ordered.length, 8) }"
               :disabled="!online"
               :title="online ? undefined : OFFLINE_HINT"

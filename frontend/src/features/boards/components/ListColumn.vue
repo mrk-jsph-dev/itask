@@ -101,7 +101,7 @@ function save(input: ListInput) {
       <h2 class="min-w-0 truncate text-base font-semibold">{{ list.name }}</h2>
       <span
         class="text-[13px]"
-        :class="overLimit ? 'font-semibold text-red-700' : 'text-muted'"
+        :class="overLimit ? 'font-semibold text-danger' : 'text-muted'"
         :title="list.wipLimit ? `WIP limit ${list.wipLimit}` : undefined"
         :aria-label="`${cards.length} cards${list.wipLimit ? `, limit ${list.wipLimit}` : ''}`"
         >{{ cards.length }}<template v-if="list.wipLimit">/{{ list.wipLimit }}</template></span
@@ -122,7 +122,7 @@ function save(input: ListInput) {
         </button>
         <button
           type="button"
-          class="ghost h-[30px] w-[30px] rounded-lg text-lg text-[#374151]"
+          class="ghost h-[30px] w-[30px] rounded-lg text-lg text-ink-soft"
           :aria-label="`Add task to ${list.name} list`"
           @click.stop="addCard"
         >
@@ -134,7 +134,7 @@ function save(input: ListInput) {
           ref="menu"
           role="menu"
           :aria-label="`${list.name} list actions`"
-          class="pop absolute top-11 right-0 z-20 flex w-44 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+          class="pop absolute top-11 right-0 z-20 flex w-44 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-pop"
           @keydown="onMenuKey"
         >
           <button
@@ -166,7 +166,7 @@ function save(input: ListInput) {
           <button
             type="button"
             role="menuitem"
-            class="ghost rounded-lg px-3 py-2 text-left text-red-700"
+            class="ghost rounded-lg px-3 py-2 text-left text-danger"
             @click="pick('archive')"
           >
             🗄 Archive

@@ -65,7 +65,7 @@ function onKeydown(event: KeyboardEvent) {
     role="dialog"
     :aria-label="`Preview of ${card.title}`"
     tabindex="-1"
-    class="preview pop flex flex-col gap-3.5 rounded-[20px] border border-line-soft bg-panel p-5 shadow-[0_20px_48px_rgb(17_24_39/0.16)] outline-none"
+    class="preview pop flex flex-col gap-3.5 rounded-[20px] border border-line-soft bg-panel p-5 shadow-float outline-none"
     @keydown="onKeydown"
   >
     <div class="flex items-center gap-2">
@@ -87,7 +87,7 @@ function onKeydown(event: KeyboardEvent) {
       <span
         v-if="due"
         class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-semibold"
-        :class="due.state === 'overdue' ? 'text-red-700' : 'text-muted'"
+        :class="due.state === 'overdue' ? 'text-danger' : 'text-muted'"
       >
         <svg
           width="14"
@@ -121,7 +121,7 @@ function onKeydown(event: KeyboardEvent) {
         class="check press mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2"
         :class="
           card.completedAt
-            ? 'border-[#16A34A] bg-[#16A34A] text-white'
+            ? 'border-success-fill bg-success-fill text-on-accent'
             : 'border-line text-transparent'
         "
         :disabled="!editable"
@@ -156,7 +156,7 @@ function onKeydown(event: KeyboardEvent) {
       </div>
     </div>
 
-    <div class="min-h-10 pl-10 text-sm text-[#374151]">
+    <div class="min-h-10 pl-10 text-sm text-ink-soft">
       <div v-if="excerpt === undefined" class="flex flex-col gap-1.5">
         <SkeletonBlock height="12px" />
         <SkeletonBlock height="12px" width="70%" />
@@ -190,12 +190,12 @@ function onKeydown(event: KeyboardEvent) {
           :name="a.displayName"
           :color="a.avatarColor"
           :size="22"
-          class="ring-2 ring-white"
+          class="ring-2 ring-panel"
         />
       </span>
       <button
         type="button"
-        class="press ml-auto h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white"
+        class="press ml-auto h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent"
         @click="emit('open')"
       >
         Open task
@@ -210,8 +210,8 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .label-chip {
-  background: color-mix(in srgb, var(--tone) 14%, white);
-  color: color-mix(in srgb, var(--tone) 75%, #111827);
+  background: color-mix(in srgb, var(--tone) 14%, var(--color-panel));
+  color: color-mix(in srgb, var(--tone) var(--tone-text-mix), var(--color-ink));
 }
 
 .check {
@@ -222,7 +222,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .check:not(:disabled):not([aria-pressed='true']):hover {
-  border-color: #16a34a;
-  color: #16a34a;
+  border-color: var(--color-success-fill);
+  color: var(--color-success);
 }
 </style>

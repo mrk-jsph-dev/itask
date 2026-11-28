@@ -15,7 +15,7 @@ const meta = computed(
 
 <template>
   <div
-    class="lift fade-up relative flex flex-col rounded-[18px] border border-line-soft bg-[#F6F8FB]"
+    class="lift fade-up relative flex flex-col rounded-[18px] border border-line-soft bg-sunken"
     :style="{ '--i': Math.min(index, 8) }"
   >
     <RouterLink
@@ -31,8 +31,8 @@ const meta = computed(
       }}</span>
       <span class="mt-auto flex items-center gap-2 text-[13px] text-muted">
         <span
-          class="h-2.5 w-2.5 shrink-0 rounded-full"
-          :style="{ backgroundColor: board.color }"
+          class="h-2.5 w-2.5 shrink-0 rounded-full tone-bg"
+          :style="{ '--tone': board.color }"
           aria-hidden="true"
         />
         {{ meta }}
@@ -46,7 +46,7 @@ const meta = computed(
       :aria-label="board.isStarred ? `Unstar ${board.name}` : `Star ${board.name}`"
       @click="emit('star')"
     >
-      <span :class="board.isStarred ? 'pop text-amber-500' : 'text-muted'" aria-hidden="true">{{
+      <span :class="board.isStarred ? 'pop text-warn' : 'text-muted'" aria-hidden="true">{{
         board.isStarred ? '★' : '☆'
       }}</span>
     </button>

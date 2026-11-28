@@ -40,16 +40,16 @@ const preview = [
     count: 3,
     card: 'Wireframe profile page',
     priority: 'Medium',
-    color: '#1D4ED8',
+    color: 'var(--color-accent-strong)',
   },
-  { emoji: '🚧', name: 'Doing', count: 4, card: 'Boards API', priority: 'High', color: '#B91C1C' },
+  { emoji: '🚧', name: 'Doing', count: 4, card: 'Boards API', priority: 'High', color: 'var(--color-danger)' },
   {
     emoji: '✅',
     name: 'Done',
     count: 2,
     card: 'Project scaffold',
     priority: 'Low',
-    color: '#4B5563',
+    color: 'var(--color-prio-low)',
   },
 ]
 
@@ -107,7 +107,7 @@ async function tryDemo(role: DemoRole) {
 <template>
   <div class="flex min-h-screen p-2 md:p-4">
     <div
-      class="flex flex-1 flex-wrap overflow-hidden rounded-[28px] bg-panel shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+      class="flex flex-1 flex-wrap overflow-hidden rounded-[28px] bg-panel shadow-card"
     >
       <div class="flex min-w-0 flex-[1_1_460px] items-center justify-center px-6 py-12">
         <div class="fade-up flex w-full max-w-[380px] flex-col gap-7">
@@ -149,7 +149,7 @@ async function tryDemo(role: DemoRole) {
               />
             </label>
             <TurnstileWidget ref="widget" v-model:token="token" />
-            <p v-if="error" role="alert" class="text-sm text-red-600">
+            <p v-if="error" role="alert" class="text-sm text-danger">
               {{ error }}
               <RouterLink
                 v-if="needsCode"
@@ -161,7 +161,7 @@ async function tryDemo(role: DemoRole) {
             <button
               type="submit"
               :disabled="!canSubmit"
-              class="press mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
+              class="press mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-on-accent disabled:opacity-60"
             >
               <span v-if="busy" class="spinner" aria-hidden="true" />
               {{ busy ? 'Signing in…' : 'Sign in' }}

@@ -146,7 +146,7 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
           v-else
           type="button"
           class="strike min-w-0 flex-1 text-left text-sm break-words"
-          :class="item.isDone ? 'text-[#6B7280] line-through' : 'text-ink'"
+          :class="item.isDone ? 'text-muted line-through' : 'text-ink'"
           :disabled="!editable"
           @click="startEdit(item)"
         >
@@ -187,7 +187,7 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
           </button>
           <button
             type="button"
-            class="ghost h-7 w-7 shrink-0 rounded-lg text-xs text-red-700"
+            class="ghost h-7 w-7 shrink-0 rounded-lg text-xs text-danger"
             :aria-label="`Delete ${item.text}`"
             @click="detail.removeItem(item.id)"
           >
@@ -208,7 +208,7 @@ function onDrop(event: { oldDraggableIndex?: number; newDraggableIndex?: number 
       />
       <button
         type="submit"
-        class="press h-10 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-50"
+        class="press h-10 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
         :disabled="!draft.trim() || adding"
       >
         Add

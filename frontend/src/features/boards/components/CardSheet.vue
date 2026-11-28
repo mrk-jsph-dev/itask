@@ -212,7 +212,7 @@ const dateClass =
   <SideSheet :title="card ? `${card.key} ${card.title}` : 'Card'" wide @close="emit('close')">
     <template #header>
       <div
-        class="flex flex-wrap items-center gap-2.5 border-b border-[#EEF1F6] px-5 py-[18px] md:px-6"
+        class="flex flex-wrap items-center gap-2.5 border-b border-line-faint px-5 py-[18px] md:px-6"
       >
         <p v-if="card && spot" class="min-w-0 text-sm text-muted">
           {{ boards.current?.name }} / {{ spot.list.name }}
@@ -224,7 +224,7 @@ const dateClass =
           class="press ml-auto flex h-[38px] items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium disabled:opacity-60"
           :class="
             card.completedAt
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              ? 'border-success-line bg-success-soft text-success'
               : 'border-line bg-panel'
           "
           :disabled="!editable"
@@ -246,7 +246,7 @@ const dateClass =
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#374151"
+            stroke="currentColor"
             stroke-width="2.2"
             stroke-linecap="round"
             aria-hidden="true"
@@ -277,7 +277,7 @@ const dateClass =
           ref="emojiMenu"
           role="menu"
           aria-label="Card emoji"
-          class="pop absolute top-12 left-0 z-30 grid w-[248px] grid-cols-6 gap-1 rounded-[var(--radius-control)] border border-line-soft bg-panel p-2 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+          class="pop absolute top-12 left-0 z-30 grid w-[248px] grid-cols-6 gap-1 rounded-[var(--radius-control)] border border-line-soft bg-panel p-2 shadow-pop"
           @keydown="emojiPicker.onKeydown"
         >
           <button
@@ -324,7 +324,7 @@ const dateClass =
         <dt class="text-muted">Status</dt>
         <dd class="inline-flex items-center gap-1.5 font-semibold">
           <span aria-hidden="true">{{ spot.list.emoji }}</span>{{ spot.list.name }}
-          <span v-if="card.completedAt" class="font-normal text-emerald-700">· Done</span>
+          <span v-if="card.completedAt" class="font-normal text-success">· Done</span>
         </dd>
 
         <dt class="text-muted"><label :for="`priority-${card.id}`">Priority</label></dt>
@@ -337,7 +337,7 @@ const dateClass =
             :style="
               priorityPill
                 ? { color: priorityPill.color, backgroundColor: priorityPill.bg }
-                : { backgroundColor: '#F3F6FB' }
+                : { backgroundColor: 'var(--color-hover)' }
             "
             @change="onPriority"
           >
@@ -391,8 +391,8 @@ const dateClass =
             <span v-if="label.emoji" aria-hidden="true">{{ label.emoji }}</span>
             <span
               v-else
-              class="h-2 w-2 rounded-full"
-              :style="{ backgroundColor: label.color }"
+              class="h-2 w-2 rounded-full tone-bg"
+              :style="{ '--tone': label.color }"
               aria-hidden="true"
             />
             {{ label.name }}
@@ -402,7 +402,7 @@ const dateClass =
             v-if="editable"
             ref="labelTrigger"
             type="button"
-            class="ghost h-7 rounded-full border border-dashed border-line bg-panel px-2.5 text-[13px] text-[#374151]"
+            class="ghost h-7 rounded-full border border-dashed border-line bg-panel px-2.5 text-[13px] text-ink-soft"
             aria-haspopup="menu"
             :aria-expanded="labelOpen"
             aria-label="Edit labels"
@@ -415,7 +415,7 @@ const dateClass =
             ref="labelMenu"
             role="menu"
             aria-label="Labels"
-            class="pop absolute top-9 left-0 z-30 flex w-56 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+            class="pop absolute top-9 left-0 z-30 flex w-56 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 shadow-pop"
             @keydown="labelPicker.onKeydown"
           >
             <button
@@ -427,14 +427,14 @@ const dateClass =
               class="ghost flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"
               @click="toggleLabel(label.id)"
             >
-              <span class="w-4 text-accent" aria-hidden="true">{{
+              <span class="w-4 text-accent-strong" aria-hidden="true">{{
                 card.labels.some((l) => l.id === label.id) ? '✓' : ''
               }}</span>
               <span v-if="label.emoji" aria-hidden="true">{{ label.emoji }}</span>
               <span
                 v-else
-                class="h-2 w-2 rounded-full"
-                :style="{ backgroundColor: label.color }"
+                class="h-2 w-2 rounded-full tone-bg"
+                :style="{ '--tone': label.color }"
                 aria-hidden="true"
               />
               {{ label.name }}
@@ -461,7 +461,7 @@ const dateClass =
             v-if="editable"
             ref="assigneeTrigger"
             type="button"
-            class="ghost flex h-[30px] w-[30px] items-center justify-center rounded-full border border-dashed border-line text-[#374151]"
+            class="ghost flex h-[30px] w-[30px] items-center justify-center rounded-full border border-dashed border-line text-ink-soft"
             aria-haspopup="menu"
             :aria-expanded="assigneeOpen"
             aria-label="Edit assignees"
@@ -474,7 +474,7 @@ const dateClass =
             ref="assigneeMenu"
             role="menu"
             aria-label="Assignees"
-            class="pop absolute top-10 left-0 z-30 flex w-60 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+            class="pop absolute top-10 left-0 z-30 flex w-60 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 shadow-pop"
             @keydown="assigneePicker.onKeydown"
           >
             <button
@@ -486,7 +486,7 @@ const dateClass =
               class="ghost flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-left text-sm"
               @click="toggleAssignee(member.userId)"
             >
-              <span class="w-4 text-accent" aria-hidden="true">{{
+              <span class="w-4 text-accent-strong" aria-hidden="true">{{
                 card.assignees.some((a) => a.userId === member.userId) ? '✓' : ''
               }}</span>
               <UserAvatar
@@ -542,7 +542,7 @@ const dateClass =
         <button
           v-if="editable && description !== descriptionSaved"
           type="button"
-          class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-white"
+          class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-on-accent"
           @click="saveDescription"
         >
           Save description
@@ -600,7 +600,7 @@ const dateClass =
                 class="h-8 rounded-[10px] px-3 text-sm"
                 :class="
                   timeline === tab.value
-                    ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+                    ? 'bg-panel font-semibold text-ink shadow-card'
                     : 'font-medium text-muted'
                 "
                 @click="timeline = tab.value"
@@ -619,7 +619,7 @@ const dateClass =
         </section>
       </template>
 
-      <div class="flex flex-wrap items-center gap-2.5 border-t border-[#EEF1F6] pt-4">
+      <div class="flex flex-wrap items-center gap-2.5 border-t border-line-faint pt-4">
         <button
           type="button"
           class="flex min-h-11 items-center text-sm font-semibold text-accent-strong"
@@ -630,7 +630,7 @@ const dateClass =
         <button
           v-if="editable"
           type="button"
-          class="ghost ml-auto h-[42px] rounded-full border border-[#FECACA] bg-panel px-4 text-sm font-semibold text-[#B91C1C]"
+          class="ghost ml-auto h-[42px] rounded-full border border-danger-line bg-panel px-4 text-sm font-semibold text-danger"
           @click="archive"
         >
           🗄 Archive task

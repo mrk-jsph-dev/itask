@@ -33,7 +33,7 @@ const notice = computed(() =>
     :title="notice.title"
     data-testid="live-status"
   >
-    <span class="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />{{ notice.text }}
+    <span class="h-1.5 w-1.5 rounded-full bg-warn-fill" aria-hidden="true" />{{ notice.text }}
   </span>
   <span
     v-else-if="status === 'live' && others.length"

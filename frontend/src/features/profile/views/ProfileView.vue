@@ -8,6 +8,7 @@ import { ApiError } from '@/shared/api/http'
 import { useAuthStore } from '@/features/auth/store'
 import DigestPreferences from '@/features/notifications/components/DigestPreferences.vue'
 import { passwordStrength } from '@/features/auth/passwordStrength'
+import AppearanceCard from '../components/AppearanceCard.vue'
 import ConnectedAccounts from '../components/ConnectedAccounts.vue'
 import { profileApi } from '../api'
 import { avatarColors, timeZones } from '../options'
@@ -157,7 +158,7 @@ async function signOut() {
               class="peer sr-only"
               :aria-label="`Colour ${color}`"
             />
-            <span class="hidden text-sm font-bold text-white peer-checked:block" aria-hidden="true"
+            <span class="hidden text-sm font-bold text-on-accent peer-checked:block" aria-hidden="true"
               >✓</span
             >
             <span
@@ -170,18 +171,20 @@ async function signOut() {
         v-if="profileMessage"
         role="status"
         class="text-sm"
-        :class="profileMessage.ok ? 'text-emerald-700' : 'text-red-600'"
+        :class="profileMessage.ok ? 'text-success' : 'text-danger'"
       >
         {{ profileMessage.text }}
       </p>
       <button
         type="submit"
         :disabled="saving"
-        class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-on-accent disabled:opacity-60"
       >
         {{ saving ? 'Saving…' : 'Save changes' }}
       </button>
     </form>
+
+    <AppearanceCard class="fade-up" style="--i: 2" />
 
     <DigestPreferences class="fade-up" style="--i: 2" />
 
@@ -232,14 +235,14 @@ async function signOut() {
           v-if="passwordMessage"
           role="status"
           class="text-sm"
-          :class="passwordMessage.ok ? 'text-emerald-700' : 'text-red-600'"
+          :class="passwordMessage.ok ? 'text-success' : 'text-danger'"
         >
           {{ passwordMessage.text }}
         </p>
         <button
           type="submit"
           :disabled="changing || strength.score < 4"
-          class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-white disabled:opacity-60"
+          class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-panel disabled:opacity-60"
         >
           <template v-if="user.hasPassword">{{
             changing ? 'Changing…' : 'Change password'

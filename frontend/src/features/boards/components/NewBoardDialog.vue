@@ -95,7 +95,7 @@ async function submit() {
 <template>
   <Teleport to="body">
     <div
-      class="fade-in fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-ink/40 p-4"
+      class="fade-in fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-scrim/40 p-4"
       @click.self="emit('close')"
     >
       <div
@@ -125,7 +125,7 @@ async function submit() {
               class="h-8 rounded-[10px] px-3 text-sm"
               :class="
                 mode === tab.value
-                  ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
+                  ? 'bg-panel font-semibold text-ink shadow-card'
                   : 'font-medium text-muted'
               "
               @click="mode = tab.value"
@@ -136,7 +136,7 @@ async function submit() {
         </div>
         <template v-if="mode === 'goal'">
           <AiGoalBoard :saving="saving" @accept="createFromGoal" />
-          <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+          <p v-if="error" role="alert" class="text-sm text-danger">{{ error }}</p>
           <div class="flex justify-end">
             <button
               type="button"
@@ -158,7 +158,7 @@ async function submit() {
             v-model:description="description"
             v-model:color="color"
           />
-          <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+          <p v-if="error" role="alert" class="text-sm text-danger">{{ error }}</p>
           <div class="flex justify-end gap-2.5">
             <button
               type="button"
@@ -170,7 +170,7 @@ async function submit() {
             <button
               type="submit"
               :disabled="saving || !name.trim()"
-              class="press flex h-11 items-center gap-2 rounded-full bg-accent px-5 font-semibold text-white disabled:opacity-60"
+              class="press flex h-11 items-center gap-2 rounded-full bg-accent px-5 font-semibold text-on-accent disabled:opacity-60"
             >
               <span v-if="saving" class="spinner" aria-hidden="true" />
               {{ saving ? 'Creating…' : 'Create board' }}

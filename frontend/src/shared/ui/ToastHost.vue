@@ -11,21 +11,21 @@ import { dismissToast, runToastAction, toasts } from './toast'
     <div
       v-for="item in toasts"
       :key="item.id"
-      class="toast-in pointer-events-auto flex max-w-md items-center gap-3 rounded-full px-5 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgb(17_24_39/0.18)]"
-      :class="item.tone === 'error' ? 'bg-red-700' : 'bg-ink'"
+      class="toast-in pointer-events-auto flex max-w-md items-center gap-3 rounded-full px-5 py-3 text-sm font-medium text-on-toast shadow-pop"
+      :class="item.tone === 'error' ? 'bg-danger-fill' : 'bg-toast'"
     >
       <span>{{ item.text }}</span>
       <button
         v-if="item.action"
         type="button"
-        class="font-semibold text-sky-300 hover:text-white"
+        class="font-semibold text-toast-action hover:text-on-toast"
         @click="runToastAction(item.id)"
       >
         {{ item.action.label }}
       </button>
       <button
         type="button"
-        class="text-white/70 hover:text-white"
+        class="text-on-toast/70 hover:text-on-toast"
         aria-label="Dismiss"
         @click="dismissToast(item.id)"
       >

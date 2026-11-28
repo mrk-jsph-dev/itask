@@ -10,19 +10,19 @@ import { applyUpdate, dismissUpdate, needRefresh } from './register'
     aria-live="polite"
   >
     <div
-      class="toast-in pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-ink px-5 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgb(17_24_39/0.18)]"
+      class="toast-in pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-toast px-5 py-3 text-sm font-medium text-panel shadow-pop"
     >
       <span>A new version of iTask is ready.</span>
       <button
         type="button"
-        class="font-semibold text-sky-300 hover:text-white"
+        class="font-semibold text-toast-action hover:text-on-toast"
         @click="applyUpdate"
       >
         Reload
       </button>
       <button
         type="button"
-        class="text-white/70 hover:text-white"
+        class="text-on-toast/70 hover:text-on-toast"
         aria-label="Later"
         @click="dismissUpdate"
       >

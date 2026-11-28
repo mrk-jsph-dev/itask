@@ -29,7 +29,7 @@ const id = useId()
     >
       🚪<span
         v-if="warnings?.length"
-        class="ml-0.5 rounded-full bg-amber-100 px-1.5 text-[11px] font-semibold text-amber-800"
+        class="ml-0.5 rounded-full bg-warn-soft px-1.5 text-[11px] font-semibold text-warn"
         :aria-label="`${warnings.length} cards miss requirements`"
         >⚠ {{ warnings.length }}</span
       ><span v-else-if="doorways.length > 1" class="text-[11px] font-semibold text-muted">{{
@@ -40,9 +40,9 @@ const id = useId()
       v-if="open"
       :id="id"
       role="tooltip"
-      class="pop absolute top-8 left-0 z-30 flex w-64 flex-col gap-1.5 rounded-[var(--radius-control)] border border-line-soft bg-panel p-3 text-[13px] font-normal shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+      class="pop absolute top-8 left-0 z-30 flex w-64 flex-col gap-1.5 rounded-[var(--radius-control)] border border-line-soft bg-panel p-3 text-[13px] font-normal shadow-pop"
     >
-      <span v-for="w in warnings ?? []" :key="w.title" class="text-amber-800">
+      <span v-for="w in warnings ?? []" :key="w.title" class="text-warn">
         ⚠ <strong class="font-semibold">{{ w.title }}</strong> needs {{ w.unmet.join(', ') }}
       </span>
       <span v-for="d in doorways" :key="d.id">

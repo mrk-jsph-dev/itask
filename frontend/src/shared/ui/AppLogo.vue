@@ -5,11 +5,11 @@ withDefaults(defineProps<{ size?: number }>(), { size: 34 })
 <template>
   <svg :width="size" :height="size" viewBox="0 0 48 48" role="img" aria-label="iTask logo">
     <rect width="48" height="48" rx="13" fill="var(--color-accent)" />
-    <circle cx="14.5" cy="13" r="3.6" fill="#FFFFFF" />
+    <circle cx="14.5" cy="13" r="3.6" fill="var(--color-on-accent)" />
     <path
       d="M14.5 21.5L21.5 33L36 14.5"
       fill="none"
-      stroke="#FFFFFF"
+      stroke="var(--color-on-accent)"
       stroke-width="5.2"
       stroke-linecap="round"
       stroke-linejoin="round"

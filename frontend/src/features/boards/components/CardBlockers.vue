@@ -84,7 +84,7 @@ function onInput() {
       <button
         v-if="editable && !picking"
         type="button"
-        class="ghost press ml-auto rounded-lg px-2.5 py-1 text-sm font-semibold text-accent"
+        class="ghost press ml-auto rounded-lg px-2.5 py-1 text-sm font-semibold text-accent-strong"
         @click="startPicking"
       >
         + Add blocker
@@ -106,8 +106,8 @@ function onInput() {
           class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
           :class="
             blocker.completed || blocker.archived
-              ? 'bg-[#DCFCE7] text-[#15803D]'
-              : 'bg-[#FEF2F2] text-[#B91C1C]'
+              ? 'bg-success-soft text-success'
+              : 'bg-danger-soft text-danger'
           "
           aria-hidden="true"
           >{{ blocker.completed || blocker.archived ? '✓' : '!' }}</span

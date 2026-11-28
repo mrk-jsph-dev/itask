@@ -74,8 +74,8 @@ async function save() {
             class="flex h-[34px] cursor-pointer items-center rounded-[10px] px-4 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent"
             :class="
               prefs.digest === f.value
-                ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-                : 'font-medium text-[#374151]'
+                ? 'bg-panel font-semibold text-ink shadow-card'
+                : 'font-medium text-ink-soft'
             "
           >
             <input
@@ -88,7 +88,7 @@ async function save() {
             {{ f.label }}
           </label>
         </div>
-        <p v-if="prefs.digest !== 'Off' && !prefs.emailConfirmed" class="text-xs text-amber-700">
+        <p v-if="prefs.digest !== 'Off' && !prefs.emailConfirmed" class="text-xs text-warn">
           Confirm your email address to receive digests (check your inbox for the link).
         </p>
       </fieldset>
@@ -117,7 +117,7 @@ async function save() {
       v-if="message"
       role="status"
       class="text-sm"
-      :class="message.ok ? 'text-emerald-700' : 'text-red-600'"
+      :class="message.ok ? 'text-success' : 'text-danger'"
     >
       {{ message.text }}
     </p>
@@ -125,7 +125,7 @@ async function save() {
       v-if="prefs"
       type="submit"
       :disabled="saving"
-      class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-60"
+      class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-on-accent disabled:opacity-60"
     >
       {{ saving ? 'Saving…' : 'Save notification settings' }}
     </button>

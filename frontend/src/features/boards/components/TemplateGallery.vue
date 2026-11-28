@@ -57,7 +57,7 @@ function remove(template: BoardTemplate) {
 const tile =
   'press flex h-full w-full flex-col gap-1 rounded-[16px] border p-3 text-left transition-colors'
 const tileState = (active: boolean) =>
-  active ? 'border-accent bg-[#EFF4FF] ring-1 ring-accent' : 'border-line hover:bg-hover'
+  active ? 'border-accent bg-accent-soft ring-1 ring-accent' : 'border-line hover:bg-hover'
 </script>
 
 <template>

@@ -26,10 +26,18 @@ select {
     box-shadow var(--d-fast) var(--ease-out);
 }
 select:hover:not(:disabled) {
-  border-color: #b7c3d6;
+  border-color: var(--color-line-strong);
+}
+:root[data-theme='dark'] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa4b5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa4b5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
 }
 select:disabled {
-  background-image: none;
+  background-image: none !important;
   cursor: not-allowed;
 }
 
@@ -88,8 +96,33 @@ select:disabled {
 }
 .mention {
   border-radius: 6px;
-  background: #eff4ff;
+  background: var(--color-accent-soft);
   padding: 0 0.2em;
   font-weight: 600;
   color: var(--color-accent-strong);
+}
+
+/*
+ * User-picked colours (labels, boards) arrive as hex data. Render them through --tone so the dark
+ * theme can lift them (same hue, lighter) and dots keep 3:1 against the dark panel.
+ */
+.tone-bg {
+  background-color: var(--tone);
+}
+.tone-text {
+  color: var(--tone);
+}
+:root[data-theme='dark'] .tone-bg {
+  background-color: color-mix(in srgb, var(--tone) 70%, white);
+}
+:root[data-theme='dark'] .tone-text {
+  color: color-mix(in srgb, var(--tone) 55%, white);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .tone-bg {
+    background-color: color-mix(in srgb, var(--tone) 70%, white);
+  }
+  :root:not([data-theme='light']) .tone-text {
+    color: color-mix(in srgb, var(--tone) 55%, white);
+  }
 }

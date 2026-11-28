@@ -95,7 +95,7 @@ async function disconnect(provider: ExternalProvider) {
           v-if="!row.connected"
           type="button"
           :disabled="busy !== null"
-          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
           :aria-label="`Connect ${row.label}`"
           @click="connect(row.provider)"
         >
@@ -107,7 +107,7 @@ async function disconnect(provider: ExternalProvider) {
           :disabled="busy !== null || !removable"
           :title="removable ? undefined : 'Set a password first, so you can still sign in.'"
           class="ghost h-9 rounded-full border border-line px-4 text-sm font-semibold disabled:opacity-60"
-          :class="confirming === row.provider ? 'border-red-300 text-red-600' : ''"
+          :class="confirming === row.provider ? 'border-danger-line text-danger' : ''"
           :aria-label="`Disconnect ${row.label}`"
           @click="disconnect(row.provider)"
           @blur="confirming = null"

@@ -34,7 +34,7 @@ async function submit() {
 <template>
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
-      class="fade-up flex w-full max-w-[440px] flex-col gap-6 rounded-[28px] bg-panel p-8 shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+      class="fade-up flex w-full max-w-[440px] flex-col gap-6 rounded-[28px] bg-panel p-8 shadow-card"
     >
       <div class="flex items-center gap-2.5">
         <AppLogo />
@@ -62,11 +62,11 @@ async function submit() {
           />
         </label>
         <TurnstileWidget ref="widget" v-model:token="token" />
-        <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-danger">{{ error }}</p>
         <button
           type="submit"
           :disabled="!canSubmit"
-          class="press flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
+          class="press flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-on-accent disabled:opacity-60"
         >
           <span v-if="busy" class="spinner" aria-hidden="true" />
           {{ busy ? 'Sending…' : 'Send reset link' }}

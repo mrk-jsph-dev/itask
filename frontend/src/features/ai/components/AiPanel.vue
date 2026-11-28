@@ -9,7 +9,7 @@ const ai = useAiStore()
 
 <template>
   <section
-    class="fade-up flex w-full flex-col gap-3 rounded-[16px] border border-[#DCE6FE] bg-[#F5F8FF] p-4"
+    class="fade-up flex w-full flex-col gap-3 rounded-[16px] border border-accent-line bg-accent-soft p-4"
     :aria-label="title"
   >
     <h3 class="flex items-center gap-1.5 text-sm font-semibold text-accent-strong">

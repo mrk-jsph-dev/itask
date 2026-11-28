@@ -68,7 +68,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
 
 <template>
   <article
-    class="lift relative flex flex-col gap-3 rounded-[14px] border border-line-soft bg-panel p-3.5 shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+    class="lift relative flex flex-col gap-3 rounded-[14px] border border-line-soft bg-panel p-3.5 shadow-card"
     :class="{ 'cursor-grab active:cursor-grabbing': editable }"
     :aria-label="`${card.key} ${card.title}${card.blocked ? ', blocked' : ''}`"
   >
@@ -89,7 +89,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
           class="flex gap-2 text-[15px] leading-[1.4] font-medium break-words"
           :class="{ 'text-muted line-through': card.completedAt }"
         >
-          <span v-if="card.completedAt" class="text-emerald-600 no-underline" aria-label="Done"
+          <span v-if="card.completedAt" class="text-success no-underline" aria-label="Done"
             >✓</span
           >
           <span v-else-if="card.emoji" aria-hidden="true">{{ card.emoji }}</span>
@@ -115,7 +115,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
           ref="menu"
           role="menu"
           :aria-label="picking ? 'Move to list' : `${card.title} card actions`"
-          class="pop absolute top-10 right-2 z-30 flex w-48 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+          class="pop absolute top-10 right-2 z-30 flex w-48 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-pop"
           @keydown="onKeydown"
         >
           <template v-if="picking">
@@ -162,7 +162,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
             <button
               type="button"
               role="menuitem"
-              :class="[itemClass, 'text-red-700']"
+              :class="[itemClass, 'text-danger']"
               @click="pick('archive')"
             >
               🗄 Archive
@@ -176,13 +176,13 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
       <li
         v-for="label in card.labels"
         :key="label.id"
-        class="flex items-center gap-1.5 rounded-full border border-line-soft px-2.5 py-0.5 text-[13px] text-[#374151]"
+        class="flex items-center gap-1.5 rounded-full border border-line-soft px-2.5 py-0.5 text-[13px] text-ink-soft"
       >
         <span v-if="label.emoji" aria-hidden="true">{{ label.emoji }}</span>
         <span
           v-else
-          class="h-2 w-2 rounded-full"
-          :style="{ backgroundColor: label.color }"
+          class="h-2 w-2 rounded-full tone-bg"
+          :style="{ '--tone': label.color }"
           aria-hidden="true"
         />
         {{ label.name }}
@@ -198,7 +198,7 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         card.blocked ||
         card.blockingCount
       "
-      class="flex items-center gap-2.5 text-[13px] text-[#374151]"
+      class="flex items-center gap-2.5 text-[13px] text-ink-soft"
     >
       <BlockedChip :card="card" show-blocking />
       <span
@@ -259,13 +259,13 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
 
     <div
       v-if="card.assignees.length || card.dueAt || card.commentCount"
-      class="flex items-center gap-2.5 border-t border-[#EEF1F6] pt-2.5 text-[13px] text-[#374151]"
+      class="flex items-center gap-2.5 border-t border-line-faint pt-2.5 text-[13px] text-ink-soft"
     >
       <span v-if="card.assignees.length" class="flex" aria-label="Assignees">
         <span
           v-for="(person, i) in shownAssignees"
           :key="person.userId"
-          class="flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-panel text-[10px] font-bold text-white"
+          class="flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-panel text-[10px] font-bold text-on-accent"
           :class="{ '-ml-[7px]': i > 0 }"
           :style="{ backgroundColor: person.avatarColor }"
           :title="person.displayName"
@@ -304,9 +304,9 @@ const itemClass = 'ghost rounded-lg px-3 py-2 text-left disabled:opacity-40'
         :class="[
           card.commentCount ? '' : 'ml-auto',
           due === 'overdue'
-            ? 'bg-red-50 font-semibold text-red-700'
+            ? 'bg-danger-soft font-semibold text-danger'
             : due === 'soon'
-              ? 'bg-amber-50 text-amber-800'
+              ? 'bg-warn-soft text-warn'
               : due === 'done'
                 ? 'text-muted'
                 : '',

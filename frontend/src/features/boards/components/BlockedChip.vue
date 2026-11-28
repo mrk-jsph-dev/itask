@@ -17,7 +17,7 @@ const blockingLabel = computed(() => `Blocks ${plural(props.card.blockingCount)}
 <template>
   <span
     v-if="card.blocked"
-    class="inline-flex items-center gap-1 rounded-lg bg-[#FEF2F2] px-2 py-[3px] text-[12px] font-semibold text-[#B91C1C]"
+    class="inline-flex items-center gap-1 rounded-lg bg-danger-soft px-2 py-[3px] text-[12px] font-semibold text-danger"
     role="img"
     :aria-label="blockedLabel"
     :title="blockedLabel"

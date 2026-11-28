@@ -141,7 +141,7 @@ async function older() {
     <ol class="flex flex-col gap-4" aria-label="Comments">
       <li v-for="comment in detail.comments" :key="comment.id" class="fade-up flex gap-3">
         <UserAvatar :name="comment.authorName" :color="comment.authorColor" :size="34" />
-        <div class="flex min-w-0 flex-1 flex-col gap-1 rounded-[14px] bg-[#F6F8FB] px-3.5 py-2.5">
+        <div class="flex min-w-0 flex-1 flex-col gap-1 rounded-[14px] bg-sunken px-3.5 py-2.5">
           <p class="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span class="font-semibold">{{ comment.authorName }}</span>
             <time class="text-xs text-muted" :datetime="comment.createdAt">
@@ -165,7 +165,7 @@ async function older() {
             <div class="flex gap-2">
               <button
                 type="submit"
-                class="press h-8 rounded-full bg-accent px-3 text-sm font-semibold text-white"
+                class="press h-8 rounded-full bg-accent px-3 text-sm font-semibold text-on-accent"
               >
                 Save
               </button>
@@ -192,7 +192,7 @@ async function older() {
             <button
               v-if="canDelete(comment)"
               type="button"
-              class="font-semibold text-muted hover:text-red-700"
+              class="font-semibold text-muted hover:text-danger"
               @click="detail.removeComment(comment.id)"
             >
               Delete
@@ -234,7 +234,7 @@ async function older() {
           id="mention-list"
           role="listbox"
           aria-label="Mention a member"
-          class="pop absolute bottom-full left-10 z-20 mb-1 flex w-56 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+          class="pop absolute bottom-full left-10 z-20 mb-1 flex w-56 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-pop"
         >
           <li
             v-for="(member, i) in suggestions"
@@ -250,7 +250,7 @@ async function older() {
         </ul>
         <button
           type="submit"
-          class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-50"
+          class="press h-9 w-fit rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-50"
           :disabled="!draft.trim() || sending"
         >
           Send

@@ -12,6 +12,9 @@ public class AppUser : IdentityUser<Guid>
     /// <summary>IANA time zone id used to show dates in the user's local time.</summary>
     public string TimeZone { get; set; } = "UTC";
 
+    /// <summary>Colour theme; the client applies it after `/me` loads.</summary>
+    public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>Marks seeded demo accounts so features can restrict them (e.g. AI, uploads).</summary>

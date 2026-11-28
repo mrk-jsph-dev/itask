@@ -34,7 +34,7 @@ defineExpose({ discard: () => (summary.value = null) })
       <button
         v-if="canPost"
         type="button"
-        class="press flex h-9 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+        class="press flex h-9 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
         :disabled="saving || !summary.trim()"
         @click="emit('post', summary.trim())"
       >

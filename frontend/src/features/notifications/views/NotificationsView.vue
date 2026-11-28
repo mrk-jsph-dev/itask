@@ -73,8 +73,8 @@ async function accept(n: AppNotification, inviteId: string) {
           class="h-[34px] rounded-[10px] px-3 text-sm"
           :class="
             store.unreadOnly === chip.unread
-              ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-              : 'font-medium text-[#374151]'
+              ? 'bg-panel font-semibold text-ink shadow-card'
+              : 'font-medium text-ink-soft'
           "
           @click="pick(chip.unread)"
         >
@@ -130,7 +130,7 @@ async function accept(n: AppNotification, inviteId: string) {
       >
         <h2 class="pt-2 pb-1 text-[13px] font-semibold text-muted">{{ group.day }}</h2>
         <ol class="flex flex-col">
-          <li v-for="n in group.items" :key="n.id" class="border-t border-[#EEF1F6] py-2.5">
+          <li v-for="n in group.items" :key="n.id" class="border-t border-line-faint py-2.5">
             <NotificationRow
               :notification="n"
               :accepting="accepting === n.id"

@@ -40,7 +40,7 @@ function onDragOver(event: DragEvent) {
 <template>
   <section
     class="flex flex-col gap-3 rounded-2xl transition-colors"
-    :class="{ 'bg-[#EFF4FF] outline-2 outline-dashed outline-accent': dragging }"
+    :class="{ 'bg-accent-soft outline-2 outline-dashed outline-accent': dragging }"
     aria-labelledby="attachments-title"
     @dragover="onDragOver"
     @dragleave.self="dragging = false"
@@ -78,7 +78,7 @@ function onDragOver(event: DragEvent) {
         <button
           v-if="canDelete(file.uploadedById)"
           type="button"
-          class="ghost absolute top-2 right-2 z-10 h-7 w-7 rounded-lg text-xs text-red-700 opacity-60 group-hover:opacity-100"
+          class="ghost absolute top-2 right-2 z-10 h-7 w-7 rounded-lg text-xs text-danger opacity-60 group-hover:opacity-100"
           :aria-label="`Delete ${file.fileName}`"
           @click="detail.removeAttachment(file.id)"
         >
@@ -96,7 +96,7 @@ function onDragOver(event: DragEvent) {
       <li v-if="canUpload()" class="flex">
         <button
           type="button"
-          class="ghost flex min-h-[66px] flex-1 flex-col items-center justify-center rounded-xl border-[1.5px] border-dashed border-line bg-panel text-[13px] font-medium text-[#374151]"
+          class="ghost flex min-h-[66px] flex-1 flex-col items-center justify-center rounded-xl border-[1.5px] border-dashed border-line bg-panel text-[13px] font-medium text-ink-soft"
           title="Or drop files here (10 MB max)"
           @click="input?.click()"
         >

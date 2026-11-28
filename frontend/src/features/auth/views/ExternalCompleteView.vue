@@ -51,7 +51,7 @@ onMounted(async () => {
 <template>
   <div class="flex min-h-screen items-center justify-center p-4">
     <div
-      class="fade-up flex w-full max-w-[420px] flex-col gap-6 rounded-[28px] bg-panel p-8 shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+      class="fade-up flex w-full max-w-[420px] flex-col gap-6 rounded-[28px] bg-panel p-8 shadow-card"
     >
       <div class="flex items-center gap-2.5">
         <AppLogo />
@@ -62,7 +62,7 @@ onMounted(async () => {
         <p role="alert" class="text-[15px] text-muted">{{ error }}</p>
         <RouterLink
           :to="auth.isSignedIn ? '/profile' : '/sign-in'"
-          class="press flex h-12 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-white no-underline"
+          class="press flex h-12 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-on-accent no-underline"
           >{{ auth.isSignedIn ? 'Back to your profile' : 'Back to sign in' }}</RouterLink
         >
       </template>

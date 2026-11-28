@@ -1,22 +1,219 @@
-/* Design tokens exposed to Tailwind as theme values (bg-panel, text-muted, ...). */
+/*
+ * Design tokens exposed to Tailwind as theme values (bg-panel, text-muted, shadow-pop, ...).
+ * Light values live in @theme; the dark set below redefines the same custom properties, so every
+ * utility follows the active theme. Components use these tokens only (see noRawColours.spec.ts).
+ */
 
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
 
   --color-shell: #e9eef6;
   --color-panel: #ffffff;
+  --color-sunken: #f6f8fb;
+  --color-highlight: #f6f8fd;
   --color-ink: #111827;
+  --color-ink-soft: #374151;
   --color-muted: #5b6474;
   --color-line: #d5dbe5;
   --color-line-soft: #e6eaf1;
+  --color-line-faint: #eef1f6;
+  --color-line-strong: #b7c3d6;
   --color-hover: #f3f6fb;
   --color-accent: #1d5bf5;
   --color-accent-strong: #1d4ed8;
+  --color-accent-soft: #eff4ff;
+  --color-accent-line: #dce6fe;
+  --color-on-accent: #ffffff;
+
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-danger-line: #fecaca;
+  --color-danger-fill: #b91c1c;
+  --color-success: #15803d;
+  --color-success-soft: #dcfce7;
+  --color-success-line: #a7f3d0;
+  --color-success-fill: #16a34a;
+  --color-warn: #b45309;
+  --color-warn-soft: #fffbeb;
+  --color-warn-line: #fde68a;
+  --color-warn-fill: #f59e0b;
+  --color-ai: #6d28d9;
+  --color-ai-soft: #f5f3ff;
+  --color-ai-line: #ddd6fe;
+
+  --color-scrim: #111827;
+  --color-toast: #111827;
+  --color-on-toast: #ffffff;
+  --color-toast-action: #7dd3fc;
+
+  --color-skel: #eef1f6;
+  --color-skel-hi: #f7f9fc;
+
+  /* Priority pills (text on background). */
+  --color-prio-low: #4b5563;
+  --color-prio-low-bg: #f3f4f6;
+  --color-prio-medium: #1d4ed8;
+  --color-prio-medium-bg: #eff4ff;
+  --color-prio-high: #b91c1c;
+  --color-prio-high-bg: #fef2f2;
+  --color-prio-urgent: #ffffff;
+  --color-prio-urgent-bg: #b91c1c;
 
   /* Chart series (validated for colour-blind separation and 3:1 on the panel). */
   --color-chart-done: #1d5bf5;
   --color-chart-created: #eb6834;
 
+  /* Shadow parts: a ring (transparent on light) plus a drop shadow colour per depth. */
+  --color-shadow-ring: transparent;
+  --color-shadow-soft: rgb(17 24 39 / 0.06);
+  --color-shadow: rgb(17 24 39 / 0.12);
+  --color-shadow-deep: rgb(17 24 39 / 0.18);
+  --color-shadow-accent: rgb(29 91 245 / 0.28);
+
+  --shadow-card: 0 0 0 1px var(--color-shadow-ring), 0 1px 2px var(--color-shadow-soft);
+  --shadow-seg: 0 0 0 1px var(--color-shadow-ring), 0 1px 2px var(--color-shadow-soft);
+  --shadow-pop: 0 0 0 1px var(--color-shadow-ring), 0 10px 24px var(--color-shadow);
+  --shadow-sheet: 0 0 0 1px var(--color-shadow-ring), 0 10px 40px var(--color-shadow-deep);
+  --shadow-float: 0 0 0 1px var(--color-shadow-ring), 0 20px 48px var(--color-shadow-deep);
+  --shadow-focus: 0 0 0 3px rgb(29 91 245 / 0.15);
+
   --radius-panel: 24px;
   --radius-control: 12px;
+}
+
+:root {
+  color-scheme: light;
+  /* How much of a user colour goes into text tinted with it (the rest is ink). */
+  --tone-text-mix: 70%;
+}
+
+/* Dark set: forced with data-theme="dark", or from the system unless forced light. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --tone-text-mix: 45%;
+  --color-shell: #0e131b;
+  --color-panel: #161c26;
+  --color-sunken: #1b222e;
+  --color-highlight: #1a2232;
+  --color-ink: #e7ebf2;
+  --color-ink-soft: #c9d0db;
+  --color-muted: #9aa4b5;
+  --color-line: #343e50;
+  --color-line-soft: #2a3342;
+  --color-line-faint: #232b38;
+  --color-line-strong: #4a5568;
+  --color-hover: #212938;
+  --color-accent: #2f66f0;
+  --color-accent-strong: #8db1ff;
+  --color-accent-soft: #1a2746;
+  --color-accent-line: #2c406f;
+  --color-on-accent: #ffffff;
+
+  --color-danger: #fca5a5;
+  --color-danger-soft: #3a1c20;
+  --color-danger-line: #6b2b31;
+  --color-danger-fill: #b91c1c;
+  --color-success: #6ee7a0;
+  --color-success-soft: #123224;
+  --color-success-line: #1f5236;
+  --color-success-fill: #15803d;
+  --color-warn: #fbbf5c;
+  --color-warn-soft: #33270f;
+  --color-warn-line: #5c4516;
+  --color-warn-fill: #f59e0b;
+  --color-ai: #c4b5fd;
+  --color-ai-soft: #261e42;
+  --color-ai-line: #41356f;
+
+  --color-scrim: #000000;
+  --color-toast: #2b3443;
+  --color-on-toast: #f1f4f8;
+  --color-toast-action: #7dd3fc;
+
+  --color-skel: #1f2733;
+  --color-skel-hi: #2a3341;
+
+  --color-prio-low: #c9d0db;
+  --color-prio-low-bg: #262e3b;
+  --color-prio-medium: #a9c3ff;
+  --color-prio-medium-bg: #1a2746;
+  --color-prio-high: #fca5a5;
+  --color-prio-high-bg: #3a1c20;
+  --color-prio-urgent: #ffffff;
+  --color-prio-urgent-bg: #b91c1c;
+
+  --color-chart-done: #3987e5;
+  --color-chart-created: #d95926;
+
+  --color-shadow-ring: #2a3342;
+  --color-shadow-soft: rgb(0 0 0 / 0.3);
+  --color-shadow: rgb(0 0 0 / 0.45);
+  --color-shadow-deep: rgb(0 0 0 / 0.55);
+  --color-shadow-accent: rgb(47 102 240 / 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --tone-text-mix: 45%;
+    --color-shell: #0e131b;
+    --color-panel: #161c26;
+    --color-sunken: #1b222e;
+    --color-highlight: #1a2232;
+    --color-ink: #e7ebf2;
+    --color-ink-soft: #c9d0db;
+    --color-muted: #9aa4b5;
+    --color-line: #343e50;
+    --color-line-soft: #2a3342;
+    --color-line-faint: #232b38;
+    --color-line-strong: #4a5568;
+    --color-hover: #212938;
+    --color-accent: #2f66f0;
+    --color-accent-strong: #8db1ff;
+    --color-accent-soft: #1a2746;
+    --color-accent-line: #2c406f;
+    --color-on-accent: #ffffff;
+
+    --color-danger: #fca5a5;
+    --color-danger-soft: #3a1c20;
+    --color-danger-line: #6b2b31;
+    --color-danger-fill: #b91c1c;
+    --color-success: #6ee7a0;
+    --color-success-soft: #123224;
+    --color-success-line: #1f5236;
+    --color-success-fill: #15803d;
+    --color-warn: #fbbf5c;
+    --color-warn-soft: #33270f;
+    --color-warn-line: #5c4516;
+    --color-warn-fill: #f59e0b;
+    --color-ai: #c4b5fd;
+    --color-ai-soft: #261e42;
+    --color-ai-line: #41356f;
+
+    --color-scrim: #000000;
+  --color-toast: #2b3443;
+    --color-on-toast: #f1f4f8;
+    --color-toast-action: #7dd3fc;
+
+    --color-skel: #1f2733;
+    --color-skel-hi: #2a3341;
+
+    --color-prio-low: #c9d0db;
+    --color-prio-low-bg: #262e3b;
+    --color-prio-medium: #a9c3ff;
+    --color-prio-medium-bg: #1a2746;
+    --color-prio-high: #fca5a5;
+    --color-prio-high-bg: #3a1c20;
+    --color-prio-urgent: #ffffff;
+    --color-prio-urgent-bg: #b91c1c;
+
+    --color-chart-done: #3987e5;
+    --color-chart-created: #d95926;
+
+    --color-shadow-ring: #2a3342;
+    --color-shadow-soft: rgb(0 0 0 / 0.3);
+    --color-shadow: rgb(0 0 0 / 0.45);
+    --color-shadow-deep: rgb(0 0 0 / 0.55);
+    --color-shadow-accent: rgb(47 102 240 / 0.4);
+  }
 }
