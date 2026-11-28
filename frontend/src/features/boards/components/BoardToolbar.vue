@@ -29,6 +29,7 @@ const viewMeta: Record<BoardViewKind, { label: string; icon: string }> = {
   board: { label: 'Board', icon: 'M3 4h18v16H3zM9 4v16M15 4v16' },
   list: { label: 'List', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
   calendar: { label: 'Calendar', icon: 'M3 5h18v16H3zM16 3v4M8 3v4M3 10h18' },
+  timeline: { label: 'Timeline', icon: 'M4 6h9M8 12h12M4 18h7' },
 }
 const icons = {
   filter: 'M3 5h18l-7 8v6l-4 2v-8z',
@@ -48,6 +49,15 @@ async function onTabKey(event: KeyboardEvent, index: number) {
 }
 
 const count = computed(() => activeCount(props.state.filter))
+
+/** The Timeline always groups rows (by list unless another grouping is picked). */
+const timeline = computed(() => props.state.view === 'timeline')
+const shownGroup = computed<GroupKey>(() =>
+  timeline.value && props.state.group === 'none' ? 'list' : props.state.group,
+)
+const groupChoices = computed(() =>
+  timeline.value ? groupKeys.filter((k) => k !== 'none') : groupKeys,
+)
 
 const filterId = useId()
 const filterTrigger = useTemplateRef('filterTrigger')
@@ -76,7 +86,7 @@ function pickSort(key: SortKey) {
 
 function pickGroup(key: GroupKey) {
   group.close(true)
-  emit('change', { group: key })
+  emit('change', { group: timeline.value && key === 'list' ? 'none' : key })
 }
 
 function clear() {
@@ -100,12 +110,13 @@ const menuClass =
         role="tab"
         :aria-selected="state.view === view"
         :tabindex="state.view === view ? 0 : -1"
-        class="tab flex h-[38px] items-center gap-2 rounded-[10px] px-4 text-[15px]"
+        class="tab flex h-[38px] items-center gap-2 rounded-[10px] px-3 text-[15px] sm:px-4"
         :class="
           state.view === view
             ? 'bg-panel font-semibold text-ink shadow-card'
             : 'font-medium text-ink-soft hover:text-ink'
         "
+        :title="viewMeta[view].label"
         @click="emit('change', { view })"
         @keydown="onTabKey($event, i)"
       >
@@ -122,7 +133,8 @@ const menuClass =
         >
           <path :d="viewMeta[view].icon" />
         </svg>
-        {{ viewMeta[view].label }}
+        <!-- Phones show only the picked view's name; the others keep it for screen readers. -->
+        <span :class="{ 'max-sm:sr-only': state.view !== view }">{{ viewMeta[view].label }}</span>
       </button>
     </div>
 
@@ -229,7 +241,7 @@ const menuClass =
         </div>
       </div>
 
-      <div v-if="state.view === 'list'" class="relative">
+      <div v-if="state.view === 'list' || timeline" class="relative">
         <button
           ref="groupTrigger"
           type="button"
@@ -252,7 +264,7 @@ const menuClass =
           >
             <path :d="icons.group" />
           </svg>
-          {{ state.group === 'none' ? 'Group by' : `Group: ${groupLabels[state.group]}` }}
+          {{ shownGroup === 'none' ? 'Group by' : `Group: ${groupLabels[shownGroup]}` }}
         </button>
         <div
           v-if="group.open.value"
@@ -264,16 +276,16 @@ const menuClass =
           @keydown="group.onKeydown"
         >
           <button
-            v-for="key in groupKeys"
+            v-for="key in groupChoices"
             :key="key"
             type="button"
             role="menuitemradio"
-            :aria-checked="state.group === key"
+            :aria-checked="shownGroup === key"
             class="ghost flex items-center justify-between rounded-lg px-3 py-2 text-left"
             @click="pickGroup(key)"
           >
             {{ groupLabels[key] }}
-            <span v-if="state.group === key" class="text-accent-strong" aria-hidden="true">✓</span>
+            <span v-if="shownGroup === key" class="text-accent-strong" aria-hidden="true">✓</span>
           </button>
         </div>
       </div>

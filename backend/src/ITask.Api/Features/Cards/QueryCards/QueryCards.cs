@@ -12,8 +12,9 @@ using Microsoft.EntityFrameworkCore;
 namespace ITask.Api.Features.Cards.QueryCards;
 
 /// <summary>
-/// The board's active cards (on active lists) matching a filter, sorted, for the List and Calendar
-/// views. Any member may read. Multi-value parameters are comma-separated and match any value;
+/// The board's active cards (on active lists) matching a filter, sorted, for the List, Calendar and
+/// Timeline views. A <c>from</c>/<c>to</c> window keeps dated cards whose
+/// [start ?? due, due ?? start] range overlaps it and adds the dependency links between them. Any member may read. Multi-value parameters are comma-separated and match any value;
 /// different parameters must all match. Due buckets use the <c>tz</c> time zone (default UTC).
 /// </summary>
 public static partial class QueryCards
@@ -25,6 +26,8 @@ public static partial class QueryCards
     public const int MaxValues = 50;
 
     public static readonly TimeSpan MaxRange = TimeSpan.FromDays(62);
+
+    public static readonly TimeSpan MaxWindow = TimeSpan.FromDays(180);
 
     /// <summary>Assignee value for cards with nobody assigned.</summary>
     public const string Unassigned = "none";
@@ -49,9 +52,15 @@ public static partial class QueryCards
         DateTimeOffset? DueTo,
         string? Sort,
         string? Tz,
-        string? Blocked = null);
+        string? Blocked = null,
+        DateTimeOffset? From = null,
+        DateTimeOffset? To = null);
 
-    public sealed record Response(IReadOnlyList<CardSummary> Items, bool Truncated);
+    /// <summary><c>CardId</c> waits on <c>BlockedById</c>.</summary>
+    public sealed record DependencyLink(Guid CardId, Guid BlockedById);
+
+    /// <summary><c>Dependencies</c> is filled only for a window query, between returned cards.</summary>
+    public sealed record Response(IReadOnlyList<CardSummary> Items, bool Truncated, IReadOnlyList<DependencyLink> Dependencies);
 
     public sealed class Validator : AbstractValidator<Request>
     {
@@ -77,6 +86,18 @@ public static partial class QueryCards
                 .Must((r, to) => r.DueFrom <= to && to - r.DueFrom <= MaxRange)
                 .When(r => r.DueFrom is not null && r.DueTo is not null)
                 .WithMessage($"dueTo must follow dueFrom, at most {MaxRange.TotalDays} days later.");
+            RuleFor(r => r.To)
+                .NotNull()
+                .When(r => r.From is not null)
+                .WithMessage("Send from and to together.");
+            RuleFor(r => r.From)
+                .NotNull()
+                .When(r => r.To is not null)
+                .WithMessage("Send from and to together.");
+            RuleFor(r => r.To)
+                .Must((r, to) => r.From < to && to - r.From <= MaxWindow)
+                .When(r => r.From is not null && r.To is not null)
+                .WithMessage($"to must follow from, at most {MaxWindow.TotalDays} days later.");
         }
     }
 
@@ -162,6 +183,13 @@ public static partial class QueryCards
                 matches = matches.Where(c => c.DueAt < to);
             }
 
+            var window = request.From is not null && request.To is not null;
+            if (window)
+            {
+                var (start, end) = (request.From!.Value, request.To!.Value);
+                matches = matches.Where(c => Overlaps(c, start, end));
+            }
+
             var listOrder = await db.Lists
                 .AsNoTracking()
                 .Where(l => l.BoardId == boardId && l.ArchivedAt == null)
@@ -169,8 +197,34 @@ public static partial class QueryCards
                 .ToDictionaryAsync(l => l.Id, l => l.Position, ct);
 
             var sorted = Sort(matches, sort, listOrder).ToList();
-            return TypedResults.Ok(new Response([.. sorted.Take(MaxItems)], sorted.Count > MaxItems));
+            var items = sorted.Take(MaxItems).ToList();
+            List<DependencyLink> links = [];
+            if (window && items.Count > 0)
+            {
+                var ids = items.Select(c => c.Id).ToHashSet();
+                var all = await db.CardDependencies
+                    .AsNoTracking()
+                    .Where(d => d.Card!.BoardId == boardId && d.Card.ArchivedAt == null)
+                    .Select(d => new DependencyLink(d.CardId, d.BlockedById))
+                    .ToListAsync(ct);
+                links = [.. all.Where(l => ids.Contains(l.CardId) && ids.Contains(l.BlockedById))];
+            }
+
+            return TypedResults.Ok(new Response(items, sorted.Count > MaxItems, links));
         }
+    }
+
+    /// <summary>Whether a dated card's [start ?? due, due ?? start] range touches [from, to).</summary>
+    internal static bool Overlaps(CardSummary card, DateTimeOffset from, DateTimeOffset to)
+    {
+        if (card.StartAt is null && card.DueAt is null)
+        {
+            return false;
+        }
+
+        var start = card.StartAt ?? card.DueAt!.Value;
+        var end = card.DueAt ?? card.StartAt!.Value;
+        return start < to && end >= from;
     }
 
     /// <summary>Due soonest first (no date last), priority highest first, created newest first; ties by number.</summary>

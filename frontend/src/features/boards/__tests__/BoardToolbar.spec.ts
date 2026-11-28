@@ -10,6 +10,8 @@ const state = (change: Partial<BoardState> = {}): BoardState => ({
   sort: 'position',
   group: 'none',
   month: null,
+  zoom: 'month',
+  from: null,
   ...change,
 })
 
@@ -24,17 +26,37 @@ describe('BoardToolbar', () => {
     const wrapper = mountToolbar(state())
     const tabs = wrapper.findAll('[role=tab]')
 
-    expect(tabs.map((t) => t.attributes('aria-selected'))).toEqual(['true', 'false', 'false'])
+    expect(tabs.map((t) => t.attributes('aria-selected'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+    ])
     await tabs[2]!.trigger('click')
     await tabs[0]!.trigger('keydown', { key: 'ArrowLeft' })
 
-    expect(wrapper.emitted('change')).toEqual([[{ view: 'calendar' }], [{ view: 'calendar' }]])
+    expect(wrapper.emitted('change')).toEqual([[{ view: 'calendar' }], [{ view: 'timeline' }]])
     wrapper.unmount()
   })
 
-  it('shows Group by on the List view only', () => {
+  it('shows Group by on the List and Timeline views only', () => {
     expect(mountToolbar(state()).text()).not.toContain('Group by')
     expect(mountToolbar(state({ view: 'list' })).text()).toContain('Group by')
+    expect(mountToolbar(state({ view: 'timeline' })).text()).toContain('Group: List')
+  })
+
+  it('offers no "No grouping" on the Timeline; List there means the default', async () => {
+    const wrapper = mountToolbar(state({ view: 'timeline', group: 'label' }))
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().startsWith('Group:'))!
+      .trigger('click')
+    const items = wrapper.findAll('[role=menuitemradio]')
+
+    expect(items.map((i) => i.text())).not.toContain('No grouping')
+    await items.find((i) => i.text() === 'List')!.trigger('click')
+    expect(wrapper.emitted('change')).toEqual([[{ group: 'none' }]])
+    wrapper.unmount()
   })
 
   it('toggles filter values and clears them', async () => {

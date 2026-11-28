@@ -2,13 +2,13 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 import { toast } from '@/shared/ui/toast'
-import { cardsApi, type Card, type CardDetail, type CardPatch } from './api'
+import { cardsApi, type Card, type CardDetail, type CardPatch, type DependencyLink } from './api'
 import { useCardsStore } from './cardsStore'
-import { toApiParams, type BoardFilter, type SortKey } from './filters'
+import { toApiParams, type BoardFilter, type CardRange, type SortKey } from './filters'
 import { errorText } from './store'
 
 /**
- * Filtered, sorted cards for the List and Calendar views, loaded from `GET /boards/{id}/cards`.
+ * Filtered, sorted cards for the List, Calendar and Timeline views, loaded from `GET /boards/{id}/cards`.
  * Edits made here also reach the board's lists, so switching back to Board shows them.
  */
 export const useViewsStore = defineStore('views', () => {
@@ -17,19 +17,16 @@ export const useViewsStore = defineStore('views', () => {
   /** Matching cards; null while loading. */
   const cards = ref<Card[] | null>(null)
   const truncated = ref(false)
+  /** Blocker links between the loaded cards (Timeline windows only). */
+  const dependencies = ref<DependencyLink[]>([])
   /** Bumped per load, so a slow older response can't overwrite a newer one. */
   let request = 0
   /** Card details fetched for the calendar preview, by card id. */
   let details = new Map<string, Promise<CardDetail>>()
   /** Arguments of the latest load, to reload after a change that touches other cards. */
-  let last: [BoardFilter, SortKey, { from: Date; to: Date } | undefined] | null = null
+  let last: [BoardFilter, SortKey, CardRange | undefined] | null = null
 
-  async function load(
-    id: string,
-    filter: BoardFilter,
-    sort: SortKey,
-    range?: { from: Date; to: Date },
-  ) {
+  async function load(id: string, filter: BoardFilter, sort: SortKey, range?: CardRange) {
     const mine = ++request
     last = [filter, sort, range]
     if (boardId.value !== id) cards.value = null
@@ -40,6 +37,7 @@ export const useViewsStore = defineStore('views', () => {
       if (mine !== request) return
       cards.value = result.items
       truncated.value = result.truncated
+      dependencies.value = result.dependencies ?? []
     } catch (e) {
       if (mine !== request) return
       cards.value ??= []
@@ -53,6 +51,7 @@ export const useViewsStore = defineStore('views', () => {
     boardId.value = null
     cards.value = null
     truncated.value = false
+    dependencies.value = []
   }
 
   function replace(card: Card) {
@@ -105,5 +104,5 @@ export const useViewsStore = defineStore('views', () => {
     }
   }
 
-  return { boardId, cards, truncated, load, reset, update, detail, toggleComplete }
+  return { boardId, cards, truncated, dependencies, load, reset, update, detail, toggleComplete }
 })

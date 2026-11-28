@@ -2,6 +2,26 @@
 
 All notable changes follow [Semantic Versioning](https://semver.org). Tags are `vX.Y.Z`.
 
+## 1.4.0
+
+Seeing the work: board insights, "blocked by" links, dark mode and a timeline.
+
+- **Timeline view:** a fourth board view that draws tasks as bars from start to due date, grouped
+  by list (or label, assignee, priority, due). Week, Month and Quarter zoom, a today line and shaded
+  weekends; the window and zoom live in the link. Editors drag a bar to move both dates or drag an
+  end to change one (Alt+arrows and Alt+Shift+arrows from the keyboard). Blocker links show as
+  arrows, red when a task starts before its blocker is due. Tasks with no dates wait in a "No dates"
+  tray. Phones get a stacked agenda that opens the task on tap.
+- **Board insights:** done vs created over 30, 60 or 90 days, time in each list, WIP and the oldest
+  open tasks, computed when you open the page.
+- **Card dependencies:** mark a task as blocked by others on the same board (no loops, up to 10).
+  Blocked tasks show a lock, assignees are told when the last blocker is done, and automations can
+  react to "unblocked".
+- **Dark mode:** System, Light or Dark in your profile, saved to your account.
+- **Card query:** `GET /api/boards/{id}/cards` takes a `from`/`to` window (up to 180 days) and then
+  returns the blocker links between the returned cards.
+- **Phones:** the view switcher shows only the current view's name, so four views fit at 390 px.
+
 ## 1.3.2
 
 - **Lower AI caps for a near-$0 bill:** 10 AI requests per user and 30 for the whole app per day

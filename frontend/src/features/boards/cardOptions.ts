@@ -1,4 +1,4 @@
-import type { CardPriority } from './api'
+import type { Card, CardPriority } from './api'
 
 export const priorities: readonly CardPriority[] = ['None', 'Low', 'Medium', 'High', 'Urgent']
 
@@ -28,6 +28,16 @@ export function dueState(dueAt: string, completedAt: string | null, now = new Da
   const left = new Date(dueAt).getTime() - now.getTime()
   if (left < 0) return 'overdue'
   return left <= 2 * day ? 'soon' : 'later'
+}
+
+/** A dated task's accent: grey when done, red when overdue, else its first label's colour or the app accent. */
+export function cardTone(
+  card: Pick<Card, 'dueAt' | 'completedAt' | 'labels'>,
+  now = new Date(),
+): string {
+  if (card.completedAt) return 'var(--color-muted)'
+  if (card.dueAt && dueState(card.dueAt, null, now) === 'overdue') return 'var(--color-danger-fill)'
+  return card.labels[0]?.color ?? 'var(--color-accent)'
 }
 
 /** "Nov 24", with the year only when it isn't the current one. */
