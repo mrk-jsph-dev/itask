@@ -61,7 +61,7 @@ const inputClass =
           class="peer sr-only"
           :aria-label="`Colour ${option}`"
         />
-        <span class="hidden text-sm font-bold text-white peer-checked:block" aria-hidden="true"
+        <span class="hidden text-sm font-bold text-on-accent peer-checked:block" aria-hidden="true"
           >✓</span
         >
       </label>

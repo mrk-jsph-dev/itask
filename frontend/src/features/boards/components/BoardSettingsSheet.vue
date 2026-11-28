@@ -215,14 +215,14 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
         v-if="detailsMessage"
         role="status"
         class="text-sm"
-        :class="detailsMessage.ok ? 'text-emerald-700' : 'text-red-600'"
+        :class="detailsMessage.ok ? 'text-success' : 'text-danger'"
       >
         {{ detailsMessage.text }}
       </p>
       <button
         type="submit"
         :disabled="savingDetails || !name.trim()"
-        class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-11 w-fit rounded-full bg-accent px-6 text-sm font-semibold text-on-accent disabled:opacity-60"
       >
         {{ savingDetails ? 'Saving…' : 'Save details' }}
       </button>
@@ -299,11 +299,11 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
           <option v-for="role in boardRoles" :key="role" :value="role">{{ role }}</option>
         </select>
       </label>
-      <p v-if="inviteError" role="alert" class="text-sm text-red-600">{{ inviteError }}</p>
+      <p v-if="inviteError" role="alert" class="text-sm text-danger">{{ inviteError }}</p>
       <button
         type="submit"
         :disabled="inviting"
-        class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-panel disabled:opacity-60"
       >
         {{ inviting ? 'Creating…' : 'Create invite link' }}
       </button>
@@ -319,7 +319,7 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
           />
           <button
             type="button"
-            class="press h-9 rounded-full bg-accent px-4 text-xs font-semibold text-white"
+            class="press h-9 rounded-full bg-accent px-4 text-xs font-semibold text-on-accent"
             @click="copyLink"
           >
             Copy
@@ -338,7 +338,7 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
           >
           <button
             type="button"
-            class="ghost rounded-full px-3 py-1 text-xs font-semibold text-red-700"
+            class="ghost rounded-full px-3 py-1 text-xs font-semibold text-danger"
             :aria-label="`Revoke invite for ${invite.email ?? 'link'}`"
             @click="revoke(invite.id)"
           >
@@ -371,11 +371,11 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
         />
         Include cards
       </label>
-      <p v-if="templateError" role="alert" class="text-sm text-red-600">{{ templateError }}</p>
+      <p v-if="templateError" role="alert" class="text-sm text-danger">{{ templateError }}</p>
       <button
         type="submit"
         :disabled="savingTemplate || !templateName.trim()"
-        class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-11 w-fit rounded-full bg-ink px-6 text-sm font-semibold text-panel disabled:opacity-60"
       >
         {{ savingTemplate ? 'Saving…' : 'Save as template' }}
       </button>
@@ -396,7 +396,7 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
         <button
           v-if="board.archivedAt"
           type="button"
-          class="h-10 rounded-full bg-red-700 px-5 text-sm font-semibold text-white"
+          class="h-10 rounded-full bg-danger-fill px-5 text-sm font-semibold text-on-accent"
           @click="deleteBoard"
         >
           {{ confirmDelete ? 'Click again to delete forever' : 'Delete board' }}
@@ -408,7 +408,7 @@ const sectionClass = 'flex flex-col gap-4 rounded-[20px] border border-line-soft
       <button
         v-if="!store.isOwner"
         type="button"
-        class="ghost h-10 w-fit rounded-full border border-line px-5 text-sm font-semibold text-red-700"
+        class="ghost h-10 w-fit rounded-full border border-line px-5 text-sm font-semibold text-danger"
         @click="leave"
       >
         Leave this board

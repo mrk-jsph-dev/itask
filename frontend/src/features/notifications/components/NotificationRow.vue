@@ -32,7 +32,7 @@ const time = computed(() => props.when ?? timeLabel(props.notification.createdAt
       >{{ line.emoji }}</span
     >
     <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-      <p class="text-sm leading-[1.45]" :class="unread ? 'text-ink' : 'text-[#4B5563]'">
+      <p class="text-sm leading-[1.45]" :class="unread ? 'text-ink' : 'text-muted'">
         <span v-if="notification.actor" aria-hidden="true">{{ line.emoji }} </span>
         <span v-if="line.actor" class="font-semibold">{{ line.actor }} </span>
         {{ line.what }}
@@ -54,7 +54,7 @@ const time = computed(() => props.when ?? timeLabel(props.notification.createdAt
       <button
         v-if="inviteId && unread"
         type="button"
-        class="press relative z-10 mt-1.5 h-8 w-fit rounded-full bg-accent px-4 text-[13px] font-semibold text-white disabled:opacity-60"
+        class="press relative z-10 mt-1.5 h-8 w-fit rounded-full bg-accent px-4 text-[13px] font-semibold text-on-accent disabled:opacity-60"
         :disabled="accepting"
         @click="emit('accept', inviteId)"
       >

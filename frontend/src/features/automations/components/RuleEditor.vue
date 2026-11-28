@@ -314,7 +314,7 @@ const chip = 'text-sm font-semibold text-muted'
       <button
         v-if="draft.conditions.length < MAX_CONDITIONS"
         type="button"
-        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-accent"
+        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-accent-strong"
         @click="addCondition"
       >
         + {{ isDoorway ? 'Requirement' : 'Condition' }}
@@ -440,7 +440,7 @@ const chip = 'text-sm font-semibold text-muted'
       <button
         v-if="draft.actions.length < MAX_ACTIONS"
         type="button"
-        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-accent"
+        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-accent-strong"
         @click="addAction"
       >
         + Action
@@ -449,7 +449,7 @@ const chip = 'text-sm font-semibold text-muted'
 
     <p :id="`${id}-preview`" class="rounded-[12px] bg-hover px-3 py-2 text-sm">
       {{ sentence }}
-      <span v-if="hasAi" class="ml-1 font-semibold text-violet-700">· ✨ uses AI quota</span>
+      <span v-if="hasAi" class="ml-1 font-semibold text-ai">· ✨ uses AI quota</span>
       <span class="ml-1 text-muted">
         {{
           !isDoorway && isHourly(draft.trigger!.type)
@@ -481,13 +481,13 @@ const chip = 'text-sm font-semibold text-muted'
           e.g. {{ preview.samples.map((c) => `${c.key} ${c.title}`).join(', ') }}
         </span>
       </p>
-      <p v-if="previewError" class="text-sm text-red-700">{{ previewError }}</p>
+      <p v-if="previewError" class="text-sm text-danger">{{ previewError }}</p>
     </div>
-    <p v-if="local || error" role="alert" class="text-sm text-red-700">{{ local ?? error }}</p>
+    <p v-if="local || error" role="alert" class="text-sm text-danger">{{ local ?? error }}</p>
     <div class="flex gap-2">
       <button
         type="submit"
-        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
         :disabled="saving"
       >
         {{ saving ? 'Saving…' : 'Save' }}

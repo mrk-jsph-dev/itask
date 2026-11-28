@@ -78,7 +78,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
 
     <form
       v-if="lists"
-      class="fade-up flex flex-col gap-3 rounded-[16px] border border-[#DCE6FE] bg-[#F5F8FF] p-4"
+      class="fade-up flex flex-col gap-3 rounded-[16px] border border-accent-line bg-accent-soft p-4"
       aria-label="Board draft"
       @submit.prevent="accept"
     >
@@ -147,7 +147,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
         </button>
         <button
           type="submit"
-          class="press flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+          class="press flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
           :disabled="saving || !name.trim() || !lists.some((l) => l.trim())"
         >
           <span v-if="saving" class="spinner" aria-hidden="true" />

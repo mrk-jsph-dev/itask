@@ -20,7 +20,7 @@ const extra = inject(panelHeaderExtra, null)
 
 <template>
   <header
-    class="flex flex-wrap items-center gap-3 border-b border-[#EEF1F6] px-5 py-[18px] md:px-7"
+    class="flex flex-wrap items-center gap-3 border-b border-line-faint px-5 py-[18px] md:px-7"
   >
     <slot name="title">
       <h1 class="text-[22px] font-semibold">{{ title }}</h1>

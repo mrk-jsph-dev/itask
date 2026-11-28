@@ -120,8 +120,8 @@ const more = () => run(() => store.loadMore(), "Couldn't load older activity.")
               class="h-[34px] rounded-[10px] px-3 text-sm"
               :class="
                 store.category === chip.category
-                  ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-                  : 'font-medium text-[#374151]'
+                  ? 'bg-panel font-semibold text-ink shadow-card'
+                  : 'font-medium text-ink-soft'
               "
               @click="pick(chip.category)"
             >
@@ -179,7 +179,7 @@ const more = () => run(() => store.loadMore(), "Couldn't load older activity.")
             <li
               v-for="entry in group.items"
               :key="entry.id"
-              class="border-t border-[#EEF1F6] py-2.5"
+              class="border-t border-line-faint py-2.5"
             >
               <ActivityRow :entry="entry" :show-board="!boardId" />
             </li>

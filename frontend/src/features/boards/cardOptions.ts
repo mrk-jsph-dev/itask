@@ -2,12 +2,17 @@ import type { CardPriority } from './api'
 
 export const priorities: readonly CardPriority[] = ['None', 'Low', 'Medium', 'High', 'Urgent']
 
-/** Pill colours from DESIGN.md; Urgent is a filled red. None shows no pill. */
+const pill = (name: string) => ({
+  color: `var(--color-prio-${name})`,
+  bg: `var(--color-prio-${name}-bg)`,
+})
+
+/** Pill colours (theme tokens) from DESIGN.md; Urgent is a filled red. None shows no pill. */
 export const priorityStyle: Record<Exclude<CardPriority, 'None'>, { color: string; bg: string }> = {
-  Low: { color: '#4B5563', bg: '#F3F4F6' },
-  Medium: { color: '#1D4ED8', bg: '#EFF4FF' },
-  High: { color: '#B91C1C', bg: '#FEF2F2' },
-  Urgent: { color: '#FFFFFF', bg: '#B91C1C' },
+  Low: pill('low'),
+  Medium: pill('medium'),
+  High: pill('high'),
+  Urgent: pill('urgent'),
 }
 
 /** Emoji offered for labels. */

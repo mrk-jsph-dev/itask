@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="fade-in fixed inset-0 z-40 bg-ink/30" aria-hidden="true" @click="emit('close')" />
+    <div class="fade-in fixed inset-0 z-40 bg-scrim/30" aria-hidden="true" @click="emit('close')" />
     <div
       ref="panel"
       role="dialog"
@@ -47,10 +47,10 @@ onBeforeUnmount(() => {
       :aria-label="$slots.header ? title : undefined"
       :class="
         wide
-          ? 'max-w-[760px] md:inset-y-4 md:right-4 md:w-[calc(100%-32px)] md:rounded-[24px] md:shadow-[0_24px_60px_rgb(17_24_39/0.18)]'
+          ? 'max-w-[760px] md:inset-y-4 md:right-4 md:w-[calc(100%-32px)] md:rounded-[24px] md:shadow-float'
           : 'gap-5 p-6 max-w-md'
       "
-      class="sheet fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto bg-panel shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+      class="sheet fixed inset-y-0 right-0 z-40 flex w-full flex-col overflow-y-auto bg-panel shadow-sheet"
     >
       <slot v-if="$slots.header" name="header" />
       <div v-else class="flex items-center justify-between gap-4" :class="{ 'px-6 pt-6': wide }">

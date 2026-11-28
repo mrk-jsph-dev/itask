@@ -204,7 +204,7 @@ const cost = (a: Automation) =>
     <div v-else-if="canManage" class="flex flex-wrap gap-2">
       <button
         type="button"
-        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white"
+        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent"
         @click="startNew('Doorway')"
       >
         🚪 New doorway
@@ -245,7 +245,7 @@ const cost = (a: Automation) =>
       </form>
       <button
         type="button"
-        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-violet-700 disabled:opacity-60"
+        class="ghost w-fit rounded-full px-3 py-1 text-sm font-semibold text-ai disabled:opacity-60"
         :disabled="!!ai.busy"
         @click="reviewBoard"
       >
@@ -258,7 +258,7 @@ const cost = (a: Automation) =>
         <li
           v-for="(sg, i) in suggestions"
           :key="i"
-          class="flex flex-col gap-1.5 rounded-[14px] border border-violet-200 bg-violet-50/40 p-3"
+          class="flex flex-col gap-1.5 rounded-[14px] border border-ai-line bg-ai-soft p-3"
         >
           <p class="text-sm font-semibold">{{ sg.automation.name }}</p>
           <p class="text-sm">{{ describe(sg.automation, refs) }}</p>
@@ -296,7 +296,7 @@ const cost = (a: Automation) =>
             <div class="flex items-start gap-2">
               <div class="min-w-0 flex-1">
                 <p class="font-semibold">{{ a.name }}</p>
-                <p class="text-sm text-[#374151]">{{ describe(a, refs) }}</p>
+                <p class="text-sm text-ink-soft">{{ describe(a, refs) }}</p>
               </div>
               <label
                 v-if="canManage"
@@ -316,14 +316,14 @@ const cost = (a: Automation) =>
                 class="rounded-full px-2 py-0.5 font-semibold"
                 :class="
                   a.timing === 'hourly'
-                    ? 'bg-amber-50 text-amber-800'
-                    : 'bg-emerald-50 text-emerald-800'
+                    ? 'bg-warn-soft text-warn'
+                    : 'bg-success-soft text-success'
                 "
                 >{{ cost(a) }}</span
               >
               <span
                 v-if="usesAi(a)"
-                class="rounded-full bg-violet-50 px-2 py-0.5 font-semibold text-violet-800"
+                class="rounded-full bg-ai-soft px-2 py-0.5 font-semibold text-ai"
                 >✨ uses AI quota</span
               >
               <span class="text-muted" data-testid="automation-runs">{{ activity(a) }}</span>
@@ -337,14 +337,14 @@ const cost = (a: Automation) =>
                 </button>
                 <button
                   type="button"
-                  class="ghost rounded-full px-2 py-0.5 font-semibold text-red-700"
+                  class="ghost rounded-full px-2 py-0.5 font-semibold text-danger"
                   @click="remove(a)"
                 >
                   Delete
                 </button>
               </template>
             </div>
-            <p v-if="a.problem" class="text-xs text-red-700">⚠ {{ a.problem }}</p>
+            <p v-if="a.problem" class="text-xs text-danger">⚠ {{ a.problem }}</p>
           </li>
         </ul>
       </template>

@@ -87,8 +87,8 @@ const empty = computed(() => (data.value ? isEmpty(data.value) : false))
             class="h-[34px] rounded-[10px] px-3 text-sm"
             :class="
               days === r
-                ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-                : 'font-medium text-[#374151]'
+                ? 'bg-panel font-semibold text-ink shadow-card'
+                : 'font-medium text-ink-soft'
             "
             @click="pick(r)"
           >
@@ -127,7 +127,7 @@ const empty = computed(() => (data.value ? isEmpty(data.value) : false))
             <dd class="text-[26px] leading-tight font-semibold tabular-nums text-ink">
               <span v-if="t.warn" aria-hidden="true" class="text-xl">⚠️ </span>{{ t.value }}
             </dd>
-            <dd class="text-xs" :class="t.warn ? 'font-semibold text-[#b45309]' : 'text-muted'">
+            <dd class="text-xs" :class="t.warn ? 'font-semibold text-warn' : 'text-muted'">
               {{ t.hint }}
             </dd>
           </div>

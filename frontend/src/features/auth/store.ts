@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import { ApiError } from '@/shared/api/http'
 import { clearApiCache } from '@/shared/pwa/cache'
+import { useThemeStore } from '@/shared/theme/store'
 import { authApi, type DemoRole, type Me, type RegisterInput } from './api'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -21,6 +22,8 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       loaded.value = true
     }
+    if (user.value) useThemeStore().adopt(user.value.themePreference, !user.value.isDemo)
+    else useThemeStore().detach()
   }
 
   async function reload() {

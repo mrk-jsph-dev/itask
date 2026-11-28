@@ -27,6 +27,7 @@ const me = {
   displayName: 'Ada Lovelace',
   avatarColor: '#1D5BF5',
   timeZone: 'UTC',
+  themePreference: 'System' as const,
   isPlatformAdmin: false,
   isDemo: false,
   hasPassword: true,

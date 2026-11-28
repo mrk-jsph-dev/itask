@@ -55,7 +55,7 @@ function onKeydown(event: KeyboardEvent) {
 const chip =
   'press flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium'
 const chipState = (active: boolean) =>
-  active ? 'border-accent bg-[#EFF4FF] text-accent' : 'border-line text-[#374151] hover:bg-hover'
+  active ? 'border-accent bg-accent-soft text-accent-strong' : 'border-line text-ink-soft hover:bg-hover'
 const priorityChoices = priorities as readonly CardPriority[]
 const blockedChoices = [
   { value: 'yes', label: '🔒 Blocked' },
@@ -67,7 +67,7 @@ const blockedChoices = [
   <div
     role="dialog"
     aria-label="Filter tasks"
-    class="pop absolute top-11 right-0 z-30 flex w-[min(340px,calc(100vw-32px))] flex-col gap-4 rounded-[var(--radius-control)] border border-line-soft bg-panel p-4 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+    class="pop absolute top-11 right-0 z-30 flex w-[min(340px,calc(100vw-32px))] flex-col gap-4 rounded-[var(--radius-control)] border border-line-soft bg-panel p-4 text-sm shadow-pop"
     @keydown="onKeydown"
   >
     <label class="flex flex-col gap-1.5">
@@ -145,8 +145,8 @@ const blockedChoices = [
           @click="toggle('labels', label.id)"
         >
           <span
-            class="h-2.5 w-2.5 rounded-full"
-            :style="{ backgroundColor: label.color }"
+            class="h-2.5 w-2.5 rounded-full tone-bg"
+            :style="{ '--tone': label.color }"
             aria-hidden="true"
           />
           <span v-if="label.emoji" aria-hidden="true">{{ label.emoji }}</span>

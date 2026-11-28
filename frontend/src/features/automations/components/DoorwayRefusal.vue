@@ -25,12 +25,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       ref="panel"
       role="alertdialog"
       aria-labelledby="doorway-refusal-title"
-      class="pop fixed bottom-6 left-1/2 z-50 flex w-[min(420px,calc(100%-32px))] -translate-x-1/2 flex-col gap-3 rounded-[20px] border border-line-soft bg-panel p-4 shadow-[0_18px_40px_rgb(17_24_39/0.18)]"
+      class="pop fixed bottom-6 left-1/2 z-50 flex w-[min(420px,calc(100%-32px))] -translate-x-1/2 flex-col gap-3 rounded-[20px] border border-line-soft bg-panel p-4 shadow-float"
     >
       <p id="doorway-refusal-title" class="font-semibold">🚪 {{ refusal.message }}</p>
       <ul
         v-if="refusal.unmet.length"
-        class="flex flex-col gap-1 text-sm text-[#374151]"
+        class="flex flex-col gap-1 text-sm text-ink-soft"
         aria-label="Missing"
       >
         <li v-for="u in refusal.unmet" :key="u">• Add {{ u }}</li>
@@ -39,7 +39,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
-          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white"
+          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent"
           @click="emit('openCard')"
         >
           Open card

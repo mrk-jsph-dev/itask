@@ -130,12 +130,12 @@ const inputClass =
             @input="onInput"
           />
         </label>
-        <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" role="alert" class="text-sm text-danger">{{ error }}</p>
         <p v-else-if="note" role="status" class="text-sm text-muted">{{ note }}</p>
         <button
           type="submit"
           :disabled="!canVerify"
-          class="press flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-white disabled:opacity-60"
+          class="press flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-on-accent disabled:opacity-60"
         >
           <span v-if="busy" class="spinner" aria-hidden="true" />
           {{ busy ? 'Checking…' : 'Verify and continue' }}

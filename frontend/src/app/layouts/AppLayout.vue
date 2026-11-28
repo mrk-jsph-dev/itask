@@ -127,14 +127,14 @@ onBeforeUnmount(() => {
 
     <Teleport to="body">
       <template v-if="drawerOpen">
-        <div class="fade-in fixed inset-0 z-40 bg-ink/30" aria-hidden="true" @click="closeDrawer" />
+        <div class="fade-in fixed inset-0 z-40 bg-scrim/30" aria-hidden="true" @click="closeDrawer" />
         <div
           id="app-drawer"
           ref="drawer"
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
-          class="drawer fixed inset-y-0 left-0 z-40 w-[280px] max-w-[85vw] overflow-y-auto bg-shell p-3 shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+          class="drawer fixed inset-y-0 left-0 z-40 w-[280px] max-w-[85vw] overflow-y-auto bg-shell p-3 shadow-sheet"
         >
           <AppSidebar
             :search-shortcut="searchShortcut"
@@ -151,7 +151,7 @@ onBeforeUnmount(() => {
       @close="searchOpen = false"
     />
     <main
-      class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-panel)] bg-panel shadow-[0_1px_2px_rgb(17_24_39/0.04)]"
+      class="flex min-w-0 flex-1 flex-col rounded-[var(--radius-panel)] bg-panel shadow-card"
     >
       <OfflineBanner />
       <RouterView />

@@ -20,7 +20,7 @@ const title = computed(() => {
 <template>
   <button
     type="button"
-    class="press flex items-center gap-1.5 rounded-full border border-[#DCE6FE] bg-[#F5F8FF] font-semibold text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
+    class="press flex items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft font-semibold text-accent-strong disabled:cursor-not-allowed disabled:opacity-60"
     :class="compact ? 'h-9 px-3 text-sm' : 'h-[42px] px-3.5 text-sm'"
     :disabled="disabled"
     :title="title"

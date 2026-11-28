@@ -101,7 +101,7 @@ onMounted(loadMore)
             <span class="truncate text-sm font-semibold">{{ user.displayName || user.email }}</span>
             <span
               v-if="user.id === auth.user?.id"
-              class="shrink-0 rounded-full bg-[#eef3ff] px-2 py-0.5 text-[11px] font-semibold text-accent-strong"
+              class="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent-strong"
               >You</span
             >
             <span
@@ -111,7 +111,7 @@ onMounted(loadMore)
             >
             <span
               v-if="user.isLocked"
-              class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+              class="shrink-0 rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger"
               >Locked</span
             >
           </span>
@@ -120,10 +120,10 @@ onMounted(loadMore)
           >
         </div>
         <select
-          class="h-9 w-[150px] rounded-full border px-3.5 text-xs font-semibold focus:border-accent focus:shadow-[0_0_0_3px_rgb(29_91_245/0.15)] focus:outline-none disabled:opacity-70"
+          class="h-9 w-[150px] rounded-full border px-3.5 text-xs font-semibold focus:border-accent focus:shadow-focus focus:outline-none disabled:opacity-70"
           :class="
             user.isPlatformAdmin
-              ? 'border-[#c9d7fb] bg-[#eef3ff] text-accent-strong'
+              ? 'border-accent-line bg-accent-soft text-accent-strong'
               : 'border-line bg-panel text-ink'
           "
           :value="user.isPlatformAdmin ? 'PlatformAdmin' : 'User'"
@@ -142,8 +142,8 @@ onMounted(loadMore)
           class="lock-button flex h-9 w-[104px] items-center justify-center gap-1.5 rounded-full border text-xs font-semibold"
           :class="
             user.isLocked
-              ? 'border-transparent bg-accent text-white hover:bg-accent-strong'
-              : 'border-line bg-panel text-ink hover:border-red-200 hover:bg-red-50 hover:text-red-700'
+              ? 'border-transparent bg-accent text-on-accent hover:bg-accent-strong'
+              : 'border-line bg-panel text-ink hover:border-danger-line hover:bg-danger-soft hover:text-danger'
           "
           :aria-label="`${user.isLocked ? 'Unlock' : 'Lock'} ${user.email}`"
           @click="toggleLock(user)"

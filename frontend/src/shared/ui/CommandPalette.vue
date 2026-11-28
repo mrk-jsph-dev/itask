@@ -76,12 +76,12 @@ onBeforeUnmount(() => returnFocus?.focus())
 
 <template>
   <Teleport to="body">
-    <div class="fade-in fixed inset-0 z-50 bg-ink/30" aria-hidden="true" @click="emit('close')" />
+    <div class="fade-in fixed inset-0 z-50 bg-scrim/30" aria-hidden="true" @click="emit('close')" />
     <div
       role="dialog"
       aria-modal="true"
       :aria-label="label"
-      class="pop fixed inset-x-4 top-[12vh] z-50 mx-auto flex max-h-[70vh] max-w-xl flex-col overflow-hidden rounded-3xl bg-panel shadow-[0_10px_40px_rgb(17_24_39/0.2)]"
+      class="pop fixed inset-x-4 top-[12vh] z-50 mx-auto flex max-h-[70vh] max-w-xl flex-col overflow-hidden rounded-3xl bg-panel shadow-sheet"
     >
       <div class="flex items-center gap-3 border-b border-line-soft px-5 py-4">
         <svg

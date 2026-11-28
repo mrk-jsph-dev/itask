@@ -19,7 +19,7 @@ const html = computed(() => renderMarkdown(model.value))
 
 const tabClass = (active: boolean) => [
   'rounded-full px-3 py-1 text-[13px] font-semibold',
-  active ? 'bg-ink text-white' : 'ghost text-muted',
+  active ? 'bg-ink text-panel' : 'ghost text-muted',
 ]
 </script>
 

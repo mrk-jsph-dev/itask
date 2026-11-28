@@ -84,7 +84,7 @@ function submit() {
       </button>
       <button
         type="submit"
-        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+        class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
         :disabled="busy || !name.trim()"
       >
         {{ submitLabel }}

@@ -14,6 +14,7 @@ const me: Me = {
   displayName: 'Ada',
   avatarColor: '#1D5BF5',
   timeZone: 'UTC',
+  themePreference: 'System',
   isPlatformAdmin: false,
   isDemo: false,
   hasPassword: true,

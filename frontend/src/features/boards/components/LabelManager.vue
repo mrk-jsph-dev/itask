@@ -71,8 +71,8 @@ async function remove(label: Label) {
     <ul v-else-if="cards.labels.length" class="flex flex-col gap-1" aria-label="Board labels">
       <li v-for="label in cards.labels" :key="label.id" class="flex items-center gap-2 text-sm">
         <span
-          class="h-3 w-3 shrink-0 rounded-full"
-          :style="{ backgroundColor: label.color }"
+          class="h-3 w-3 shrink-0 rounded-full tone-bg"
+          :style="{ '--tone': label.color }"
           aria-hidden="true"
         />
         <span aria-hidden="true">{{ label.emoji }}</span>
@@ -87,7 +87,7 @@ async function remove(label: Label) {
         </button>
         <button
           type="button"
-          class="ghost rounded-full px-3 py-1 text-xs font-semibold text-red-700"
+          class="ghost rounded-full px-3 py-1 text-xs font-semibold text-danger"
           :aria-label="
             confirmDelete === label.id
               ? `Confirm delete ${label.name}`
@@ -166,7 +166,7 @@ async function remove(label: Label) {
         </button>
         <button
           type="submit"
-          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+          class="press h-9 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
           :disabled="busy || !draft.name.trim()"
         >
           {{ editing === 'new' ? 'Add label' : 'Save label' }}

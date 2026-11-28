@@ -46,7 +46,7 @@ function wipText(w: ListWip) {
       <span
         v-if="wipById.get(b.listId)"
         class="col-span-2 text-xs"
-        :class="over(wipById.get(b.listId)) ? 'font-semibold text-[#b45309]' : 'text-muted'"
+        :class="over(wipById.get(b.listId)) ? 'font-semibold text-warn' : 'text-muted'"
       >
         <span v-if="over(wipById.get(b.listId))" aria-hidden="true">⚠️ </span>
         {{ wipText(wipById.get(b.listId)!) }}

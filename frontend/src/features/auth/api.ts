@@ -1,3 +1,4 @@
+import type { ThemePreference } from '@/shared/theme/theme'
 import { api } from '@/shared/api/http'
 import type { ExternalProvider } from './external'
 
@@ -7,6 +8,7 @@ export interface Me {
   displayName: string
   avatarColor: string
   timeZone: string
+  themePreference: ThemePreference
   isPlatformAdmin: boolean
   isDemo: boolean
   /** False for accounts created through GitHub or Microsoft until a password is set. */

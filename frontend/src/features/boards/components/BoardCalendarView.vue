@@ -215,9 +215,9 @@ function onChipKey(event: KeyboardEvent, card: Card) {
 /** A task's accent: red when overdue, grey when done, else its first label's colour or the app accent. */
 function tone(card: Card): string {
   const state = card.dueAt ? dueState(card.dueAt, card.completedAt) : null
-  if (state === 'done') return '#9CA3AF'
-  if (state === 'overdue') return '#DC2626'
-  return card.labels[0]?.color ?? '#1D5BF5'
+  if (state === 'done') return 'var(--color-muted)'
+  if (state === 'overdue') return 'var(--color-danger-fill)'
+  return card.labels[0]?.color ?? 'var(--color-accent)'
 }
 
 const time = (card: Card) =>
@@ -233,8 +233,8 @@ const outside = (d: Date) => mode.value === 'month' && d.getMonth() !== shownMon
 
 const segment = (active: boolean) =>
   active
-    ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-    : 'font-medium text-[#374151] hover:text-ink'
+    ? 'bg-panel font-semibold text-ink shadow-card'
+    : 'font-medium text-ink-soft hover:text-ink'
 </script>
 
 <template>
@@ -296,7 +296,7 @@ const segment = (active: boolean) =>
 
     <p v-if="undatedCount" class="-mt-1 text-sm text-muted">
       {{ undatedCount }} {{ undatedCount === 1 ? 'task has' : 'tasks have' }} no due date.
-      <button type="button" class="font-semibold text-accent" @click="emit('showUndated')">
+      <button type="button" class="font-semibold text-accent-strong" @click="emit('showUndated')">
         Show in List
       </button>
     </p>
@@ -328,7 +328,7 @@ const segment = (active: boolean) =>
           v-for="name in weekdayNames"
           :key="name.long"
           role="columnheader"
-          class="bg-[#F8FAFD] py-2.5 text-center text-[13px] font-semibold text-[#374151]"
+          class="bg-sunken py-2.5 text-center text-[13px] font-semibold text-ink-soft"
         >
           <span class="hidden lg:inline">{{ name.long }}</span>
           <span class="lg:hidden">{{ name.short }}</span>
@@ -343,7 +343,7 @@ const segment = (active: boolean) =>
         :data-day="dayKey(day)"
         class="day fade-in flex min-w-0 flex-col gap-1.5 p-2"
         :class="[
-          outside(day) ? 'bg-[#FAFBFD]' : 'bg-panel',
+          outside(day) ? 'bg-sunken' : 'bg-panel',
           { 'is-over': over === dayKey(day), 'is-today': dayKey(day) === today },
         ]"
         :style="{ '--i': Math.min(i, 12) }"
@@ -356,9 +356,9 @@ const segment = (active: boolean) =>
             class="flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-[15px] font-semibold"
             :class="
               dayKey(day) === today
-                ? 'bg-accent text-white'
+                ? 'bg-accent text-on-accent'
                 : outside(day)
-                  ? 'text-[#B6BDC9]'
+                  ? 'text-muted'
                   : 'text-ink'
             "
             >{{ day.getDate() }}</span
@@ -484,18 +484,18 @@ const segment = (active: boolean) =>
 }
 
 .day.is-over {
-  background: color-mix(in srgb, var(--color-accent) 7%, white);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-panel));
   box-shadow: inset 0 0 0 2px var(--color-accent);
 }
 
 .task {
   border-left: 3px solid var(--tone);
-  background: color-mix(in srgb, var(--tone) 10%, white);
-  color: color-mix(in srgb, var(--tone) 70%, #111827);
+  background: color-mix(in srgb, var(--tone) 10%, var(--color-panel));
+  color: color-mix(in srgb, var(--tone) var(--tone-text-mix), var(--color-ink));
 }
 
 .task:hover {
-  background: color-mix(in srgb, var(--tone) 16%, white);
+  background: color-mix(in srgb, var(--tone) 16%, var(--color-panel));
 }
 
 .task.is-done {

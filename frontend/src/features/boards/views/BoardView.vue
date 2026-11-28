@@ -425,7 +425,7 @@ function onArchivedToggle(event: Event) {
       </template>
       <template #chip>
         <span
-          class="rounded-full bg-[#F3F4F6] px-2.5 py-1 text-xs font-semibold text-[#374151]"
+          class="rounded-full bg-hover px-2.5 py-1 text-xs font-semibold text-ink-soft"
           title="Only board members can see this board"
           >Private</span
         >
@@ -452,7 +452,7 @@ function onArchivedToggle(event: Event) {
           @click="store.toggleStar(store.current.id, store.current.isStarred)"
         >
           <span
-            :class="store.current.isStarred ? 'pop text-amber-500' : 'text-muted'"
+            :class="store.current.isStarred ? 'pop text-warn' : 'text-muted'"
             aria-hidden="true"
             >{{ store.current.isStarred ? '★' : '☆' }}</span
           >
@@ -551,7 +551,7 @@ function onArchivedToggle(event: Event) {
           <button
             ref="aiTrigger"
             type="button"
-            class="press flex h-[42px] items-center gap-1.5 rounded-full border border-[#DCE6FE] bg-[#F5F8FF] px-3.5 text-sm font-semibold text-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
+            class="press flex h-[42px] items-center gap-1.5 rounded-full border border-accent-line bg-accent-soft px-3.5 text-sm font-semibold text-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
             aria-haspopup="menu"
             :aria-expanded="aiPicker.open.value"
             aria-label="AI helpers"
@@ -566,7 +566,7 @@ function onArchivedToggle(event: Event) {
             ref="aiMenu"
             role="menu"
             aria-label="AI helpers"
-            class="pop absolute top-12 right-0 z-30 flex w-60 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]"
+            class="pop absolute top-12 right-0 z-30 flex w-60 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-pop"
             @keydown="aiPicker.onKeydown"
           >
             <button
@@ -595,7 +595,7 @@ function onArchivedToggle(event: Event) {
         <button
           v-if="canWrite && ordered.length"
           type="button"
-          class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          class="press h-[42px] rounded-full bg-accent px-[18px] text-[15px] font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="!online"
           :title="online ? undefined : OFFLINE_HINT"
           @click="newTask"
@@ -615,7 +615,7 @@ function onArchivedToggle(event: Event) {
       <div
         v-if="store.current.archivedAt"
         role="status"
-        class="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        class="rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn"
       >
         🗄 This board is archived.
         <template v-if="store.isOwner">Restore it from Settings to work on it again.</template>
@@ -659,7 +659,7 @@ function onArchivedToggle(event: Event) {
           Some tasks are hidden or sorted, so dragging is off.
           <button
             type="button"
-            class="font-semibold text-accent"
+            class="font-semibold text-accent-strong"
             @click="setState({ filter: emptyFilter(), sort: 'position' })"
           >
             Show board order

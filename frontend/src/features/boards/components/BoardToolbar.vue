@@ -84,13 +84,13 @@ function clear() {
 }
 
 const toolClass =
-  'ghost relative flex h-[38px] items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-[#374151]'
+  'ghost relative flex h-[38px] items-center gap-1.5 rounded-[10px] px-3 text-sm font-medium text-ink-soft'
 const menuClass =
-  'pop absolute top-11 right-0 z-30 flex w-48 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-[0_10px_24px_rgb(17_24_39/0.12)]'
+  'pop absolute top-11 right-0 z-30 flex w-48 flex-col rounded-[var(--radius-control)] border border-line-soft bg-panel p-1 text-sm shadow-pop'
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-3 border-b border-[#EEF1F6] px-5 py-3.5 md:px-7">
+  <div class="flex flex-wrap items-center gap-3 border-b border-line-faint px-5 py-3.5 md:px-7">
     <div role="tablist" aria-label="Board view" class="flex gap-1 rounded-[14px] bg-hover p-1">
       <button
         v-for="(view, i) in views"
@@ -103,8 +103,8 @@ const menuClass =
         class="tab flex h-[38px] items-center gap-2 rounded-[10px] px-4 text-[15px]"
         :class="
           state.view === view
-            ? 'bg-panel font-semibold text-ink shadow-[0_1px_2px_rgb(17_24_39/0.08)]'
-            : 'font-medium text-[#374151] hover:text-ink'
+            ? 'bg-panel font-semibold text-ink shadow-card'
+            : 'font-medium text-ink-soft hover:text-ink'
         "
         @click="emit('change', { view })"
         @keydown="onTabKey($event, i)"
@@ -130,7 +130,7 @@ const menuClass =
       <button
         v-if="count"
         type="button"
-        class="ghost h-[38px] rounded-[10px] px-3 text-sm font-semibold text-accent"
+        class="ghost h-[38px] rounded-[10px] px-3 text-sm font-semibold text-accent-strong"
         @click="clear"
       >
         Clear filters
@@ -140,7 +140,7 @@ const menuClass =
         <button
           ref="filterTrigger"
           type="button"
-          :class="[toolClass, count ? 'bg-[#EFF4FF] text-accent' : '']"
+          :class="[toolClass, count ? 'bg-accent-soft text-accent-strong' : '']"
           aria-haspopup="dialog"
           :aria-expanded="filterOpen"
           :aria-controls="filterId"
@@ -163,7 +163,7 @@ const menuClass =
           Filter
           <span
             v-if="count"
-            class="rounded-full bg-accent px-1.5 text-[11px] leading-[18px] font-semibold text-white"
+            class="rounded-full bg-accent px-1.5 text-[11px] leading-[18px] font-semibold text-on-accent"
             aria-hidden="true"
             >{{ count }}</span
           >
@@ -184,7 +184,7 @@ const menuClass =
         <button
           ref="sortTrigger"
           type="button"
-          :class="[toolClass, state.sort !== 'position' ? 'text-accent' : '']"
+          :class="[toolClass, state.sort !== 'position' ? 'text-accent-strong' : '']"
           aria-haspopup="menu"
           :aria-expanded="sort.open.value"
           :aria-controls="sortId"
@@ -224,7 +224,7 @@ const menuClass =
             @click="pickSort(key)"
           >
             {{ sortLabels[key] }}
-            <span v-if="state.sort === key" class="text-accent" aria-hidden="true">✓</span>
+            <span v-if="state.sort === key" class="text-accent-strong" aria-hidden="true">✓</span>
           </button>
         </div>
       </div>
@@ -233,7 +233,7 @@ const menuClass =
         <button
           ref="groupTrigger"
           type="button"
-          :class="[toolClass, state.group !== 'none' ? 'text-accent' : '']"
+          :class="[toolClass, state.group !== 'none' ? 'text-accent-strong' : '']"
           aria-haspopup="menu"
           :aria-expanded="group.open.value"
           :aria-controls="groupId"
@@ -273,7 +273,7 @@ const menuClass =
             @click="pickGroup(key)"
           >
             {{ groupLabels[key] }}
-            <span v-if="state.group === key" class="text-accent" aria-hidden="true">✓</span>
+            <span v-if="state.group === key" class="text-accent-strong" aria-hidden="true">✓</span>
           </button>
         </div>
       </div>

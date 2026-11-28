@@ -77,7 +77,7 @@ async function signOut() {
 
 <template>
   <section
-    class="fade-up flex w-full max-w-[360px] min-w-0 flex-[1_1_300px] flex-col gap-4 rounded-[20px] bg-[#F6F8FB] p-[22px]"
+    class="fade-up flex w-full max-w-[360px] min-w-0 flex-[1_1_300px] flex-col gap-4 rounded-[20px] bg-sunken p-[22px]"
     aria-labelledby="profile-card-title"
   >
     <div class="flex items-center gap-3.5">
@@ -108,7 +108,7 @@ async function signOut() {
           class="flex flex-col-reverse rounded-xl bg-panel p-2.5"
         >
           <dt class="text-xs text-muted">{{ tile.label }}</dt>
-          <dd class="text-xl font-bold" :class="{ 'text-accent': tile.accent }">
+          <dd class="text-xl font-bold" :class="{ 'text-accent-strong': tile.accent }">
             {{ tile.value }}
           </dd>
         </div>
@@ -137,7 +137,7 @@ async function signOut() {
       </label>
       <button
         type="submit"
-        class="press flex h-11 items-center justify-center gap-2 rounded-full bg-accent font-semibold text-white disabled:opacity-60"
+        class="press flex h-11 items-center justify-center gap-2 rounded-full bg-accent font-semibold text-on-accent disabled:opacity-60"
         :disabled="saving || !displayName.trim() || displayName.trim() === user.displayName"
       >
         <span v-if="saving" class="spinner" aria-hidden="true" />

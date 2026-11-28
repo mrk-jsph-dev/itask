@@ -128,7 +128,7 @@ const tipLeft = computed(() =>
     </svg>
     <div
       v-if="tip"
-      class="pointer-events-none absolute top-6 z-10 -translate-x-1/2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] shadow-[0_8px_24px_rgb(17_24_39/0.12)]"
+      class="pointer-events-none absolute top-6 z-10 -translate-x-1/2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] shadow-pop"
       :style="{ left: `${tipLeft}px` }"
       role="presentation"
     >

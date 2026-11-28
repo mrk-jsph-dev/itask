@@ -55,9 +55,9 @@ function setPriority(card: Card, value: string) {
 const dueClass = (card: Card) => {
   const state = card.dueAt ? dueState(card.dueAt, card.completedAt) : null
   return state === 'overdue'
-    ? 'text-red-700 font-semibold'
+    ? 'text-danger font-semibold'
     : state === 'soon'
-      ? 'text-amber-700'
+      ? 'text-warn'
       : ''
 }
 </script>
@@ -80,7 +80,7 @@ const dueClass = (card: Card) => {
     <p
       v-if="truncated"
       role="status"
-      class="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      class="rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn"
     >
       Showing the first {{ cards.length }} tasks. Narrow the filter to see the rest.
     </p>
@@ -94,8 +94,8 @@ const dueClass = (card: Card) => {
       <h2 v-if="group !== 'none'" class="flex items-center gap-2 px-1 text-base font-semibold">
         <span
           v-if="section.color"
-          class="h-2.5 w-2.5 rounded-full"
-          :style="{ backgroundColor: section.color }"
+          class="h-2.5 w-2.5 rounded-full tone-bg"
+          :style="{ '--tone': section.color }"
           aria-hidden="true"
         />
         <span v-if="section.emoji" aria-hidden="true">{{ section.emoji }}</span>
@@ -142,7 +142,7 @@ const dueClass = (card: Card) => {
                 <span
                   v-for="label in card.labels"
                   :key="label.id"
-                  class="rounded-full px-2 py-0.5 text-xs font-semibold text-white"
+                  class="rounded-full px-2 py-0.5 text-xs font-semibold text-on-accent"
                   :style="{ backgroundColor: label.color }"
                   >{{ label.emoji }} {{ label.name }}</span
                 >
@@ -159,7 +159,7 @@ const dueClass = (card: Card) => {
                   :name="a.displayName"
                   :color="a.avatarColor"
                   :size="24"
-                  class="ring-2 ring-white"
+                  class="ring-2 ring-panel"
                 />
               </span>
             </td>

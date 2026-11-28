@@ -62,7 +62,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
 <template>
   <Teleport to="body">
     <div
-      class="fade-in fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-ink/40 p-4"
+      class="fade-in fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-scrim/40 p-4"
       @click.self="emit('close')"
     >
       <div
@@ -98,7 +98,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
 
         <form
           v-if="draft"
-          class="fade-up flex flex-col gap-3 rounded-[16px] border border-[#DCE6FE] bg-[#F5F8FF] p-4"
+          class="fade-up flex flex-col gap-3 rounded-[16px] border border-accent-line bg-accent-soft p-4"
           aria-label="Task draft"
           @submit.prevent="accept"
         >
@@ -150,7 +150,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
                 class="press flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold"
                 :class="
                   draft.labelIds.includes(label.id)
-                    ? 'border-transparent text-white'
+                    ? 'border-transparent text-on-accent'
                     : 'border-line bg-panel text-ink'
                 "
                 :style="draft.labelIds.includes(label.id) ? { background: label.color } : {}"
@@ -172,7 +172,7 @@ const field = 'h-10 w-full rounded-[12px] border border-line bg-panel px-3 text-
             </button>
             <button
               type="submit"
-              class="press flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60"
+              class="press flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-on-accent disabled:opacity-60"
               :disabled="saving || !draft.title.trim() || !draft.listId"
             >
               <span v-if="saving" class="spinner" aria-hidden="true" />
