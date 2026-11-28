@@ -15,7 +15,7 @@ import {
   rangeOf,
   weekDays,
 } from '../calendar'
-import { dueState } from '../cardOptions'
+import { cardTone } from '../cardOptions'
 import CalendarTaskPreview from './CalendarTaskPreview.vue'
 
 const props = defineProps<{
@@ -212,13 +212,7 @@ function onChipKey(event: KeyboardEvent, card: Card) {
   emit('move', card.id, moveToDay(card.dueAt, dayKey(target)))
 }
 
-/** A task's accent: red when overdue, grey when done, else its first label's colour or the app accent. */
-function tone(card: Card): string {
-  const state = card.dueAt ? dueState(card.dueAt, card.completedAt) : null
-  if (state === 'done') return 'var(--color-muted)'
-  if (state === 'overdue') return 'var(--color-danger-fill)'
-  return card.labels[0]?.color ?? 'var(--color-accent)'
-}
+const tone = (card: Card) => cardTone(card)
 
 const time = (card: Card) =>
   card.dueAt

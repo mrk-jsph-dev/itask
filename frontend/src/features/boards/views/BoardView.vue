@@ -25,6 +25,7 @@ import { toast } from '@/shared/ui/toast'
 import type { BoardList, Card, CardPatch, ListInput } from '../api'
 import { fromDateInput } from '../cardOptions'
 import BoardCalendarView from '../components/BoardCalendarView.vue'
+import BoardTimelineView from '../components/BoardTimelineView.vue'
 import BoardListView from '../components/BoardListView.vue'
 import BoardPresence from '../components/BoardPresence.vue'
 import BoardSettingsSheet from '../components/BoardSettingsSheet.vue'
@@ -36,7 +37,14 @@ import { useCardDetailStore } from '../cardDetailStore'
 import { useCardsStore } from '../cardsStore'
 import { useListsStore } from '../listsStore'
 import { errorText, useBoardsStore } from '../store'
-import { activeCount, compareBy, emptyFilter, matches, type BoardState } from '../filters'
+import {
+  activeCount,
+  compareBy,
+  emptyFilter,
+  matches,
+  type BoardState,
+  type CardRange,
+} from '../filters'
 import { useBoardLive } from '../live'
 import { useBoardState } from '../useBoardState'
 import { useViewsStore } from '../viewsStore'
@@ -173,20 +181,29 @@ function changeState(change: Partial<BoardState>) {
 
 /** Days the Calendar shows, reported by the calendar itself. */
 const calendarRange = ref<{ from: Date; to: Date } | null>(null)
+/** Days the Timeline shows, reported by the timeline itself. */
+const timelineRange = ref<CardRange | null>(null)
 
 function loadView() {
   if (notFound.value || view.value === 'board') return
-  if (view.value === 'calendar' && !calendarRange.value) return
-  void views.load(
-    props.boardId,
-    state.value.filter,
-    state.value.sort,
-    view.value === 'calendar' ? calendarRange.value! : undefined,
-  )
+  const range =
+    view.value === 'calendar'
+      ? calendarRange.value
+      : view.value === 'timeline'
+        ? timelineRange.value
+        : undefined
+  if (range === null) return
+  void views.load(props.boardId, state.value.filter, state.value.sort, range)
 }
 
 watch(
-  () => [view.value, JSON.stringify(state.value.filter), state.value.sort, calendarRange.value],
+  () => [
+    view.value,
+    JSON.stringify(state.value.filter),
+    state.value.sort,
+    calendarRange.value,
+    timelineRange.value,
+  ],
   loadView,
 )
 
@@ -210,6 +227,15 @@ const undatedCount = computed(() => {
     .filter((c) => !c.dueAt && matches(c, state.value.filter, now)).length
 })
 
+/** Matching tasks with neither a start nor a due date, for the Timeline's tray. */
+const timelineUndated = computed(() => {
+  if (view.value !== 'timeline') return []
+  const now = new Date()
+  return (lists.lists ?? [])
+    .flatMap((l) => l.cards)
+    .filter((c) => !c.dueAt && !c.startAt && matches(c, state.value.filter, now))
+})
+
 function showUndated() {
   setState({ view: 'list', filter: { ...state.value.filter, due: ['none'] } })
 }
@@ -227,6 +253,7 @@ watch(
   async (id) => {
     views.reset()
     calendarRange.value = null
+    timelineRange.value = null
     notFound.value = false
     settingsOpen.value = false
     automationsOpen.value = false
@@ -649,6 +676,23 @@ function onArchivedToggle(event: Event) {
         @move="(cardId, dueAt) => updateCard(cardId, { dueAt })"
         @toggle-complete="views.toggleComplete"
         @show-undated="showUndated"
+      />
+      <BoardTimelineView
+        v-else-if="view === 'timeline'"
+        :cards="views.cards"
+        :undated="timelineUndated"
+        :dependencies="views.dependencies"
+        :zoom="state.zoom"
+        :from="state.from"
+        :group="state.group"
+        :editable="editable"
+        :lists="listNames"
+        :labels="cards.labels ?? []"
+        :members="store.members"
+        @window="(change) => setState(change)"
+        @range="(range) => (timelineRange = range)"
+        @open="openCard"
+        @update="updateCard"
       />
       <template v-else>
         <p

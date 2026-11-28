@@ -147,6 +147,64 @@ public sealed class QueryCardsTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task Window_keeps_cards_whose_date_range_overlaps_it()
+    {
+        var board = await BoardAsync();
+        var from = new DateTimeOffset(2026, 3, 1, 0, 0, 0, TimeSpan.Zero);
+        var to = from.AddDays(31);
+        async Task Card(string title, DateTimeOffset? start, DateTimeOffset? due)
+        {
+            var card = await board.Client.CreateCardAsync(board.BoardId, board.TodoId, title);
+            if (start is not null || due is not null)
+            {
+                await PatchAsync(board, card, new { startAt = start, dueAt = due });
+            }
+        }
+
+        await Card("Inside", from.AddDays(3), from.AddDays(5));
+        await Card("Starts before", from.AddDays(-10), from.AddDays(2));
+        await Card("Ends after", to.AddDays(-1), to.AddDays(10));
+        await Card("Spans", from.AddDays(-5), to.AddDays(5));
+        await Card("Due only", null, from.AddDays(9));
+        await Card("Start only", from.AddDays(12), null);
+        await Card("Before", from.AddDays(-9), from.AddDays(-1));
+        await Card("After", to, to.AddDays(2));
+        await Card("Due only outside", null, to.AddDays(1));
+        await Card("No dates", null, null);
+        var window = $"from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
+
+        Assert.Equal(
+            ["Inside", "Starts before", "Ends after", "Spans", "Due only", "Start only"],
+            await TitlesAsync(board, window));
+    }
+
+    [Fact]
+    public async Task Window_returns_dependency_links_between_returned_cards_only()
+    {
+        var board = await BoardAsync();
+        var due = DateTimeOffset.UtcNow.AddDays(2);
+        var first = await board.Client.CreateCardAsync(board.BoardId, board.TodoId, "First");
+        var second = await board.Client.CreateCardAsync(board.BoardId, board.TodoId, "Second");
+        var undated = await board.Client.CreateCardAsync(board.BoardId, board.TodoId, "Undated");
+        await PatchAsync(board, first, new { dueAt = due });
+        await PatchAsync(board, second, new { dueAt = due.AddDays(1) });
+        foreach (var (card, blocker) in new[] { (second, first), (first, undated) })
+        {
+            (await board.Client.PutAsync(
+                new Uri($"{CardTestKit.Cards(board.BoardId)}/{card.Id}/blocked-by/{blocker.Id}", UriKind.Relative), null))
+                .EnsureSuccessStatusCode();
+        }
+
+        var window = $"from={Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(-1).ToString("O"))}"
+            + $"&to={Uri.EscapeDataString(DateTimeOffset.UtcNow.AddDays(30).ToString("O"))}";
+        var windowed = await QueryAsync(board, window);
+        var plain = await QueryAsync(board);
+
+        Assert.Equal([new QueryCards.DependencyLink(second.Id, first.Id)], windowed.Dependencies);
+        Assert.Empty(plain.Dependencies);
+    }
+
+    [Fact]
     public async Task Sorts_by_due_priority_created_and_title()
     {
         var board = await BoardAsync();
@@ -175,6 +233,10 @@ public sealed class QueryCardsTests(ApiFactory factory) : IClassFixture<ApiFacto
     [InlineData("tz=Mars/Olympus")]
     [InlineData("dueFrom=2026-12-01T00:00:00Z&dueTo=2026-11-01T00:00:00Z")]
     [InlineData("dueFrom=2026-01-01T00:00:00Z&dueTo=2026-06-01T00:00:00Z")]
+    [InlineData("from=2026-01-01T00:00:00Z")]
+    [InlineData("to=2026-01-01T00:00:00Z")]
+    [InlineData("from=2026-02-01T00:00:00Z&to=2026-01-01T00:00:00Z")]
+    [InlineData("from=2026-01-01T00:00:00Z&to=2026-07-01T00:00:00Z")]
     public async Task Invalid_parameters_are_rejected(string query)
     {
         var board = await BoardAsync();

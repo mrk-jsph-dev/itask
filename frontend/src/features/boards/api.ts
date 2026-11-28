@@ -356,6 +356,13 @@ export interface CardQueryResult {
   items: Card[]
   /** More cards matched than the API returns at once. */
   truncated: boolean
+  /** `cardId` waits on `blockedById`; only filled for a Timeline window, between returned cards. */
+  dependencies?: DependencyLink[]
+}
+
+export interface DependencyLink {
+  cardId: string
+  blockedById: string
 }
 
 export const cardsApi = {
@@ -367,7 +374,13 @@ export const cardsApi = {
   update: (boardId: string, cardId: string, patch: CardPatch) =>
     api.patch<Card>(`${cards(boardId)}/${cardId}`, patch),
   /** `overrideDoorway` (Owners) moves the card through a block-mode doorway anyway. */
-  move: (boardId: string, cardId: string, move: CardMove, rowVersion: string, overrideDoorway = false) =>
+  move: (
+    boardId: string,
+    cardId: string,
+    move: CardMove,
+    rowVersion: string,
+    overrideDoorway = false,
+  ) =>
     api.put<{ card: Card; renumbered: boolean }>(`${cards(boardId)}/${cardId}/position`, {
       ...move,
       rowVersion,

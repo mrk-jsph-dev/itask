@@ -9,6 +9,7 @@ import {
   groupCards,
   matches,
   matchesDue,
+  matchesWindow,
   parseQuery,
   toApiParams,
   toQuery,
@@ -67,6 +68,8 @@ describe('board filter query', () => {
       sort: 'due' as const,
       group: 'label' as const,
       month: '2026-12',
+      zoom: 'quarter' as const,
+      from: '2026-12-07',
     }
 
     const query = toQuery(state)
@@ -82,6 +85,8 @@ describe('board filter query', () => {
       sort: 'due',
       group: 'label',
       month: '2026-12',
+      zoom: 'quarter',
+      from: '2026-12-07',
     })
     expect(parseQuery(query as Record<string, string>)).toEqual({
       ...state,
@@ -94,6 +99,8 @@ describe('board filter query', () => {
         sort: 'position',
         group: 'none',
         month: null,
+        zoom: 'month',
+        from: null,
       }),
     ).toEqual({})
   })
@@ -106,12 +113,15 @@ describe('board filter query', () => {
       sort: 'random',
       group: 'colour',
       month: '2026-13',
+      zoom: 'year',
+      from: '2026-02-30x',
     })
 
     expect(state.view).toBeNull()
     expect(state.filter.due).toEqual(['overdue'])
     expect(state.filter.priority).toEqual(['Low'])
     expect([state.sort, state.group, state.month]).toEqual(['position', 'none', null])
+    expect([state.zoom, state.from]).toEqual(['month', null])
   })
 
   it('counts active fields and builds API params', () => {
@@ -222,5 +232,33 @@ describe('sorting and grouping', () => {
       ['No date', ['Charlie']],
     ])
     expect(groupCards([], 'none', ctx)).toEqual([])
+  })
+})
+
+describe('timeline window', () => {
+  const from = new Date(2026, 2, 1)
+  const to = new Date(2026, 3, 1)
+  const at = (d: number) => new Date(2026, 2, d).toISOString()
+
+  it('mirrors the API overlap rule', () => {
+    const hit = (startAt: string | null, dueAt: string | null) =>
+      matchesWindow({ startAt, dueAt }, { from, to })
+
+    expect(hit(at(3), at(5))).toBe(true)
+    expect(hit(at(-5), at(2))).toBe(true)
+    expect(hit(at(-5), at(40))).toBe(true)
+    expect(hit(null, at(9))).toBe(true)
+    expect(hit(at(12), null)).toBe(true)
+    expect(hit(at(-9), at(-1))).toBe(false)
+    expect(hit(to.toISOString(), at(40))).toBe(false)
+    expect(hit(null, null)).toBe(false)
+  })
+
+  it('sends from/to for a window and dueFrom/dueTo for the calendar', () => {
+    const win = toApiParams(emptyFilter(), 'position', { from, to, kind: 'window' }, '')
+    const cal = toApiParams(emptyFilter(), 'position', { from, to }, '')
+
+    expect([win.get('from'), win.has('dueFrom')]).toEqual([from.toISOString(), false])
+    expect([cal.get('dueFrom'), cal.has('from')]).toEqual([from.toISOString(), false])
   })
 })

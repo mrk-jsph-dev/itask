@@ -3,12 +3,14 @@ import type { LocationQuery, LocationQueryRaw } from 'vue-router'
 import type { BoardList, Card, CardPriority, Label, Member } from './api'
 import { priorities } from './cardOptions'
 
-export type BoardViewKind = 'board' | 'list' | 'calendar'
+export type BoardViewKind = 'board' | 'list' | 'calendar' | 'timeline'
+export type TimelineZoom = 'week' | 'month' | 'quarter'
 export type DueFilter = 'overdue' | 'today' | 'week' | 'none'
 export type SortKey = 'position' | 'due' | 'priority' | 'created' | 'title'
 export type GroupKey = 'none' | 'list' | 'label' | 'assignee' | 'priority' | 'due'
 
-export const views: readonly BoardViewKind[] = ['board', 'list', 'calendar']
+export const views: readonly BoardViewKind[] = ['board', 'list', 'calendar', 'timeline']
+export const zooms: readonly TimelineZoom[] = ['week', 'month', 'quarter']
 export const dueFilters: readonly DueFilter[] = ['overdue', 'today', 'week', 'none']
 export const sortKeys: readonly SortKey[] = ['position', 'due', 'priority', 'created', 'title']
 export const groupKeys: readonly GroupKey[] = [
@@ -69,6 +71,10 @@ export interface BoardState {
   group: GroupKey
   /** Calendar month as `yyyy-mm`, or null for the current month. */
   month: string | null
+  /** Timeline zoom (default month). */
+  zoom: TimelineZoom
+  /** Timeline window start as `yyyy-mm-dd`, or null for the one holding today. */
+  from: string | null
 }
 
 export const emptyFilter = (): BoardFilter => ({
@@ -102,11 +108,13 @@ function oneOf<T extends string>(value: string, allowed: readonly T[], fallback:
 }
 
 const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/
+const dayPattern = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 
 /** Reads the board state from a route query, ignoring values it doesn't know. */
 export function parseQuery(query: LocationQuery): BoardState {
   const view = first(query.view)
   const month = first(query.month)
+  const from = first(query.from)
   return {
     view: (views as readonly string[]).includes(view) ? (view as BoardViewKind) : null,
     filter: {
@@ -123,6 +131,8 @@ export function parseQuery(query: LocationQuery): BoardState {
     sort: oneOf(first(query.sort), sortKeys, 'position'),
     group: oneOf(first(query.group), groupKeys, 'none'),
     month: monthPattern.test(month) ? month : null,
+    zoom: oneOf(first(query.zoom), zooms, 'month'),
+    from: dayPattern.test(from) ? from : null,
   }
 }
 
@@ -141,6 +151,8 @@ export function toQuery(state: BoardState): LocationQueryRaw {
   if (state.sort !== 'position') query.sort = state.sort
   if (state.group !== 'none') query.group = state.group
   if (state.month) query.month = state.month
+  if (state.zoom !== 'month') query.zoom = state.zoom
+  if (state.from) query.from = state.from
   return query
 }
 
@@ -154,11 +166,18 @@ export function activeCount(filter: BoardFilter): number {
   )
 }
 
+/** A [from, to) range: due dates for the Calendar, overlapping date ranges for the Timeline. */
+export interface CardRange {
+  from: Date
+  to: Date
+  kind?: 'due' | 'window'
+}
+
 /** Query parameters for `GET /boards/{id}/cards`. */
 export function toApiParams(
   filter: BoardFilter,
   sort: SortKey,
-  range?: { from: Date; to: Date },
+  range?: CardRange,
   timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
 ): URLSearchParams {
   const params = new URLSearchParams()
@@ -171,8 +190,9 @@ export function toApiParams(
   if (filter.blocked) params.set('blocked', filter.blocked)
   if (sort !== 'position') params.set('sort', sort)
   if (range) {
-    params.set('dueFrom', range.from.toISOString())
-    params.set('dueTo', range.to.toISOString())
+    const [from, to] = range.kind === 'window' ? ['from', 'to'] : ['dueFrom', 'dueTo']
+    params.set(from, range.from.toISOString())
+    params.set(to, range.to.toISOString())
   }
   if (timeZone) params.set('tz', timeZone)
   return params
@@ -230,6 +250,17 @@ export function matches(card: Card, filter: BoardFilter, now = new Date()): bool
   }
   if (filter.due.length && !filter.due.some((b) => matchesDue(card, b, now))) return false
   return true
+}
+
+/** Whether a dated card's [start ?? due, due ?? start] range touches [from, to); mirrors the API's window. */
+export function matchesWindow(
+  card: Pick<Card, 'startAt' | 'dueAt'>,
+  window: { from: Date; to: Date },
+): boolean {
+  const startIso = card.startAt ?? card.dueAt
+  const endIso = card.dueAt ?? card.startAt
+  if (!startIso || !endIso) return false
+  return new Date(startIso) < window.to && new Date(endIso) >= window.from
 }
 
 const rank = (p: CardPriority) => priorities.indexOf(p)
