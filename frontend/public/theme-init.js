@@ -4,7 +4,7 @@
   var pref = null
   try {
     pref = localStorage.getItem('itask.theme')
-  } catch (e) {
+  } catch {
     return
   }
   if (pref !== 'Dark' && pref !== 'Light') return
